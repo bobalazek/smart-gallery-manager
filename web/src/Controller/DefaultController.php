@@ -8,6 +8,7 @@ use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Doctrine\ORM\EntityManagerInterface;
 use Intervention\Image\ImageManager;
 use App\Entity\Image;
@@ -68,12 +69,12 @@ class DefaultController extends AbstractController
             flush();
         });
 
-        $dispositionHeader = $response->headers->makeDisposition(
+        $dispositionHeader = HeaderUtils::makeDisposition(
             ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            $imageData['relative_pathname'],
-            'image.jpg'
+            $imageData['relative_pathname']
         );
         $response->headers->set('Content-Disposition', $dispositionHeader);
+        $response->headers->set('Content-Type', $image->mime());
 
         return $response;
     }

@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 
 services:
   mariadb:
@@ -25,13 +25,16 @@ services:
       - php-fpm
     networks:
         - network
+    network_mode: host
   php-fpm:
     build: ./docker/php-fpm
     volumes:
       - ./web:/var/www
     networks:
         - network
+    network_mode: host
 
 networks:
     network:
         driver: bridge
+        external: true
