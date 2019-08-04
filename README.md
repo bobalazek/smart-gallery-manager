@@ -2,7 +2,7 @@
 
 ## Development
 
-* Run: `docker-compose up`
+* Run: `docker-compose build`, and then `docker-compose up`
 * Visit: http://localhost:81
 
 ### Frontend
