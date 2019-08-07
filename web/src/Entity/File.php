@@ -25,6 +25,21 @@ class File
     private $hash;
 
     /**
+     * @ORM\Column(type="string", length=32)
+     */
+    private $type;
+
+    /**
+     * @ORM\Column(type="text")
+     */
+    private $path;
+
+    /**
+     * @ORM\Column(type="string", length=128)
+     */
+    private $mime;
+
+    /**
      * @ORM\Column(type="array")
      */
     private $data = [];
@@ -57,6 +72,42 @@ class File
     public function setHash(string $hash): self
     {
         $this->hash = $hash;
+
+        return $this;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): self
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+
+    public function getPath(): ?string
+    {
+        return $this->path;
+    }
+
+    public function setPath(string $path): self
+    {
+        $this->path = $path;
+
+        return $this;
+    }
+
+    public function getMime(): ?string
+    {
+        return $this->mime;
+    }
+
+    public function setMime(string $mime): self
+    {
+        $this->mime = $mime;
 
         return $this;
     }
@@ -111,10 +162,9 @@ class File
 
     public function getMeta(): ?array
     {
-        $data = $this->getData();
         $exif = null;
         try {
-            $exif = exif_read_data($data['real_path'], 0, true);
+            $exif = exif_read_data($this->getPath(), 0, true);
         } catch (\Exception $e) {}
 
         $device = [
@@ -143,9 +193,7 @@ class File
         // TODO: if date not present, maybe also look in the name of the file?
 
         return [
-            'name' => basename($data['real_path']),
-            'path' => $data['real_path'],
-            'extension' => $data['extension'],
+            'name' => basename($this->getPath()),
             'date' => $date,
             'device' => $device,
         ];
@@ -156,6 +204,9 @@ class File
         return [
             'id' => $this->getId(),
             'hash' => $this->getHash(),
+            'path' => $this->getPath(),
+            'type' => $this->getType(),
+            'mime' => $this->getMime(),
             'data' => $this->getData(),
             'created_at' => $this->getCreatedAt()->format(DATE_ATOM),
             'modified_at' => $this->getModifiedAt()->format(DATE_ATOM),

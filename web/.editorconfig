@@ -7,3 +7,7 @@ trim_trailing_whitespace = true
 [*.{php,js,css,html,twig,yml}]
 indent_style = space
 indent_size = 4
+
+[*.jsx]
+indent_style = space
+indent_size = 2

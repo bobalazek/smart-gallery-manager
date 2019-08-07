@@ -11,6 +11,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Mime\MimeTypes;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\File;
 
@@ -35,6 +36,7 @@ class FilesLoadCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $finder = new Finder();
         $filesystem = new Filesystem();
+        $mimeTypes = new MimeTypes();
         $filesRepository = $this->em->getRepository(File::class);
 
         define('PROJECT_ROOT', dirname(__DIR__) . '/../..');
@@ -48,34 +50,45 @@ class FilesLoadCommand extends Command
             return false;
         }
 
-        // Browse the paths
-        $paths = $settings['paths'];
-        foreach ($paths as $path) {
-            $files = $finder->in($path)->files();
-            $io->section(sprintf('Starting to process folder: %s', $path));
+        // Browse the folders
+        $folders = $settings['folders'];
+        foreach ($folders as $folder) {
+            $files = $finder->in($folder)->files();
+            $io->section(sprintf('Starting to process folder: %s', $folder));
 
             $i = 0;
-            foreach ($files as $file) {
-                $io->text(sprintf('Starting to process file: %s', $file));
+            foreach ($files as $fileObject) {
+                $filePath = $fileObject->getRealPath();
 
-                $absoluteFilePath = $file->getRealPath();
+                $io->text(sprintf('Starting to process file: %s', $filePath));
 
-                $fileHash = sha1($absoluteFilePath);
+                $fileHash = sha1($filePath);
+                $fileMime = $mimeTypes->guessMimeType($filePath);
 
-                // General data
-                $data = [
-                    'real_path' => $absoluteFilePath,
-                    'relative_pathname' => $file->getRelativePathname(),
-                    'extension' => strtolower($file->getExtension()),
-                    'mime' => mime_content_type($absoluteFilePath),
-                ];
                 $file = $filesRepository->findOneByHash($fileHash);
-                if (!$file) {
-                    $file = new File();
-                    $file->setHash($fileHash);
+                if ($file) {
+                    $io->text(sprintf('File %s already exists. Skipping ...', $filePath));
+                    continue;
                 }
 
-                $file->setData($data);
+                $type = strpos($fileMime, 'image/') !== false
+                    ? 'image'
+                    : (strpos($fileMime, 'video/') !== false
+                        ? 'video'
+                        : (strpos($fileMime, 'audio/') !== false
+                            ? 'audio'
+                            : 'other'
+                        )
+                    );
+
+                $file = new File();
+                $file
+                    ->setHash($fileHash)
+                    ->setPath($filePath)
+                    ->setType($type)
+                    ->setMime($fileMime)
+                    ->setData([])
+                ;
 
                 // Get the meta AFTER we've set the data, because it depends
                 //   on some data there.

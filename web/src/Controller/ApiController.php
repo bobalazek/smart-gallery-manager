@@ -45,9 +45,11 @@ class ApiController extends AbstractController
         $files = $this->em->createQueryBuilder()
             ->select('f')
             ->from(File::class, 'f')
+            ->where('f.type = :type')
             ->orderBy('f.takenAt', 'DESC')
             ->setFirstResult($offset)
             ->setMaxResults($limit)
+            ->setParameter('type', 'image')
             ->getQuery()
             ->getResult();
 
@@ -55,6 +57,24 @@ class ApiController extends AbstractController
         foreach ($files as $file) {
             $single = $file->toArray();
             $single['links'] = [
+                'thumbnail' => $this->generateUrl(
+                    'file',
+                    [
+                        'hash' => $file->getHash(),
+                        'type' => 'thumbnail',
+                        'format' => 'jpg',
+                    ],
+                    UrlGeneratorInterface::ABSOLUTE_URL
+                ),
+                'small' => $this->generateUrl(
+                    'file',
+                    [
+                        'hash' => $file->getHash(),
+                        'type' => 'small',
+                        'format' => 'jpg',
+                    ],
+                    UrlGeneratorInterface::ABSOLUTE_URL
+                ),
                 'original' => $this->generateUrl(
                     'file',
                     [

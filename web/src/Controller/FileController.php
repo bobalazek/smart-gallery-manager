@@ -60,23 +60,22 @@ class FileController extends AbstractController
             throw $this->createNotFoundException('The file does not exist');
         }
 
-        $fileData = $file->getData();
         $fileMeta = $file->getMeta();
 
         $cacheKey = $hash . '.' . $type . '.' . $format;
         $fileMimeAndContent = $cache->get(
             $cacheKey,
-            function (ItemInterface $item) use ($fileData, $type, $format, $maxAge) {
+            function (ItemInterface $item) use ($file, $type, $format, $maxAge) {
                 $item->tag('file');
                 $item->expiresAfter($maxAge);
 
-                $mime = $fileData['mime'];
+                $mime = $file->getMime();
                 $content = '';
 
                 if (strpos('image/', $mime) !== false) {
                     $manager = new ImageManager(['driver' => 'imagick']);
 
-                    $fileInstance = $manager->make($fileData['real_path']);
+                    $fileInstance = $manager->make($file->getPath());
                     $fileInstance->orientate();
 
                     if ($type === 'thumbnail') {
@@ -88,10 +87,10 @@ class FileController extends AbstractController
                             $constraint->upsize();
                         });
                     }
-                    $mime = $fileInstance->mime();
+
                     $content = $fileInstance->encode($format);
                 } else {
-                    $content = file_get_contents($fileData['real_path']);
+                    $content = file_get_contents($file->getPath());
                 }
 
                 return [

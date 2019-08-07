@@ -1,0 +1,101 @@
+{% extends 'bootstrap.html.twig' %}
+
+{% block title %}Smart Gallery Manager{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        body img {
+            min-width: 100%;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div id="files-row" class="row"
+            data-offset="{{ offset }}"
+            data-limit="{{ limit }}">
+            {% for i, file in files %}
+                {% set thumbnail_file_url = url('file', {
+                    hash: file.getHash(),
+                    type: 'thumbnail',
+                    format: 'jpg',
+                }) %}
+                {% set small_file_url = url('file', {
+                    hash: file.getHash(),
+                    type: 'small',
+                    format: 'jpg',
+                }) %}
+                {% set original_file_url = url('file', {
+                    hash: file.getHash(),
+                    type: 'original',
+                    format: 'jpg',
+                }) %}
+                <div class="col-sm-2">
+                    <a href="{{ original_file_url }}"
+                        target="_blank"
+                        data-id="{{ file.getId() }}">
+                        <img class="img-fluid"
+                            src="{{ thumbnail_file_url }}"
+                            data-src="{{ small_file_url }}" />
+                    </a>
+                    {{ dump(file.toArray()) }}
+                    <hr />
+                </div>
+            {% endfor %}
+        </div>
+        <div id="files-loading-row" class="row">
+            <div class="col-sm-12 text-center">
+                <i class="fa fa-4x fa-spinner fa-spin"></i>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        jQuery(document).ready(function() {
+            loadImages();
+
+            $('#files-loading-row').hide();
+
+            jQuery(window).on('scroll', function() {
+                if(jQuery(window).scrollTop() + jQuery(window).height() === jQuery(document).height()) {
+                    if ($('#files-loading-row').is(':visible')) {
+                        return;
+                    }
+
+                    $('#files-loading-row').show();
+
+                    var newOffset = parseInt(jQuery('#files-row').attr('data-offset'))
+                        + parseInt(jQuery('#files-row').attr('data-limit'));
+                    jQuery.get(window.location.href + '?offset=' + newOffset, function(html) {
+                        var $html = $(html);
+                        var $filesRowNew = $html.find('#files-row');
+
+                        $('#files-row').attr('data-offset', $filesRowNew.attr('data-offset'));
+                        $('#files-row').append(
+                            $filesRowNew.html()
+                        );
+
+                        // Allow the thumbnails to load first, else they get canceled
+                        setTimeout(function() {
+                            loadImages();
+                        });
+
+                        $('#files-loading-row').hide();
+                    });
+                }
+            });
+        });
+
+        function loadImages() {
+            jQuery('body img').each(function() {
+                var $img = $(this);
+                $img.attr('src', $img.attr('data-src'));
+            });
+        }
+    </script>
+{% endblock %}

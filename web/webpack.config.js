@@ -8,7 +8,8 @@ if (!Encore.isRuntimeEnvironmentConfigured()) {
 
 Encore
     .setOutputPath('public/build/')
-    .setPublicPath('/build')
+    //.setPublicPath('/build')
+    .setPublicPath('/smart-gallery-manager/web/public/build') // TODO: temporary, until docker isn't ready
     .setManifestKeyPrefix('build/')
 
     /*
@@ -20,7 +21,7 @@ Encore
      * Each entry will result in one JavaScript file (e.g. app.js)
      * and one CSS file (e.g. app.css) if your JavaScript imports CSS.
      */
-    .addEntry('app', './assets/js/app.js')
+    .addEntry('app', './assets/js/app.jsx')
     //.addEntry('page1', './assets/js/page1.js')
     //.addEntry('page2', './assets/js/page2.js')
 
