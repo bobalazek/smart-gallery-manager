@@ -20,4 +20,7 @@ $ yarn encore production
 ```
 
 ### Backend
-* https://symfony.com/doc/current/index.html#gsc.tab=0
+* https://symfony.com/doc/current/index.html
+
+## Notes
+* For .heic/.heif, the [libheif](https://github.com/strukturag/libheif) library is required
