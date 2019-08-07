@@ -25,11 +25,6 @@ class File
     private $hash;
 
     /**
-     * @ORM\Column(type="string", length=32)
-     */
-    private $type;
-
-    /**
      * @ORM\Column(type="text")
      */
     private $path;
@@ -38,6 +33,11 @@ class File
      * @ORM\Column(type="string", length=128)
      */
     private $mime;
+
+    /**
+     * @ORM\Column(type="string", length=16)
+     */
+    private $extension;
 
     /**
      * @ORM\Column(type="array")
@@ -76,18 +76,6 @@ class File
         return $this;
     }
 
-    public function getType(): ?string
-    {
-        return $this->type;
-    }
-
-    public function setType(string $type): self
-    {
-        $this->type = $type;
-
-        return $this;
-    }
-
     public function getPath(): ?string
     {
         return $this->path;
@@ -108,6 +96,18 @@ class File
     public function setMime(string $mime): self
     {
         $this->mime = $mime;
+
+        return $this;
+    }
+
+    public function getExtension(): ?string
+    {
+        return $this->extension;
+    }
+
+    public function setExtension(string $extension): self
+    {
+        $this->extension = $extension;
 
         return $this;
     }
@@ -205,8 +205,8 @@ class File
             'id' => $this->getId(),
             'hash' => $this->getHash(),
             'path' => $this->getPath(),
-            'type' => $this->getType(),
             'mime' => $this->getMime(),
+            'extension' => $this->getExtension(),
             'data' => $this->getData(),
             'created_at' => $this->getCreatedAt()->format(DATE_ATOM),
             'modified_at' => $this->getModifiedAt()->format(DATE_ATOM),

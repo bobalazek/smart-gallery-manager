@@ -11,8 +11,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
-use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Component\Mime\MimeTypes;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Intervention\Image\ImageManager;
 use App\Entity\File;
@@ -72,8 +73,14 @@ class FileController extends AbstractController
                 $mime = $file->getMime();
                 $content = '';
 
-                if (strpos('image/', $mime) !== false) {
-                    $manager = new ImageManager(['driver' => 'imagick']);
+                $isImage = strpos('image/', $mime) !== false
+                    || $file->getExtension() === 'heic';
+
+                if ($isImage) {
+                    $mimeTypes = new MimeTypes();
+                    $manager = new ImageManager([
+                        'driver' => 'imagick',
+                    ]);
 
                     $fileInstance = $manager->make($file->getPath());
                     $fileInstance->orientate();
@@ -88,6 +95,8 @@ class FileController extends AbstractController
                         });
                     }
 
+                    $formatMimeTypes = $mimeTypes->getMimeTypes($format);
+                    $mime = $formatMimeTypes[0];
                     $content = $fileInstance->encode($format);
                 } else {
                     $content = file_get_contents($file->getPath());
@@ -104,7 +113,7 @@ class FileController extends AbstractController
 
         $dispositionHeader = HeaderUtils::makeDisposition(
             ResponseHeaderBag::DISPOSITION_INLINE,
-            $fileMeta['name']
+            $fileMeta['name'] // TODO: if it's converted, it should habe a new name?
         );
         $response->headers->set('Content-Disposition', $dispositionHeader);
         $response->headers->set('Content-Type', $fileMimeAndContent['mime']);

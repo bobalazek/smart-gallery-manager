@@ -8,6 +8,7 @@ use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Mime\MimeTypes;
 use Doctrine\ORM\EntityManagerInterface;
 use Intervention\Image\ImageManager;
 use App\Entity\File;
@@ -33,6 +34,8 @@ class ApiController extends AbstractController
      */
     public function files(Request $request)
     {
+        $mimeTypes = new MimeTypes();
+
         $format = $request->get('format', 'jpg');
         $offset = (int) $request->get('offset', 0);
         $limit = (int) $request->get('limit', 32);
@@ -45,11 +48,11 @@ class ApiController extends AbstractController
         $files = $this->em->createQueryBuilder()
             ->select('f')
             ->from(File::class, 'f')
-            ->where('f.type = :type')
-            ->orderBy('f.takenAt', 'DESC')
+            // TODO: only allowed formats
+            //->orderBy('f.takenAt', 'DESC')
+            ->orderBy('f.id', 'DESC')
             ->setFirstResult($offset)
             ->setMaxResults($limit)
-            ->setParameter('type', 'image')
             ->getQuery()
             ->getResult();
 
