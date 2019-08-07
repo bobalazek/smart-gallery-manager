@@ -1,0 +1,126 @@
+<?php
+
+namespace App\Controller;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Finder\Finder;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\Cache\Adapter\TagAwareAdapter;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Doctrine\ORM\EntityManagerInterface;
+use Intervention\Image\ImageManager;
+use App\Entity\File;
+
+class FileController extends AbstractController
+{
+    public function __construct(ParameterBagInterface $params, EntityManagerInterface $em)
+    {
+        $this->params = $params;
+        $this->em = $em;
+    }
+
+    /**
+     * @Route("/file/{hash}.{type}.{format}", name="file")
+     */
+    public function show($hash, $type, $format, Request $request)
+    {
+        ini_set('memory_limit', '512M');
+
+        $allowedFormats = $this->params->get('allowed_formats');
+        $maxAge = $this->params->get('max_age');
+
+        if (!in_array($type, ['thumbnail', 'small', 'original'])) {
+            throw new \Exception('Invalid type. Allowed: "thumbnail", "small" or "original"');
+        }
+
+        if (!in_array($format, $allowedFormats)) {
+            throw new \Exception('Invalid format. Allowed: ' . implode(', ', $allowedFormats));
+        }
+
+        $cache = new TagAwareAdapter(
+            new FilesystemAdapter(
+                'files'
+            ),
+            new FilesystemAdapter(
+                'file_tags'
+            )
+        );
+
+        //$cache->invalidateTags(['file']);
+
+        $filesRepository = $this->em->getRepository(File::class);
+        $file = $filesRepository->findOneByHash($hash);
+        if (!$file) {
+            throw $this->createNotFoundException('The file does not exist');
+        }
+
+        $fileData = $file->getData();
+        $fileMeta = $file->getMeta();
+
+        $cacheKey = $hash . '.' . $type . '.' . $format;
+        $fileMimeAndContent = $cache->get(
+            $cacheKey,
+            function (ItemInterface $item) use ($fileData, $type, $format, $maxAge) {
+                $item->tag('file');
+                $item->expiresAfter($maxAge);
+
+                $mime = $fileData['mime'];
+                $content = '';
+
+                if (strpos('image/', $mime) !== false) {
+                    $manager = new ImageManager(['driver' => 'imagick']);
+
+                    $fileInstance = $manager->make($fileData['real_path']);
+                    $fileInstance->orientate();
+
+                    if ($type === 'thumbnail') {
+                        $fileInstance->widen(64, function ($constraint) {
+                            $constraint->upsize();
+                        });
+                    } elseif ($type === 'small') {
+                        $fileInstance->widen(640, function ($constraint) {
+                            $constraint->upsize();
+                        });
+                    }
+                    $mime = $fileInstance->mime();
+                    $content = $fileInstance->encode($format);
+                } else {
+                    $content = file_get_contents($fileData['real_path']);
+                }
+
+                return [
+                    'mime' => $mime,
+                    'content' => $content,
+                ];
+            }
+        );
+
+        $response = new Response();
+
+        $dispositionHeader = HeaderUtils::makeDisposition(
+            ResponseHeaderBag::DISPOSITION_INLINE,
+            $fileMeta['name']
+        );
+        $response->headers->set('Content-Disposition', $dispositionHeader);
+        $response->headers->set('Content-Type', $fileMimeAndContent['mime']);
+        $response->headers->set('Content-Length', strlen($fileMimeAndContent['content']));
+
+        $response->setContent($fileMimeAndContent['content']);
+        $response->setSharedMaxAge($maxAge);
+        $response->setCache([
+            'etag' => sha1($cacheKey),
+            'last_modified' => $file->getModifiedAt(),
+            'max_age' => $maxAge,
+            's_maxage' => $maxAge,
+            'private' => true,
+        ]);
+
+        return $response;
+    }
+}

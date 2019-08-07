@@ -14,9 +14,9 @@ use Symfony\Component\Filesystem\Filesystem;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\File;
 
-class FilesCommand extends Command
+class FilesLoadCommand extends Command
 {
-    protected static $defaultName = 'app:files';
+    protected static $defaultName = 'app:files:load';
 
     public function __construct(EntityManagerInterface $em)
     {
@@ -27,9 +27,7 @@ class FilesCommand extends Command
 
     protected function configure()
     {
-        $this
-            ->setDescription('Prepares all the files stuff')
-        ;
+        $this->setDescription('Loads (inserts or updates) all the local files into the database.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -42,8 +40,13 @@ class FilesCommand extends Command
         define('PROJECT_ROOT', dirname(__DIR__) . '/../..');
 
         // Get the settings
-        $settings = Yaml::parseFile(PROJECT_ROOT . '/settings.yml');
-        // TODO: error handling
+        try {
+            $settings = Yaml::parseFile(PROJECT_ROOT . '/settings.yml');
+        } catch (\Exception $e) {
+            $io->error($e->getMessage());
+
+            return false;
+        }
 
         // Browse the paths
         $paths = $settings['paths'];
@@ -51,6 +54,7 @@ class FilesCommand extends Command
             $files = $finder->in($path)->files();
             $io->section(sprintf('Starting to process folder: %s', $path));
 
+            $i = 0;
             foreach ($files as $file) {
                 $io->text(sprintf('Starting to process file: %s', $file));
 
@@ -62,7 +66,8 @@ class FilesCommand extends Command
                 $data = [
                     'real_path' => $absoluteFilePath,
                     'relative_pathname' => $file->getRelativePathname(),
-                    'extension' => $file->getExtension(),
+                    'extension' => strtolower($file->getExtension()),
+                    'mime' => mime_content_type($absoluteFilePath),
                 ];
                 $file = $filesRepository->findOneByHash($fileHash);
                 if (!$file) {
@@ -76,7 +81,7 @@ class FilesCommand extends Command
                 //   on some data there.
                 $fileMeta = $file->getMeta();
 
-                $takenAt = new \DateTime();
+                $takenAt = new \DateTime('1970-01-01');
                 if ($fileMeta['date']) {
                     $takenAt = new \DateTime($fileMeta['date']);
                 }
@@ -88,6 +93,12 @@ class FilesCommand extends Command
                 ;
 
                 $this->em->persist($file);
+
+                $i++;
+                if (($i % 100) === 0) {
+                    $this->em->flush();
+                    $this->em->clear();
+                }
             }
 
             $this->em->flush();
@@ -95,5 +106,7 @@ class FilesCommand extends Command
         }
 
         $io->success('Success!');
+
+        return true;
     }
 }

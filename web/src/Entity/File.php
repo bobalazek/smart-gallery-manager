@@ -6,6 +6,9 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\FileRepository")
+ * @ORM\Table(name="files",indexes={
+ *   @ORM\Index(name="hash_idx", columns={"hash"})
+ * })
  */
 class File
 {
@@ -140,8 +143,11 @@ class File
         // TODO: if date not present, maybe also look in the name of the file?
 
         return [
-            'device' => $device,
+            'name' => basename($data['real_path']),
+            'path' => $data['real_path'],
+            'extension' => $data['extension'],
             'date' => $date,
+            'device' => $device,
         ];
     }
 
@@ -150,10 +156,11 @@ class File
         return [
             'id' => $this->getId(),
             'hash' => $this->getHash(),
-            'meta' => $this->getMeta(),
+            'data' => $this->getData(),
             'created_at' => $this->getCreatedAt()->format(DATE_ATOM),
             'modified_at' => $this->getModifiedAt()->format(DATE_ATOM),
             'taken_at' => $this->getTakenAt()->format(DATE_ATOM),
+            'meta' => $this->getMeta(),
         ];
     }
 }
