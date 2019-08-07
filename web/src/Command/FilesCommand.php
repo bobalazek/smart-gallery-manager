@@ -12,11 +12,11 @@ use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Filesystem\Filesystem;
 use Doctrine\ORM\EntityManagerInterface;
-use App\Entity\Image;
+use App\Entity\File;
 
-class ImagesCommand extends Command
+class FilesCommand extends Command
 {
-    protected static $defaultName = 'app:images';
+    protected static $defaultName = 'app:files';
 
     public function __construct(EntityManagerInterface $em)
     {
@@ -28,7 +28,7 @@ class ImagesCommand extends Command
     protected function configure()
     {
         $this
-            ->setDescription('Prepares all the image stuff')
+            ->setDescription('Prepares all the files stuff')
         ;
     }
 
@@ -37,7 +37,7 @@ class ImagesCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $finder = new Finder();
         $filesystem = new Filesystem();
-        $imagesRepository = $this->em->getRepository(Image::class);
+        $filesRepository = $this->em->getRepository(File::class);
 
         define('PROJECT_ROOT', dirname(__DIR__) . '/../..');
 
@@ -64,15 +64,30 @@ class ImagesCommand extends Command
                     'relative_pathname' => $file->getRelativePathname(),
                     'extension' => $file->getExtension(),
                 ];
-                $image = $imagesRepository->findOneByHash($fileHash);
-                if (!$image) {
-                    $image = new Image();
-                    $image->setHash($fileHash);
+                $file = $filesRepository->findOneByHash($fileHash);
+                if (!$file) {
+                    $file = new File();
+                    $file->setHash($fileHash);
                 }
 
-                $image->setData($data);
+                $file->setData($data);
 
-                $this->em->persist($image);
+                // Get the meta AFTER we've set the data, because it depends
+                //   on some data there.
+                $fileMeta = $file->getMeta();
+
+                $takenAt = new \DateTime();
+                if ($fileMeta['date']) {
+                    $takenAt = new \DateTime($fileMeta['date']);
+                }
+
+                $file
+                    ->setCreatedAt(new \DateTime())
+                    ->setModifiedAt(new \DateTime())
+                    ->setTakenAt($takenAt)
+                ;
+
+                $this->em->persist($file);
             }
 
             $this->em->flush();

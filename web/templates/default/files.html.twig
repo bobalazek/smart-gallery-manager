@@ -1,0 +1,58 @@
+{% extends 'bootstrap.html.twig' %}
+
+{% block title %}Smart Gallery Manager{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        body img {
+            min-width: 100%;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="row">
+            {% for i, file in files | slice(0, 32) %}
+                {% set file_data = file.getData() %}
+                {% set thumbnail_file_url = url('file', {
+                    hash: file.getHash(),
+                    type: 'thumbnail',
+                    format: 'jpg',
+                }) %}
+                {% set small_file_url = url('file', {
+                    hash: file.getHash(),
+                    type: 'small',
+                    format: 'jpg',
+                }) %}
+                {% set original_file_url = url('file', {
+                    hash: file.getHash(),
+                    type: 'original',
+                    format: 'jpg',
+                }) %}
+                <div class="col-sm-3">
+                    <a href="{{ original_file_url }}" target="_blank">
+                        <img class="img-fluid"
+                            src="{{ thumbnail_file_url }}"
+                            data-src="{{ small_file_url }}" />
+                    </a>
+                    {{ dump(file.toArray()) }}
+                    <hr />
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        jQuery(document).ready(function() {
+            jQuery('body img').each(function() {
+                var $img = $(this);
+                $img.attr('src', $img.attr('data-src'));
+            });
+        });
+    </script>
+{% endblock %}

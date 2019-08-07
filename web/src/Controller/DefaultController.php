@@ -6,12 +6,14 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
-use Symfony\Component\HttpFoundation\StreamedResponse;
-use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\Cache\Adapter\TagAwareAdapter;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Contracts\Cache\ItemInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Intervention\Image\ImageManager;
-use App\Entity\Image;
+use App\Entity\File;
 
 class DefaultController extends AbstractController
 {
@@ -31,50 +33,105 @@ class DefaultController extends AbstractController
     }
 
     /**
-     * @Route("/images", name="images")
+     * @Route("/files", name="files")
      */
-    public function images()
+    public function files()
     {
-        $imagesRepository = $this->em->getRepository(Image::class);
+        $filesRepository = $this->em->getRepository(File::class);
 
-        return $this->render('default/images.html.twig', [
-            'images' => $imagesRepository->findAll(),
+        return $this->render('default/files.html.twig', [
+            'files' => $filesRepository->findAll(),
         ]);
     }
 
     /**
-     * @Route("/image/{hash}/{image_name}", name="image")
+     * The method should be called "file()",
+     *   but that's already used by the AbstractController
+     *
+     * @Route("/file/{hash}.{type}.{format}", name="file")
      */
-    public function image($hash, $image_name)
+    public function fileDetail($hash, $type, $format)
     {
-        ini_set('memory_limit', '256M');
+        ini_set('memory_limit', '512M');
 
-        $imagesRepository = $this->em->getRepository(Image::class);
-        $image = $imagesRepository->findOneByHash($hash);
-        if (!$image) {
-            // TODO: return a blank image or something
+        $maxAge = 300; // TODO: add to params
+
+        if (!in_array($type, ['thumbnail', 'small', 'original'])) {
+            throw new \Exception('Invalid type. Allowed: "thumbnail", "small" or "original"');
         }
 
-        $manager = new ImageManager();
+        if (!in_array($format, ['jpg'])) {
+            throw new \Exception('Invalid format. Allowed: "jpg"');
+        }
 
-        $imageData = $image->getData();
+        $cache = new TagAwareAdapter(
+            new FilesystemAdapter(
+                'files'
+            ),
+            new FilesystemAdapter(
+                'file_tags'
+            )
+        );
 
-        $image = $manager->make($imageData['real_path']);
+        //$cache->invalidateTags(['file']);
 
-        $image->orientate();
+        $filesRepository = $this->em->getRepository(File::class);
+        $file = $filesRepository->findOneByHash($hash);
+        if (!$file) {
+            throw $this->createNotFoundException('The file does not exist');
+        }
 
-        $response = new StreamedResponse();
-        $response->setCallback(function() use ($image) {
-            echo $image->stream();
-            flush();
-        });
+        $fileData = $file->getData();
+
+        $cacheKey = $hash . '.' . $type . '.' . $format;
+        $fileMimeAndContent = $cache->get(
+            $cacheKey,
+            function (ItemInterface $item) use ($fileData, $type, $format, $maxAge) {
+                $item->tag('file');
+                $item->expiresAfter($maxAge);
+
+                // TODO: do only if image!
+                $manager = new ImageManager(['driver' => 'imagick']);
+
+                $fileInstance = $manager->make($fileData['real_path']);
+                $fileInstance->orientate();
+
+                if ($type === 'thumbnail') {
+                    $fileInstance->widen(64, function ($constraint) {
+                        $constraint->upsize();
+                    });
+                } elseif ($type === 'small') {
+                    $fileInstance->widen(640, function ($constraint) {
+                        $constraint->upsize();
+                    });
+                }
+
+                return [
+                    'mime' => $fileInstance->mime(),
+                    'content' => $fileInstance->encode($format),
+                ];
+            }
+        );
+
+        $response = new Response();
 
         $dispositionHeader = HeaderUtils::makeDisposition(
-            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            $imageData['relative_pathname']
+            ResponseHeaderBag::DISPOSITION_INLINE,
+            $fileData['relative_pathname']
         );
         $response->headers->set('Content-Disposition', $dispositionHeader);
-        $response->headers->set('Content-Type', $image->mime());
+        $response->headers->set('Content-Type', $fileMimeAndContent['mime']);
+        $response->headers->set('Content-Length', strlen($fileMimeAndContent['content']));
+
+        $response->setContent($fileMimeAndContent['content']);
+        $response->setSharedMaxAge($maxAge);
+        $response->setCache([
+            'etag' => sha1($cacheKey),
+            'last_modified' => $file->getModifiedAt(),
+            'max_age' => $maxAge,
+            's_maxage' => $maxAge,
+            'private' => true,
+        ]);
 
         return $response;
     }
