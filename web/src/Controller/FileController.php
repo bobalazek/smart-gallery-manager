@@ -46,10 +46,14 @@ class FileController extends AbstractController
 
         $cache = new TagAwareAdapter(
             new FilesystemAdapter(
-                'files'
+                'files',
+                0,
+                realpath($this->params->get('kernel.root_dir') . '/../../var/cache')
             ),
             new FilesystemAdapter(
-                'file_tags'
+                'file_tags',
+                0,
+                realpath($this->params->get('kernel.root_dir') . '/../../var/cache')
             )
         );
 
@@ -111,9 +115,15 @@ class FileController extends AbstractController
 
         $response = new Response();
 
+        $fileName = str_replace(
+            '.' . $file->getExtension(),
+            '.' . $format,
+            $fileMeta['name']
+        );
+
         $dispositionHeader = HeaderUtils::makeDisposition(
             ResponseHeaderBag::DISPOSITION_INLINE,
-            $fileMeta['name'] // TODO: if it's converted, it should habe a new name?
+            $fileName
         );
         $response->headers->set('Content-Disposition', $dispositionHeader);
         $response->headers->set('Content-Type', $fileMimeAndContent['mime']);

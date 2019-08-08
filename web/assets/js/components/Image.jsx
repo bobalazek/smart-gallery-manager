@@ -76,22 +76,29 @@ class Image extends React.Component {
       onClick,
       ...image
     } = this.props;
+    const {
+      isLoaded,
+      isError,
+    } = this.state;
 
-    const loadingIcon = <CircularProgress size={32} />;
-    const errorIcon = <BrokenImage style={{ width: 32, height: 32 }} />;
+    const iconSize = 32;
+    const loadingIcon = <CircularProgress size={iconSize} />;
+    const errorIcon = <BrokenImage style={{ width: iconSize, height: iconSize }} />;
 
     return (
-      <div className={classes.root}
-        onClick={onClick}>
-        {image.src && <img
+      <div
+        className={classes.root}
+        onClick={onClick}
+      >
+        {image.src && !isError && <img
           {...image}
           className={classes.image}
           onLoad={this.onImageLoaded}
           onError={this.onImageError}
         />}
         <div className={classes.iconContainer}>
-          {!this.state.isLoaded && !this.state.isError && loadingIcon}
-          {this.state.isError && errorIcon}
+          {!isLoaded && !isError && loadingIcon}
+          {isError && errorIcon}
         </div>
       </div>
     )

@@ -48,9 +48,8 @@ class ApiController extends AbstractController
         $files = $this->em->createQueryBuilder()
             ->select('f')
             ->from(File::class, 'f')
-            // TODO: only allowed formats
-            //->orderBy('f.takenAt', 'DESC')
-            ->orderBy('f.id', 'DESC')
+            // TODO: only allowed mime types
+            ->orderBy('f.takenAt', 'DESC')
             ->setFirstResult($offset)
             ->setMaxResults($limit)
             ->getQuery()
