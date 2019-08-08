@@ -32,7 +32,14 @@ const styles = {
     width: '100%',
   },
   content: {
-
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: '100%',
+  },
+  contentWithSidebar: {
+    width: 'calc(100% - 360px)',
   },
   sidebar: {
     position: 'absolute',
@@ -41,6 +48,10 @@ const styles = {
     bottom: 0,
     right: 0,
     width: '100%',
+    maxWidth: 0,
+    overflow: 'auto',
+  },
+  sidebarOpen: {
     maxWidth: 360,
   },
   sidebarList: {
@@ -57,12 +68,14 @@ const styles = {
     top: 16,
     left: 16,
     color: '#fff',
+    zIndex: 9999,
   },
   infoButton: {
     position: 'absolute',
     top: 16,
     right: 16,
     color: '#fff',
+    zIndex: 9999,
   },
   circularProgressWrapper: {
     textAlign: 'center',
@@ -82,6 +95,7 @@ class ImageModal extends React.Component {
     };
 
     this.imageRef = React.createRef();
+    this.imageContentRef = React.createRef();
 
     this.onImageLoad = this.onImageLoad.bind(this);
     this.onInfoButtonClick = this.onInfoButtonClick.bind(this);
@@ -118,25 +132,31 @@ class ImageModal extends React.Component {
     this.setState({
       isSidebarOpen: !this.state.isSidebarOpen,
     });
+
+    this.prepareImageStyles();
   }
 
   prepareImageStyles() {
     // Make sure the image is really ready.
     // Seems that the onLoad event of the image triggers too soon.
     setTimeout(() => {
-      const windowWidth = window.innerWidth;
-      const windowHeight = window.innerHeight;
-      const imageWidth = this.imageRef.current.clientWidth;
-      const imageHeight = this.imageRef.current.clientHeight;
+      const windowWidth = this.imageContentRef.current.clientWidth; // window.innerWidth;
+      const windowHeight = this.imageContentRef.current.clientHeight; // window.innerHeight;
+      const imageWidth = this.imageRef.current.naturalWidth;
+      const imageHeight = this.imageRef.current.naturalHeight;
       const imageAspectRatio = imageWidth / imageHeight;
 
       let finalImageWidth = imageWidth;
       let finalImageHeight = imageHeight;
 
+      if (finalImageWidth > windowWidth) {
+        finalImageWidth = windowWidth;
+        finalImageHeight = finalImageWidth / imageAspectRatio;
+      }
+
       if (finalImageHeight > windowHeight) {
-        const sizingRatio = finalImageHeight / windowHeight;
         finalImageHeight = windowHeight;
-        finalImageWidth = finalImageWidth / sizingRatio;
+        finalImageWidth = finalImageHeight * imageAspectRatio;
       }
 
       const wrapperLeft = (windowWidth - finalImageWidth) / 2;
@@ -161,6 +181,7 @@ class ImageModal extends React.Component {
       isImageLoaded,
       imageWrapperStyle,
       imageStyle,
+      isSidebarOpen,
     } = this.state;
     const {
       classes,
@@ -223,13 +244,23 @@ class ImageModal extends React.Component {
         : '',
     };
 
+    const contentClassName = isSidebarOpen
+      ? `${classes.content} ${classes.contentWithSidebar}`
+      : classes.content;
+    const sidebarClassName = isSidebarOpen
+      ? `${classes.sidebar} ${classes.sidebarOpen}`
+      : classes.sidebar;
+
     return (
       <Modal
         open={open}
         onClose={onClose}
       >
         <div className={classes.inner}>
-          <div className={classes.content}>
+          <div
+            className={contentClassName}
+            ref={this.imageContentRef}
+          >
             <div>
               <IconButton
                 className={classes.closeButton}
@@ -261,8 +292,12 @@ class ImageModal extends React.Component {
               </div>
             }
           </div>
-          <div className={classes.sidebar}>
-            <Typography variant="h4" component="h4">
+          <div className={sidebarClassName}>
+            <Typography
+              variant="h4"
+              component="h4"
+              style={{ padding: 16 }}
+            >
               Info
             </Typography>
             <Divider />
