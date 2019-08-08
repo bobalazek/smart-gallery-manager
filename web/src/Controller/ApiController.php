@@ -39,6 +39,7 @@ class ApiController extends AbstractController
         $format = $request->get('format', 'jpg');
         $offset = (int) $request->get('offset', 0);
         $limit = (int) $request->get('limit', 32);
+        // TODO: implement "after_id"
 
         $allowedFormats = $this->params->get('allowed_formats');
         if (!in_array($format, $allowedFormats)) {

@@ -57,8 +57,6 @@ class FileController extends AbstractController
             )
         );
 
-        //$cache->invalidateTags(['file']);
-
         $filesRepository = $this->em->getRepository(File::class);
         $file = $filesRepository->findOneByHash($hash);
         if (!$file) {
@@ -107,6 +105,7 @@ class FileController extends AbstractController
                 }
 
                 return [
+                    'format' => $format,
                     'mime' => $mime,
                     'content' => $content,
                 ];
@@ -117,7 +116,7 @@ class FileController extends AbstractController
 
         $fileName = str_replace(
             '.' . $file->getExtension(),
-            '.' . $format,
+            '.' . $fileMimeAndContent['format'],
             $fileMeta['name']
         );
 

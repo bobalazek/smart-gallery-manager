@@ -1,6 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 import moment from 'moment';
+import BottomScrollListener from 'react-bottom-scroll-listener';
 import { withStyles } from '@material-ui/styles';
 import Typography from '@material-ui/core/Typography';
 import Container from '@material-ui/core/Container';
@@ -30,6 +31,7 @@ class AppContainer extends React.Component {
 
     this.onImageClick = this.onImageClick.bind(this);
     this.onModalClose = this.onModalClose.bind(this);
+    this.onDocumentBottom = this.onDocumentBottom.bind(this);
   }
 
   componentDidMount() {
@@ -57,6 +59,27 @@ class AppContainer extends React.Component {
       isModalOpen: false,
       modalData: {},
     });
+  }
+
+  onDocumentBottom() {
+    if (this.state.isLoading) {
+      return false;
+    }
+
+    this.setState({
+      isLoading: true,
+    });
+
+    // TODO: implement "after_id"
+    axios.get(rootUrl + '/api/files?offset=' + this.state.files.length)
+      .then(res => {
+        const files = res.data.data;
+
+        this.setState({
+          files: this.state.files.concat(files),
+          isLoading: false,
+        });
+      });
   }
 
   render() {
@@ -120,6 +143,7 @@ class AppContainer extends React.Component {
           onClose={this.onModalClose}
           data={modalData}
         />
+        <BottomScrollListener onBottom={this.onDocumentBottom} />
       </div>
     );
   }
