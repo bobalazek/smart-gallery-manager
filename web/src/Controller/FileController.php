@@ -89,7 +89,7 @@ class FileController extends AbstractController
                 $mime = $file->getMime();
                 $content = '';
 
-                $isImage = strpos('image/', $mime) !== false
+                $isImage = strpos($mime, 'image/') !== false
                     || $file->getExtension() === 'heic';
 
                 if ($isImage) {

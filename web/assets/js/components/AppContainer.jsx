@@ -129,6 +129,7 @@ class AppContainer extends React.Component {
                     <Grid item key={file.id} xs={3}>
                       <Image
                         src={file.links.thumbnail}
+                        srcAfterLoad={file.links.small}
                         onClick={this.onImageClick.bind(this, file)}
                       />
                     </Grid>

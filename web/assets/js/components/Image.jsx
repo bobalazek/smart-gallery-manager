@@ -39,6 +39,7 @@ class Image extends React.Component {
     this.state = {
       isError: false,
       isLoaded: false,
+      src: this.props.src,
     };
 
     this.onImageLoaded = this.onImageLoaded.bind(this);
@@ -55,18 +56,27 @@ class Image extends React.Component {
   }
 
   onImageLoaded() {
-    this.setState({ isLoaded: true });
+    this.setState({
+      isLoaded: true,
+    });
+
+    if (this.props.srcAfterLoad) {
+      this.setState({
+        src: this.props.srcAfterLoad,
+      });
+    }
+
     if (this.props.onLoad) {
       this.props.onLoad();
     }
   }
 
   onImageError() {
-    if (this.props.src) {
-      this.setState({ isError: true });
-      if (this.props.onError) {
-        this.props.onError();
-      }
+    this.setState({
+      isError: true,
+    });
+    if (this.props.onError) {
+      this.props.onError();
     }
   }
 
@@ -74,11 +84,11 @@ class Image extends React.Component {
     const {
       classes,
       onClick,
-      ...image
     } = this.props;
     const {
       isLoaded,
       isError,
+      src,
     } = this.state;
 
     const iconSize = 32;
@@ -90,8 +100,8 @@ class Image extends React.Component {
         className={classes.root}
         onClick={onClick}
       >
-        {image.src && !isError && <img
-          {...image}
+        {src && !isError && <img
+          src={src}
           className={classes.image}
           onLoad={this.onImageLoaded}
           onError={this.onImageError}
