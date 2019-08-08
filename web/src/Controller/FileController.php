@@ -27,9 +27,24 @@ class FileController extends AbstractController
     }
 
     /**
-     * @Route("/file/{hash}.{type}.{format}", name="file")
+     * @Route("/file/{hash}.json", name="file.info")
      */
-    public function show($hash, $type, $format, Request $request)
+    public function info($hash)
+    {
+        $file = $this->em->getRepository(File::class)->findOneByHash($hash);
+        if (!$file) {
+            throw $this->createNotFoundException('The file does not exist');
+        }
+
+        return $this->json(
+            $file->toArray()
+        );
+    }
+
+    /**
+     * @Route("/file/{hash}.{type}.{format}", name="file.view")
+     */
+    public function view($hash, $type, $format, Request $request)
     {
         ini_set('memory_limit', '512M');
 
@@ -57,8 +72,7 @@ class FileController extends AbstractController
             )
         );
 
-        $filesRepository = $this->em->getRepository(File::class);
-        $file = $filesRepository->findOneByHash($hash);
+        $file = $this->em->getRepository(File::class)->findOneByHash($hash);
         if (!$file) {
             throw $this->createNotFoundException('The file does not exist');
         }

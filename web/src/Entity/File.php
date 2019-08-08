@@ -192,10 +192,46 @@ class File
 
         // TODO: if date not present, maybe also look in the name of the file?
 
+        // Dimensions
+        $dimensionsWidth = isset($exif['EXIF']['ExifImageWidth'])
+            ? $exif['EXIF']['ExifImageWidth']
+            : null;
+        $dimensionsHeight = isset($exif['EXIF']['ExifImageLength'])
+            ? $exif['EXIF']['ExifImageLength']
+            : null;
+        $dimensions = [
+            'width' => $dimensionsWidth,
+            'height' => $dimensionsHeight,
+            'total' => $dimensionsWidth && $dimensionsHeight
+                ? $dimensionsWidth * $dimensionsHeight
+                : null,
+        ];
+        $size = isset($exif['FILE']['FileSize'])
+            ? $exif['FILE']['FileSize']
+            : null;
+
+        // Location
+        $location = [
+            'name' => null, // TODO
+            // TODO: convert those coordinates into number
+            'altitude' => isset($exif['GPS']['ExifImageLength'])
+                ? $exif['GPS']['GPSAltitude']
+                : null,
+            'latitude' => isset($exif['GPS']['GPSLatitude'])
+                ? $exif['GPS']['GPSLatitude']
+                : null,
+            'longitude' => isset($exif['GPS']['GPSLongitude'])
+                ? $exif['GPS']['GPSLongitude']
+                : null,
+        ];
+
         return [
             'name' => basename($this->getPath()),
             'date' => $date,
+            'size' => $size,
+            'dimensions' => $dimensions,
             'device' => $device,
+            'location' => $location,
         ];
     }
 

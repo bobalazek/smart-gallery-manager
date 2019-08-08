@@ -61,7 +61,7 @@ class ApiController extends AbstractController
             $single = $file->toArray();
             $single['links'] = [
                 'thumbnail' => $this->generateUrl(
-                    'file',
+                    'file.view',
                     [
                         'hash' => $file->getHash(),
                         'type' => 'thumbnail',
@@ -70,7 +70,7 @@ class ApiController extends AbstractController
                     UrlGeneratorInterface::ABSOLUTE_URL
                 ),
                 'small' => $this->generateUrl(
-                    'file',
+                    'file.view',
                     [
                         'hash' => $file->getHash(),
                         'type' => 'small',
@@ -79,7 +79,7 @@ class ApiController extends AbstractController
                     UrlGeneratorInterface::ABSOLUTE_URL
                 ),
                 'original' => $this->generateUrl(
-                    'file',
+                    'file.view',
                     [
                         'hash' => $file->getHash(),
                         'type' => 'original',
