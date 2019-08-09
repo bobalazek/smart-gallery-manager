@@ -37,6 +37,7 @@ class AppContainer extends React.Component {
     this.state = {
       files: [],
       filesPerDate: {},
+      filesSummary: {},
       isLoading: false,
       isLoaded: false,
       isModalOpen: false,
@@ -49,6 +50,16 @@ class AppContainer extends React.Component {
 
     this._loadMoreRows = this._loadMoreRows.bind(this);
     this._isRowLoaded = this._isRowLoaded.bind(this);
+    this._getRowCount = this._getRowCount.bind(this);
+  }
+
+  componentDidMount() {
+    axios.get(rootUrl + '/api/files/summary')
+      .then(res => {
+        this.setState({
+          filesSummary: res.data.data,
+        });
+      });
   }
 
   onImageClick(file) {
@@ -166,7 +177,6 @@ class AppContainer extends React.Component {
       <InfiniteLoader
         loadMoreRows={this._loadMoreRows}
         isRowLoaded={this._isRowLoaded}
-
         rowCount={this._getRowCount}
       >
         {({ onRowsRendered, registerChild }) => (
@@ -231,6 +241,19 @@ class AppContainer extends React.Component {
 
   _isRowLoaded({ index }) {
     return false; // TODO
+  }
+
+  _getRowCount() {
+    const { filesSummary } = this.state;
+
+    if (!filesSummary.count_per_date) {
+      return 0;
+    }
+
+    return Object.keys(filesSummary.count_per_date).reduce(
+      (sum, key) => sum + parseFloat(filesSummary.count_per_date[key] || 0),
+      0
+    );
   }
 }
 
