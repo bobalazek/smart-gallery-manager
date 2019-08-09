@@ -2,7 +2,13 @@ import React from 'react';
 import axios from 'axios';
 import moment from 'moment';
 import InfiniteScroll from 'react-infinite-scroller';
-import { InfiniteLoader, AutoSizer, List } from 'react-virtualized';
+import {
+  InfiniteLoader,
+  AutoSizer,
+  CellMeasurer,
+  CellMeasurerCache,
+  List,
+} from 'react-virtualized';
 import { withStyles } from '@material-ui/styles';
 import Typography from '@material-ui/core/Typography';
 import Container from '@material-ui/core/Container';
@@ -48,9 +54,14 @@ class AppContainer extends React.Component {
     this.onModalClose = this.onModalClose.bind(this);
     this.onLoadFiles = this.onLoadFiles.bind(this);
 
+    this.cache = new CellMeasurerCache({
+      fixedWidth: true,
+      defaultHeight: 220,
+    });
     this._loadMoreRows = this._loadMoreRows.bind(this);
     this._isRowLoaded = this._isRowLoaded.bind(this);
     this._getRowCount = this._getRowCount.bind(this);
+    this._rowRenderer = this._rowRenderer.bind(this);
   }
 
   componentDidMount() {
@@ -169,6 +180,16 @@ class AppContainer extends React.Component {
           </Grid>
         </Grid>
       );
+
+      /**
+       * Full usage (down, in the render() function):
+         <InfiniteScroll
+           loadMore={this.onLoadFiles}
+           hasMore={true}
+         >
+           {this.renderGrid()}
+         </InfiniteScroll>
+       */
     });
   }
 
@@ -188,7 +209,7 @@ class AppContainer extends React.Component {
                 onRowsRendered={onRowsRendered}
                 ref={registerChild}
                 rowCount={this._getRowCount}
-                rowHeight={200}
+                rowHeight={this.cache.rowHeight}
                 rowRenderer={this._rowRenderer}
                 width={width}
               />
@@ -246,13 +267,38 @@ class AppContainer extends React.Component {
   _getRowCount() {
     const { filesSummary } = this.state;
 
-    if (!filesSummary.count_per_date) {
+    if (!filesSummary.count_per_month) {
       return 0;
     }
 
-    return Object.keys(filesSummary.count_per_date).reduce(
-      (sum, key) => sum + parseFloat(filesSummary.count_per_date[key] || 0),
+    return Object.keys(filesSummary.count_per_month).reduce(
+      (sum, key) => sum + parseFloat(filesSummary.count_per_month[key] || 0),
       0
+    );
+  }
+
+  _rowRenderer({ index, key, parent, style }) {
+    return (
+      <CellMeasurer
+        key={key}
+        cache={this.cache}
+        parent={parent}
+        columnIndex={0}
+        rowIndex={index}
+      >
+        <div style={style}>
+          <Typography
+            variant="h4"
+            component="h4"
+            className={classes.gridDateSubHeading}
+          >
+            TODO: HEADING
+          </Typography>
+          <div>
+            TODO: IMAGES
+          </div>
+        </div>
+      </CellMeasurer>
     );
   }
 }

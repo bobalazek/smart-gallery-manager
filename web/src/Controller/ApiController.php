@@ -35,6 +35,8 @@ class ApiController extends AbstractController
     public function filesSummary(Request $request)
     {
         $countPerDate = [];
+        $countPerMonth = []; // TODO
+        $countPerYear = []; // TODO
 
         $files = $this->em->createQueryBuilder()
             ->select('DATE_FORMAT(f.takenAt, \'%Y-%m-%d\') as filesDate, COUNT(f.id) as filesCount')
@@ -45,12 +47,31 @@ class ApiController extends AbstractController
             ->getQuery()
             ->getResult();
         foreach ($files as $file) {
-            $countPerDate[$file['filesDate']] = (int)$file['filesCount'];
+            $count = (int)$file['filesCount'];
+            $date = $file['filesDate'];
+
+            $datetime = new \DateTime($date);
+            $month = $datetime->format('Y-m');
+            $year = $datetime->format('Y');
+
+            $countPerDate[$date] = $count;
+
+            if (!isset($countPerMonth[$month])) {
+                $countPerMonth[$month] = 0;
+            }
+            $countPerMonth[$month] += $count;
+
+            if (!isset($countPerYear[$year])) {
+                $countPerYear[$year] = 0;
+            }
+            $countPerYear[$year] += $count;
         }
 
         return $this->json([
             'data' => [
                 'count_per_date' => $countPerDate,
+                'count_per_month' => $countPerMonth,
+                'count_per_year' => $countPerYear,
             ],
             'meta' => [],
         ]);
