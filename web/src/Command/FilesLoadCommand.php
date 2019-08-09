@@ -65,6 +65,12 @@ class FilesLoadCommand extends Command
                 $fileHash = sha1($filePath);
                 $fileMime = $mimeTypes->guessMimeType($filePath);
                 $fileExtension = $fileObject->getExtension();
+                $fileType = strpos($fileMime, 'image/') !== false
+                    ? File::TYPE_IMAGE
+                    : (strpos($fileMime, 'video/') !== false
+                        ? File::TYPE_VIDEO
+                        : File::TYPE_OTHER
+                    );
 
                 $file = $filesRepository->findOneByHash($fileHash);
                 if ($file) {
@@ -75,6 +81,7 @@ class FilesLoadCommand extends Command
                 $file = new File();
                 $file
                     ->setHash($fileHash)
+                    ->setType($fileType)
                     ->setPath($filePath)
                     ->setMime($fileMime)
                     ->setExtension($fileExtension)

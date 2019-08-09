@@ -125,6 +125,13 @@ class ImageModal extends React.Component {
     // Make sure the image is really ready.
     // Seems that the onLoad event of the image triggers too soon.
     setTimeout(() => {
+      if (
+        !this.imageRef.current ||
+        !this.imageContentRef.current
+      ) {
+        return;
+      }
+
       const windowWidth = this.imageContentRef.current.clientWidth; // window.innerWidth;
       const windowHeight = this.imageContentRef.current.clientHeight; // window.innerHeight;
       const imageWidth = this.imageRef.current.naturalWidth;

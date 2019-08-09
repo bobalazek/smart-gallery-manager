@@ -30,6 +30,19 @@ class ApiController extends AbstractController
     }
 
     /**
+     * @Route("/api/files/summary", name="api.files.summary")
+     */
+    public function filesSummary(Request $request)
+    {
+        $data = [];
+
+        return $this->json([
+            'data' => $data,
+            'meta' => [],
+        ]);
+    }
+
+    /**
      * @Route("/api/files", name="api.files")
      */
     public function files(Request $request)

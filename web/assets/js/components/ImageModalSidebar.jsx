@@ -83,19 +83,35 @@ class ImageModalSidebar extends React.Component {
           </React.Fragment>
         )
         : '',
+      hasLocationData: fileInformation
+        && fileInformation.meta
+        && fileInformation.meta.location &&
+        (
+          fileInformation.meta.location.name ||
+          fileInformation.meta.location.altitude ||
+          fileInformation.meta.location.latitude ||
+          fileInformation.meta.location.longitude
+        ),
       locationPrimary: 'Location',
       locationSecondary: fileInformation && fileInformation.meta && fileInformation.meta.location
         ? (
           <React.Fragment>
-            Name: {fileInformation.meta.location.name} <br />
-            Altitude: {fileInformation.meta.location.altitude} <br />
-            Latitude: {fileInformation.meta.location.latitude} <br />
-            Longitude: {fileInformation.meta.location.longitude} <br />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.name
+              ? 'Name:' + fileInformation.meta.location.name + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.altitude
+              ? 'Altitude:' + fileInformation.meta.location.altitude + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.latitude
+              ? 'Latitude:' + fileInformation.meta.location.latitude + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.longitude
+              ? 'Longitude:' + fileInformation.meta.location.longitude + '<br />'
+              : '' }} />
           </React.Fragment>
         )
         : '',
     };
-
     return (
       <div>
         <Typography
@@ -146,17 +162,19 @@ class ImageModalSidebar extends React.Component {
                 secondary={infoData.deviceSecondary}
               />
             </ListItem>
-            <ListItem>
-              <ListItemAvatar>
-                <Avatar>
-                  <LocationOnIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={infoData.locationPrimary}
-                secondary={infoData.locationSecondary}
-              />
-            </ListItem>
+            {infoData.hasLocationData &&
+              <ListItem>
+                <ListItemAvatar>
+                  <Avatar>
+                    <LocationOnIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={infoData.locationPrimary}
+                  secondary={infoData.locationSecondary}
+                />
+              </ListItem>
+            }
           </List>
         )}
       </div>

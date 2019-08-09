@@ -12,6 +12,11 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class File
 {
+    /***** Types *****/
+    const TYPE_IMAGE = 'image';
+    const TYPE_VIDEO = 'video';
+    const TYPE_OTHER = 'other';
+
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()
@@ -23,6 +28,11 @@ class File
      * @ORM\Column(type="string", length=255)
      */
     private $hash;
+
+    /**
+     * @ORM\Column(type="string", length=16)
+     */
+    private $type;
 
     /**
      * @ORM\Column(type="text")
@@ -72,6 +82,18 @@ class File
     public function setHash(string $hash): self
     {
         $this->hash = $hash;
+
+        return $this;
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): self
+    {
+        $this->type = $type;
 
         return $this;
     }
@@ -202,10 +224,14 @@ class File
         // Dimensions
         $dimensionsWidth = isset($exif['EXIF']['ExifImageWidth'])
             ? $exif['EXIF']['ExifImageWidth']
-            : null;
+            : (isset($exif['COMPUTED']['Width'])
+                ? $exif['COMPUTED']['Width']
+                : null);
         $dimensionsHeight = isset($exif['EXIF']['ExifImageLength'])
             ? $exif['EXIF']['ExifImageLength']
-            : null;
+            : (isset($exif['COMPUTED']['Height'])
+                ? $exif['COMPUTED']['Height']
+                : null);
         $dimensions = [
             'width' => $dimensionsWidth,
             'height' => $dimensionsHeight,
@@ -255,6 +281,7 @@ class File
         return [
             'id' => $this->getId(),
             'hash' => $this->getHash(),
+            'type' => $this->getType(),
             'path' => $this->getPath(),
             'mime' => $this->getMime(),
             'extension' => $this->getExtension(),
@@ -286,7 +313,11 @@ class File
             $n2 = (float) $explode[1];
 
             if ($type === 'shutter_speed') {
-                if ($n1 !== (float)1) {
+                if (
+                    $n1 !== (float)0 &&
+                    $n2 !== (float)0 &&
+                    $n1 !== (float)1
+                ) {
                     $return = ($n1 / $n1) . '/' . (int)($n2 / $n1);
                 }
             } else {
