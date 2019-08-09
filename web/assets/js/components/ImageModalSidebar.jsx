@@ -64,6 +64,7 @@ class ImageModalSidebar extends React.Component {
       fileSecondary: fileInformation && fileInformation.meta
         ? (
           <React.Fragment>
+            Path: {fileInformation.path} <br />
             Megapixels: {(fileInformation.meta.dimensions.total / 1000000).toFixed(1)}MP <br />
             Size: {fileInformation.meta.dimensions.width + 'x' + fileInformation.meta.dimensions.height} <br />
             File size: {(fileInformation.meta.size / 1024 / 1024).toFixed(1)}MB <br />
@@ -149,6 +150,11 @@ class ImageModalSidebar extends React.Component {
               <ListItemText
                 primary={infoData.filePrimary}
                 secondary={infoData.fileSecondary}
+                style={{
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  wordBreak: 'break-word'
+                }}
               />
             </ListItem>
             <ListItem>

@@ -235,7 +235,7 @@ class File
         $dimensions = [
             'width' => $dimensionsWidth,
             'height' => $dimensionsHeight,
-            'total' => $dimensionsWidth && $dimensionsHeight
+            'total' => is_numeric($dimensionsWidth) && is_numeric($dimensionsHeight)
                 ? $dimensionsWidth * $dimensionsHeight
                 : null,
         ];
@@ -307,8 +307,11 @@ class File
             $seconds = $this->_eval($data[2]);
 
             $return = $degrees + ($minutes / 60) + ($seconds / 3600);
-        } elseif (strpos($data, '/') !== false) {
-            $explode = explode('/', $data);
+        } elseif (
+            is_string($return) &&
+            strpos($return, '/') !== false
+        ) {
+            $explode = explode('/', $return);
             $n1 = (float) $explode[0];
             $n2 = (float) $explode[1];
 

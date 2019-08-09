@@ -24,6 +24,7 @@
         "react-bottom-scroll-listener": "^3.0.0",
         "react-dom": "^16.8.6",
         "react-in-viewport": "^0.0.38",
-        "react-infinite-loader": "^1.0.4"
+        "react-infinite-scroller": "^1.2.4",
+        "react-virtualized": "^9.21.1"
     }
 }

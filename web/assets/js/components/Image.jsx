@@ -101,15 +101,13 @@ class Image extends React.Component {
     // TODO: should actually stop the image from loading when it's out of the viewport,
     //   but it does not. Figure out why.
 
-    const finalSrc = src;
-
     return (
       <div
         className={classes.root}
         onClick={onClick}
       >
-        {finalSrc && !isError && <img
-          src={finalSrc}
+        {src && !isError && <img
+          src={src}
           className={classes.image}
           onLoad={this.onImageLoaded}
           onError={this.onImageError}

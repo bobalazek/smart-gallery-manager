@@ -36,11 +36,17 @@ class FilesGenerateCacheCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
-        $filesRepository = $this->em->getRepository(File::class);
 
         define('PROJECT_ROOT', dirname(__DIR__) . '/../..');
 
-        $files = $filesRepository->findAll();
+        $files = $this->em->createQueryBuilder()
+            ->select('f')
+            ->from(File::class, 'f')
+            ->where('f.type = :type')
+            ->orderBy('f.takenAt', 'DESC')
+            ->setParameter('type', 'image')
+            ->getQuery()
+            ->getResult();
         $filesCount = count($files);
 
         $io->text(sprintf('Found %s files. Starting to generate the thumbnails ...', $filesCount));

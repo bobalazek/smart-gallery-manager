@@ -34,10 +34,24 @@ class ApiController extends AbstractController
      */
     public function filesSummary(Request $request)
     {
-        $data = [];
+        $countPerDate = [];
+
+        $files = $this->em->createQueryBuilder()
+            ->select('DATE_FORMAT(f.takenAt, \'%Y-%m-%d\') as filesDate, COUNT(f.id) as filesCount')
+            ->from(File::class, 'f')
+            ->where('f.type = :type')
+            ->groupBy('filesDate')
+            ->setParameter('type', 'image')
+            ->getQuery()
+            ->getResult();
+        foreach ($files as $file) {
+            $countPerDate[$file['filesDate']] = (int)$file['filesCount'];
+        }
 
         return $this->json([
-            'data' => $data,
+            'data' => [
+                'count_per_date' => $countPerDate,
+            ],
             'meta' => [],
         ]);
     }
@@ -62,10 +76,11 @@ class ApiController extends AbstractController
         $files = $this->em->createQueryBuilder()
             ->select('f')
             ->from(File::class, 'f')
-            // TODO: only allowed mime types
+            ->where('f.type = :type')
             ->orderBy('f.takenAt', 'DESC')
             ->setFirstResult($offset)
             ->setMaxResults($limit)
+            ->setParameter('type', 'image')
             ->getQuery()
             ->getResult();
 
