@@ -16,6 +16,7 @@ const styles = {
     position: 'fixed',
     top: 16,
     right: 16,
+    zIndex: 9999,
   },
   gridDateHeading: {
     marginTop: 40,
