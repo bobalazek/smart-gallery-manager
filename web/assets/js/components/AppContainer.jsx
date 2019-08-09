@@ -1,7 +1,8 @@
 import React from 'react';
 import axios from 'axios';
 import moment from 'moment';
-import BottomScrollListener from 'react-bottom-scroll-listener';
+import InfiniteLoader from 'react-infinite-loader';
+import handleViewport from 'react-in-viewport';
 import { withStyles } from '@material-ui/styles';
 import Typography from '@material-ui/core/Typography';
 import Container from '@material-ui/core/Container';
@@ -12,8 +13,9 @@ import ImageModal from './ImageModal';
 
 const styles = {
   circularProgressWrapper: {
-    textAlign: 'center',
-    marginTop: 64,
+    position: 'fixed',
+    top: 16,
+    right: 16,
   },
 };
 
@@ -23,7 +25,7 @@ class AppContainer extends React.Component {
 
     this.state = {
       files: [],
-      isLoading: true,
+      isLoading: false,
       isLoaded: false,
       isModalOpen: false,
       modalData: {},
@@ -35,33 +37,10 @@ class AppContainer extends React.Component {
   }
 
   componentDidMount() {
-    axios.get(rootUrl + '/api/files')
-      .then(res => {
-        const files = res.data.data;
-
-        this.setState({
-          files,
-          isLoading: false,
-          isLoaded: true,
-        });
-      });
+    this.loadFiles();
   }
 
-  onImageClick(file) {
-    this.setState({
-      isModalOpen: true,
-      modalData: file,
-    });
-  }
-
-  onModalClose() {
-    this.setState({
-      isModalOpen: false,
-      modalData: {},
-    });
-  }
-
-  onDocumentBottom() {
+  loadFiles() {
     if (this.state.isLoading) {
       return false;
     }
@@ -82,21 +61,30 @@ class AppContainer extends React.Component {
       });
   }
 
-  render() {
-    const {
-      classes,
-    } = this.props;
-    const {
-      files,
-      isLoading,
-      isLoaded,
-      isModalOpen,
-      modalData,
-    } = this.state;
+  onImageClick(file) {
+    this.setState({
+      isModalOpen: true,
+      modalData: file,
+    });
+  }
+
+  onModalClose() {
+    this.setState({
+      isModalOpen: false,
+      modalData: {},
+    });
+  }
+
+  onDocumentBottom() {
+    this.loadFiles();
+  }
+
+  renderGrid() {
+    const { files } = this.state;
 
     let filesPerDate = {};
     files.forEach(file => {
-      const date = moment(file.taken_at).format('YYYY-MM-DD');
+      const date = moment(file.date).format('YYYY-MM-DD');
 
       if (typeof filesPerDate[date] === 'undefined') {
         filesPerDate[date] = [];
@@ -105,46 +93,60 @@ class AppContainer extends React.Component {
       filesPerDate[date].push(file);
     });
 
-    return (
-      <div>
-        <Container>
-          {isLoading && !isLoaded && (
-            <div className={classes.circularProgressWrapper}>
-              <CircularProgress size={80} />
-            </div>
-          )}
-          {!isLoading && isLoaded && files.length === 0 &&
-            <div>No files found.</div>
-          }
-          {isLoaded && files.length > 0 && Object.keys(filesPerDate).map(date => {
+    return Object.keys(filesPerDate).map(date => {
+      return (
+        <Grid container key={date} style={{ marginBottom: 20 }}>
+          <Grid item xs={12}>
+            <Typography variant="h3" component="h3">
+              {date}
+            </Typography>
+          </Grid>
+          {filesPerDate[date].map((file) => {
             return (
-              <Grid container key={date} style={{ marginBottom: 20 }}>
-                <Grid item xs={12}>
-                  <Typography variant="h3" component="h3">
-                    {date}
-                  </Typography>
-                </Grid>
-                {filesPerDate[date].map((file) => {
-                  return (
-                    <Grid item key={file.id} xs={3}>
-                      <Image
-                        src={file.links.thumbnail}
-                        srcAfterLoad={file.links.small}
-                        onClick={this.onImageClick.bind(this, file)}
-                      />
-                    </Grid>
-                  )
-                })}
+              <Grid item key={file.id} xs={3}>
+                <Image
+                  src={file.urls.thumbnail}
+                  srcAfterLoad={file.urls.small}
+                  onClick={this.onImageClick.bind(this, file)}
+                />
               </Grid>
             )
           })}
+        </Grid>
+      )
+    });
+  }
+
+  render() {
+    const {
+      classes,
+    } = this.props;
+    const {
+      isLoading,
+      isLoaded,
+      isModalOpen,
+      modalData,
+    } = this.state;
+
+    return (
+      <div>
+        {isLoading && (
+          <div className={classes.circularProgressWrapper}>
+            <CircularProgress size={80} />
+          </div>
+        )}
+        <Container>
+          {!isLoading && isLoaded && files.length === 0 &&
+            <div>No files found.</div>
+          }
+          {this.renderGrid()}
         </Container>
         <ImageModal
           open={isModalOpen}
           onClose={this.onModalClose}
           data={modalData}
         />
-        <BottomScrollListener onBottom={this.onDocumentBottom} />
+        <InfiniteLoader onVisited={this.onDocumentBottom} />
       </div>
     );
   }

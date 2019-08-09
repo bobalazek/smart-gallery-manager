@@ -1,24 +1,13 @@
 import React from 'react';
-import axios from 'axios';
-import moment from 'moment';
 import { withStyles } from '@material-ui/styles';
 import Grid from '@material-ui/core/Grid';
 import Modal from '@material-ui/core/Modal';
-import Divider from '@material-ui/core/Divider';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import ListItemAvatar from '@material-ui/core/ListItemAvatar';
-import Avatar from '@material-ui/core/Avatar';
 import CloseIcon from '@material-ui/icons/Close';
-import InsertPhotoIcon from '@material-ui/icons/InsertPhoto';
 import InfoIcon from '@material-ui/icons/Info';
-import CameraIcon from '@material-ui/icons/Camera';
-import LocationOnIcon from '@material-ui/icons/LocationOn';
-import CalendarTodayIcon from '@material-ui/icons/CalendarToday';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import ImageModalSidebar from './ImageModalSidebar';
 
 const styles = {
   root: {
@@ -52,10 +41,6 @@ const styles = {
     overflow: 'auto',
   },
   sidebarOpen: {
-    maxWidth: 360,
-  },
-  sidebarList: {
-    width: '100%',
     maxWidth: 360,
   },
   image: {
@@ -190,59 +175,14 @@ class ImageModal extends React.Component {
       data,
     } = this.props;
 
-    const imageSrc = data && data.links
-      ? data.links.original
+    const imageSrc = data && data.urls
+      ? data.urls.original
       : null;
 
     let finalImageStyle = {...imageStyle};
     if (!isImageLoaded) {
       finalImageStyle.display = 'none';
     }
-
-    const infoData = {
-      datePrimary: data
-        ? moment(data.taken_at).format('LL')
-        : '',
-      dateSecondary: data
-        ? moment(data.taken_at).format('HH:mm:ss')
-        : '',
-      filePrimary: data && data.meta
-        ? data.meta.name
-        : '',
-      fileSecondary: data && data.meta
-        ? (
-          <React.Fragment>
-            Megapixels: {(data.meta.dimensions.total / 1000000).toFixed(1)}MP <br />
-            Size: {data.meta.dimensions.width + 'x' + data.meta.dimensions.height} <br />
-            File size: {(data.meta.size / 1024 / 1024).toFixed(1)}MB <br />
-          </React.Fragment>
-        )
-        : '',
-      devicePrimary: data && data.meta && data.meta.device
-        ? data.meta.device.make + ' ' + data.meta.device.model
-        : '',
-      deviceSecondary: data && data.meta && data.meta.device
-        ? (
-          <React.Fragment>
-            Aperature: f/{data.meta.device.aperature} <br />
-            Shutter speed: {data.meta.device.shutter_speed} <br />
-            Focal length: {data.meta.device.focal_length} <br />
-            ISO: {data.meta.device.iso}
-          </React.Fragment>
-        )
-        : '',
-      locationPrimary: 'Location',
-      locationSecondary: data && data.meta && data.meta.location
-        ? (
-          <React.Fragment>
-            Name: {data.meta.location.name} <br />
-            Altitude: {data.meta.location.altitude} <br />
-            Latitude: {data.meta.location.latitude} <br />
-            Longitude: {data.meta.location.longitude} <br />
-          </React.Fragment>
-        )
-        : '',
-    };
 
     const contentClassName = isSidebarOpen
       ? `${classes.content} ${classes.contentWithSidebar}`
@@ -293,60 +233,9 @@ class ImageModal extends React.Component {
             }
           </div>
           <div className={sidebarClassName}>
-            <Typography
-              variant="h4"
-              component="h4"
-              style={{ padding: 16 }}
-            >
-              Info
-            </Typography>
-            <Divider />
-            <List className={classes.sidebarList}>
-              <ListItem>
-                <ListItemAvatar>
-                  <Avatar>
-                    <CalendarTodayIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={infoData.datePrimary}
-                  secondary={infoData.dateSecondary}
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemAvatar>
-                  <Avatar>
-                    <InsertPhotoIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={infoData.filePrimary}
-                  secondary={infoData.fileSecondary}
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemAvatar>
-                  <Avatar>
-                    <CameraIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={infoData.devicePrimary}
-                  secondary={infoData.deviceSecondary}
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemAvatar>
-                  <Avatar>
-                    <CameraIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={infoData.locationPrimary}
-                  secondary={infoData.locationSecondary}
-                />
-              </ListItem>
-            </List>
+            <ImageModalSidebar
+              data={data}
+            />
           </div>
         </div>
       </Modal>

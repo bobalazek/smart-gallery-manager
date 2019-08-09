@@ -170,11 +170,18 @@ class File
         $device = [
             'make' => $exif['IFD0']['Make'] ?? null,
             'model' => $exif['IFD0']['Model'] ?? null,
-            'shutter_speed' => $exif['EXIF']['ExposureTime'] ?? null,
-            'aperature' => $exif['EXIF']['FNumber'] ?? null,
-            'iso' => $exif['EXIF']['ISOSpeedRatings'] ?? null,
-            'focal_length' => $exif['EXIF']['FocalLength'] ?? null,
-            'orientation' => $exif['IFD0']['Orientation'] ?? null,
+            'shutter_speed' => isset($exif['EXIF']['ExposureTime'])
+                ? $this->_eval($exif['EXIF']['ExposureTime'], 'shutter_speed')
+                : null,
+            'aperature' => isset($exif['EXIF']['FNumber'])
+                ? $this->_eval($exif['EXIF']['FNumber'], 'aperature')
+                : null,
+            'iso' => isset($exif['EXIF']['ISOSpeedRatings'])
+                ? $this->_eval($exif['EXIF']['ISOSpeedRatings'], 'iso')
+                : null,
+            'focal_length' => isset($exif['EXIF']['FocalLength'])
+                ? $this->_eval($exif['EXIF']['FocalLength'], 'focal_length')
+                : null,
         ];
         $date = null;
         if (isset($exif['IFD0']['DateTime'])) {
@@ -210,19 +217,26 @@ class File
             ? $exif['FILE']['FileSize']
             : null;
 
+        // Orientation
+        $orientation = isset($exif['IFD0']['Orientation'])
+            ? $exif['IFD0']['Orientation']
+            : null;
+
         // Location
+        $altitude = isset($exif['GPS']['ExifImageLength'])
+            ? $this->_eval($exif['GPS']['GPSAltitude'], 'altitude')
+            : null;
+        $latitude = isset($exif['GPS']['GPSLatitude'])
+            ? $this->_eval($exif['GPS']['GPSLatitude'], 'latitude')
+            : null;
+        $longitude = isset($exif['GPS']['GPSLongitude'])
+            ? $this->_eval($exif['GPS']['GPSLongitude'], 'longitude')
+            : null;
         $location = [
             'name' => null, // TODO
-            // TODO: convert those coordinates into number
-            'altitude' => isset($exif['GPS']['ExifImageLength'])
-                ? $exif['GPS']['GPSAltitude']
-                : null,
-            'latitude' => isset($exif['GPS']['GPSLatitude'])
-                ? $exif['GPS']['GPSLatitude']
-                : null,
-            'longitude' => isset($exif['GPS']['GPSLongitude'])
-                ? $exif['GPS']['GPSLongitude']
-                : null,
+            'altitude' => $altitude,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
         ];
 
         return [
@@ -231,6 +245,7 @@ class File
             'size' => $size,
             'dimensions' => $dimensions,
             'device' => $device,
+            'orientation' => $orientation,
             'location' => $location,
         ];
     }
@@ -249,5 +264,40 @@ class File
             'taken_at' => $this->getTakenAt()->format(DATE_ATOM),
             'meta' => $this->getMeta(),
         ];
+    }
+
+    /**
+     * @param mixed $data
+     * @param string $type
+     */
+    private function _eval($data, $type = ''): ?string
+    {
+        $return = $data;
+
+        if (in_array($type, ['latitude', 'longitude'])) {
+            $degrees = $this->_eval($data[0]);
+            $minutes = $this->_eval($data[1]);
+            $seconds = $this->_eval($data[2]);
+
+            $return = $degrees + ($minutes / 60) + ($seconds / 3600);
+        } elseif (strpos($data, '/') !== false) {
+            $explode = explode('/', $data);
+            $n1 = (float) $explode[0];
+            $n2 = (float) $explode[1];
+
+            if ($type === 'shutter_speed') {
+                if ($n1 !== (float)1) {
+                    $return = ($n1 / $n1) . '/' . (int)($n2 / $n1);
+                }
+            } else {
+                $return = $n1 / $n2;
+            }
+        }
+
+        if (is_array($return)) {
+            return json_encode($return);
+        }
+
+        return $return;
     }
 }

@@ -58,43 +58,75 @@ class ApiController extends AbstractController
 
         $data = [];
         foreach ($files as $file) {
-            $single = $file->toArray();
-            $single['links'] = [
-                'thumbnail' => $this->generateUrl(
-                    'file.view',
-                    [
-                        'hash' => $file->getHash(),
-                        'type' => 'thumbnail',
-                        'format' => 'jpg',
-                    ],
-                    UrlGeneratorInterface::ABSOLUTE_URL
-                ),
-                'small' => $this->generateUrl(
-                    'file.view',
-                    [
-                        'hash' => $file->getHash(),
-                        'type' => 'small',
-                        'format' => 'jpg',
-                    ],
-                    UrlGeneratorInterface::ABSOLUTE_URL
-                ),
-                'original' => $this->generateUrl(
-                    'file.view',
-                    [
-                        'hash' => $file->getHash(),
-                        'type' => 'original',
-                        'format' => 'jpg',
-                    ],
-                    UrlGeneratorInterface::ABSOLUTE_URL
-                ),
+            $data[] = [
+                'id' => $file->getId(),
+                'hash' => $file->getHash(),
+                'date' => $file->getTakenAt()->format(DATE_ATOM),
+                'urls' => $this->_getFileUrls($file),
             ];
-
-            $data[] = $single;
         }
 
         return $this->json([
             'data' => $data,
             'meta' => [],
         ]);
+    }
+
+    /**
+     * @Route("/api/file/{hash}", name="api.file.detail")
+     */
+    public function fileDetail($hash, Request $request)
+    {
+        $file = $this->em->getRepository(File::class)->findOneByHash($hash);
+        if (!$file) {
+            return $this->json([
+                'error' => [
+                    'message' => 'File does not exist',
+                ],
+            ], 404);
+        }
+
+        return $this->json(array_merge(
+            $file->toArray(),
+            [
+                'urls' => $this->_getFileUrls($file),
+            ]
+        ));
+    }
+
+    /**
+     * Get's the file urls
+     */
+    private function _getFileUrls(File $file)
+    {
+        return [
+            'thumbnail' => $this->generateUrl(
+                'file.view',
+                [
+                    'hash' => $file->getHash(),
+                    'type' => 'thumbnail',
+                    'format' => 'jpg',
+                ],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            ),
+            'small' => $this->generateUrl(
+                'file.view',
+                [
+                    'hash' => $file->getHash(),
+                    'type' => 'small',
+                    'format' => 'jpg',
+                ],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            ),
+            'original' => $this->generateUrl(
+                'file.view',
+                [
+                    'hash' => $file->getHash(),
+                    'type' => 'original',
+                    'format' => 'jpg',
+                ],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            ),
+        ];
     }
 }
