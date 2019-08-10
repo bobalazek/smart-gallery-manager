@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import handleViewport from 'react-in-viewport';
 import { withStyles } from '@material-ui/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import BrokenImage from '@material-ui/icons/BrokenImage';
@@ -52,6 +51,7 @@ class Image extends React.Component {
       this.setState({
         isError: false,
         isLoaded: false,
+        src: nextProps.src,
       });
     }
   }
@@ -84,7 +84,6 @@ class Image extends React.Component {
   render() {
     const {
       classes,
-      inViewport,
       onClick,
     } = this.props;
     const {
@@ -97,16 +96,12 @@ class Image extends React.Component {
     const loadingIcon = <CircularProgress size={iconSize} />;
     const errorIcon = <BrokenImage style={{ width: iconSize, height: iconSize }} />;
 
-    //const finalSrc = inViewport ? src : '';
-    // TODO: should actually stop the image from loading when it's out of the viewport,
-    //   but it does not. Figure out why.
-
     return (
       <div
         className={classes.root}
         onClick={onClick}
       >
-        {src && !isError && <img
+        {!isError && <img
           src={src}
           className={classes.image}
           onLoad={this.onImageLoaded}
@@ -121,4 +116,4 @@ class Image extends React.Component {
   }
 }
 
-export default handleViewport(withStyles(styles)(Image), { rootMargin: '-1.0px' });
+export default withStyles(styles)(Image);

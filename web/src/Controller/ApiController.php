@@ -99,9 +99,10 @@ class ApiController extends AbstractController
         $mimeTypes = new MimeTypes();
 
         $format = $request->get('format', 'jpg');
-        $offset = (int) $request->get('offset', 0);
-        $limit = (int) $request->get('limit', 32);
-        // TODO: implement "after_id"
+        $offset = $request->get('offset');
+        $limit = $request->get('limit');
+        $fromDate = $request->get('from_date');
+        $toDate = $request->get('to_date');
 
         $allowedFormats = $this->params->get('allowed_formats');
         if (!in_array($format, $allowedFormats)) {
@@ -113,11 +114,32 @@ class ApiController extends AbstractController
             ->from(File::class, 'f')
             ->where('f.type = :type')
             ->orderBy('f.takenAt', 'DESC')
-            ->setFirstResult($offset)
-            ->setMaxResults($limit)
             ->setParameter('type', 'image')
-            ->getQuery()
-            ->getResult();
+        ;
+
+        if ($offset) {
+            $files->setFirstResult((int)$offset);
+        }
+
+        if ($limit) {
+            $files->setMaxResults((int)$limit);
+        }
+
+        if ($fromDate) {
+            $files
+                ->andWhere('f.takenAt >= :from_date')
+                ->setParameter('from_date', new \DateTime($fromDate . ' 00:00:00'))
+            ;
+        }
+
+        if ($toDate) {
+            $files
+                ->andWhere('f.takenAt <= :to_date')
+                ->setParameter('to_date', new \DateTime($toDate . ' 23:59:59'))
+            ;
+        }
+
+        $files = $files->getQuery()->getResult();
 
         $data = [];
         foreach ($files as $file) {
