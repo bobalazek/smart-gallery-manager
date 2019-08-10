@@ -12,6 +12,7 @@ use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Mime\MimeTypes;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Manager\FileManager;
 use App\Entity\File;
@@ -20,8 +21,9 @@ class FilesGenerateCacheCommand extends Command
 {
     protected static $defaultName = 'app:files:generate-cache';
 
-    public function __construct(EntityManagerInterface $em, FileManager $fileManager)
+    public function __construct(ParameterBagInterface $params, EntityManagerInterface $em, FileManager $fileManager)
     {
+        $this->params = $params;
         $this->em = $em;
         $this->fileManager = $fileManager;
 
@@ -36,6 +38,11 @@ class FilesGenerateCacheCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
+        $format = 'jpg';
+        $imageTypes = array_keys($this->params->get('allowed_image_conversion_types'));
+
+        // Do not cache originals. They are on-demand
+        unset($imageTypes['original']);
 
         define('PROJECT_ROOT', dirname(__DIR__) . '/../..');
 
@@ -62,12 +69,13 @@ class FilesGenerateCacheCommand extends Command
             );
 
             try {
-                $this->fileManager->generateCache(
-                    $file,
-                    'thumbnail',
-                    'jpg',
-                    0
-                );
+                foreach ($imageTypes as $imageType) {
+                    $this->fileManager->generateImageCache(
+                        $file,
+                        $imageType,
+                        $format
+                    );
+                }
             } catch (\Exception $e) {
                 $io->error(
                     sprintf(

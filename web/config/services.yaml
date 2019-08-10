@@ -4,8 +4,14 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
-    allowed_formats: # into which formats do we allow the files to be converted to?
+    allowed_image_conversion_formats: # into which formats do we allow the files to be converted to?
         - jpg
+    allowed_image_conversion_types:
+        thumbnail:
+            height: 64
+        preview:
+            height: 240
+        original: ~
     max_age: 3600 # how long will the image exist, until it expires?
 
 services:

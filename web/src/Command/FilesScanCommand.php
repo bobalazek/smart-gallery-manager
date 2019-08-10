@@ -12,16 +12,20 @@ use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Mime\MimeTypes;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Manager\FileManager;
 use App\Entity\File;
 
 class FilesScanCommand extends Command
 {
     protected static $defaultName = 'app:files:scan';
 
-    public function __construct(EntityManagerInterface $em)
+    public function __construct(ParameterBagInterface $params, EntityManagerInterface $em, FileManager $fileManager)
     {
+        $this->params = $params;
         $this->em = $em;
+        $this->fileManager = $fileManager;
 
         parent::__construct();
     }
@@ -37,6 +41,8 @@ class FilesScanCommand extends Command
         $finder = new Finder();
         $filesystem = new Filesystem();
         $mimeTypes = new MimeTypes();
+        $format = 'jpg';
+        $imageTypes = array_keys($this->params->get('allowed_image_conversion_types'));
         $filesRepository = $this->em->getRepository(File::class);
 
         define('PROJECT_ROOT', dirname(__DIR__) . '/../..');
@@ -56,7 +62,6 @@ class FilesScanCommand extends Command
             $files = $finder->in($folder)->files();
             $io->section(sprintf('Starting to process folder: %s', $folder));
 
-            $i = 0;
             foreach ($files as $fileObject) {
                 $filePath = $fileObject->getRealPath();
 
@@ -78,6 +83,15 @@ class FilesScanCommand extends Command
                     continue;
                 }
 
+                $fileData = [];
+                if ($fileType === File::TYPE_IMAGE) {
+                    $image = $this->fileManager->getImage($filePath);
+                    $fileData['image'] = [
+                        'width' => $image->width(),
+                        'height' => $image->height(),
+                    ];
+                }
+
                 $file = new File();
                 $file
                     ->setHash($fileHash)
@@ -85,7 +99,7 @@ class FilesScanCommand extends Command
                     ->setPath($filePath)
                     ->setMime($fileMime)
                     ->setExtension($fileExtension)
-                    ->setData([])
+                    ->setData($fileData)
                 ;
 
                 // Get the meta AFTER we've set the data, because it depends
@@ -104,16 +118,31 @@ class FilesScanCommand extends Command
                 ;
 
                 $this->em->persist($file);
+                $this->em->flush();
+                $this->em->clear();
 
-                $i++;
-                if (($i % 100) === 0) {
-                    $this->em->flush();
-                    $this->em->clear();
+                $io->text(sprintf('File %s saved.', $filePath));
+
+                $io->text(sprintf('Generating cache for %s ...', $filePath));
+
+                try {
+                    foreach ($imageTypes as $imageType) {
+                        $this->fileManager->generateImageCache(
+                            $file,
+                            $imageType,
+                            $format
+                        );
+                    }
+                } catch (\Exception $e) {
+                    $io->error(
+                        sprintf(
+                            'Generating thumbnail for: %s FAILED. Message: %s',
+                            $file->getPath(),
+                            $e->getMessage()
+                        )
+                    );
                 }
             }
-
-            $this->em->flush();
-            $this->em->clear();
         }
 
         $io->success('Success!');

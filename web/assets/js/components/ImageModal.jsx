@@ -182,8 +182,8 @@ class ImageModal extends React.Component {
       data,
     } = this.props;
 
-    const imageSrc = data && data.urls
-      ? data.urls.original
+    const imageSrc = data && data.images && data.images.original
+      ? data.images.original.src
       : null;
 
     let finalImageStyle = {...imageStyle};

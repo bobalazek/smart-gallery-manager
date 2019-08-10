@@ -11,14 +11,16 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Mime\MimeTypes;
 use Doctrine\ORM\EntityManagerInterface;
 use Intervention\Image\ImageManager;
+use App\Manager\FileManager;
 use App\Entity\File;
 
 class ApiController extends AbstractController
 {
-    public function __construct(ParameterBagInterface $params, EntityManagerInterface $em)
+    public function __construct(ParameterBagInterface $params, EntityManagerInterface $em, FileManager $fileManager)
     {
         $this->params = $params;
         $this->em = $em;
+        $this->fileManager = $fileManager;
     }
 
     /**
@@ -104,7 +106,7 @@ class ApiController extends AbstractController
         $fromDate = $request->get('from_date');
         $toDate = $request->get('to_date');
 
-        $allowedFormats = $this->params->get('allowed_formats');
+        $allowedFormats = $this->params->get('allowed_image_conversion_formats');
         if (!in_array($format, $allowedFormats)) {
             throw new \Exception('Invalid format. Allowed: ' . implode(', ', $allowedFormats));
         }
@@ -182,46 +184,50 @@ class ApiController extends AbstractController
     /**
      * Get's the file urls
      */
-    private function _getFileImages(File $file)
+    private function _getFileImages(File $file, $format = 'jpg')
     {
-        $thumbnailSrc = $this->generateUrl(
-            'file.view',
-            [
-                'hash' => $file->getHash(),
-                'type' => 'thumbnail',
-                'format' => 'jpg',
-            ],
-            UrlGeneratorInterface::ABSOLUTE_URL
-        );
-        $smallSrc = $this->generateUrl(
-            'file.view',
-            [
-                'hash' => $file->getHash(),
-                'type' => 'small',
-                'format' => 'jpg',
-            ],
-            UrlGeneratorInterface::ABSOLUTE_URL
-        );
-        $originalSrc = $this->generateUrl(
-            'file.view',
-            [
-                'hash' => $file->getHash(),
-                'type' => 'original',
-                'format' => 'jpg',
-            ],
-            UrlGeneratorInterface::ABSOLUTE_URL
-        );
+        $fileData = $file->getData();
+        $response = [];
 
-        return [
-            'thumbnail' => [
-                'src' => $thumbnailSrc,
-            ],
-            'small' => [
-                'src' => $smallSrc,
-            ],
-            'original' => [
-                'src' => $originalSrc,
-            ],
-        ];
+        $imageTypes = $this->params->get('allowed_image_conversion_types');
+        foreach ($imageTypes as $imageType => $imageTypeData) {
+            $src = $this->generateUrl(
+                'file.view',
+                [
+                    'hash' => $file->getHash(),
+                    'type' => $imageType,
+                    'format' => $format,
+                ],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
+            $width = 0;
+            $height = 0;
+
+            if (isset($fileData['image'])) {
+                $width = $fileData['image']['width'];
+                $height = $fileData['image']['height'];
+                $aspectRatio = $width / $height;
+
+                // TODO: take upsizing constraints into account
+
+                if (isset($imageTypeData['width'])) {
+                    $width = $imageTypeData['width'];
+                    $height = $width / $aspectRatio;
+                }
+
+                if (isset($imageTypeData['height'])) {
+                    $height = $imageTypeData['height'];
+                    $width = $height * $aspectRatio;
+                }
+            }
+
+            $response[$imageType] = [
+                'src' => $src,
+                'width' => $width,
+                'height' => $height,
+            ];
+        }
+
+        return $response;
     }
 }

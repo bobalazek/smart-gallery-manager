@@ -44,11 +44,12 @@ class FileController extends AbstractController
     {
         ini_set('memory_limit', '512M');
 
-        $allowedFormats = $this->params->get('allowed_formats');
+        $allowedFormats = $this->params->get('allowed_image_conversion_formats');
+        $allowedTypes = array_keys($this->params->get('allowed_image_conversion_types'));
         $maxAge = $this->params->get('max_age');
 
-        if (!in_array($type, ['thumbnail', 'small', 'original'])) {
-            throw new \Exception('Invalid type. Allowed: "thumbnail", "small" or "original"');
+        if (!in_array($type, $allowedTypes)) {
+            throw new \Exception('Invalid type. Allowed: ' . implode(', ', $allowedTypes));
         }
 
         if (!in_array($format, $allowedFormats)) {
@@ -62,19 +63,21 @@ class FileController extends AbstractController
 
         $fileMeta = $file->getMeta();
 
-        $fileCache = $this->fileManager->getCache(
+        $imageData = $this->fileManager->getImageData(
             $file,
             $type,
-            $format,
-            $maxAge
+            $format
         );
 
         $response = new Response();
 
-        $fileName = str_replace(
-            '.' . $file->getExtension(),
-            '.' . $fileCache['format'],
-            $fileMeta['name']
+        $fileName = mb_convert_encoding(
+            str_replace(
+                '.' . $file->getExtension(),
+                '.' . $imageData['format'],
+                $fileMeta['name']
+            ),
+            'ASCII'
         );
 
         $dispositionHeader = HeaderUtils::makeDisposition(
@@ -82,13 +85,13 @@ class FileController extends AbstractController
             $fileName
         );
         $response->headers->set('Content-Disposition', $dispositionHeader);
-        $response->headers->set('Content-Type', $fileCache['mime']);
-        $response->headers->set('Content-Length', strlen($fileCache['content']));
+        $response->headers->set('Content-Type', $imageData['mime']);
+        $response->headers->set('Content-Length', strlen($imageData['content']));
 
-        $response->setContent($fileCache['content']);
+        $response->setContent($imageData['content']);
         $response->setSharedMaxAge($maxAge);
         $response->setCache([
-            'etag' => sha1($fileCache['key']),
+            'etag' => sha1($imageData['key']),
             'last_modified' => $file->getModifiedAt(),
             'max_age' => $maxAge,
             's_maxage' => $maxAge,

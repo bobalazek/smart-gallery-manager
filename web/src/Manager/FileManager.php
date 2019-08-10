@@ -8,12 +8,14 @@ use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Contracts\Cache\ItemInterface;
 use Intervention\Image\ImageManager;
+use Intervention\Image\Image;
 use App\Entity\File;
 
 class FileManager {
     public function __construct(ParameterBagInterface $params)
     {
         $this->params = $params;
+
         $this->cache = new TagAwareAdapter(
             new FilesystemAdapter(
                 'files',
@@ -26,52 +28,33 @@ class FileManager {
                 realpath($this->params->get('kernel.root_dir') . '/../../var/cache')
             )
         );
+        $this->mimeTypes = new MimeTypes();
+        $this->imageManager = new ImageManager([
+            'driver' => 'imagick',
+        ]);
     }
 
     /**
-     * Gets the cache for the the specified file
+     * Gets the image cache for the the specified file
      *
      * @param File $file
      * @param string $type
      * @param string $format
-     * @param int $maxAge
      */
-    public function getCache(File $file, $type = 'thumbnail', $format = 'jpg', $maxAge = 0) {
-        if ($file->getType() !== File::TYPE_IMAGE) {
-            throw new \Exception('Only images can be cached right now.');
-        }
-
+    public function getImageData(File $file, $type = 'thumbnail', $format = 'jpg')
+    {
         $cacheKey = $file->getHash() . '.' . $type . '.' . $format;
 
         return $this->cache->get(
             $cacheKey,
-            function (ItemInterface $item) use ($file, $cacheKey, $type, $format, $maxAge) {
-                $item->tag('file');
-                $item->expiresAfter($maxAge);
+            function (ItemInterface $item) use ($cacheKey, $file, $type, $format) {
+                $item->tag('image');
 
-                $content = '';
+                $image = $this->_processImage($file, $type, $format);
 
-                $mimeTypes = new MimeTypes();
-                $manager = new ImageManager([
-                    'driver' => 'imagick',
-                ]);
-
-                $fileInstance = $manager->make($file->getPath());
-                $fileInstance->orientate();
-
-                if ($type === 'thumbnail') {
-                    $fileInstance->widen(64, function ($constraint) {
-                        $constraint->upsize();
-                    });
-                } elseif ($type === 'small') {
-                    $fileInstance->widen(640, function ($constraint) {
-                        $constraint->upsize();
-                    });
-                }
-
-                $formatMimeTypes = $mimeTypes->getMimeTypes($format);
+                $formatMimeTypes = $this->mimeTypes->getMimeTypes($format);
                 $mime = $formatMimeTypes[0];
-                $content = $fileInstance->encode($format);
+                $content = $image->encode($format);
 
                 return [
                     'key' => $cacheKey,
@@ -89,14 +72,57 @@ class FileManager {
      * @param File $file
      * @param string $type
      * @param string $format
-     * @param int $maxAge
      */
-    public function generateCache(File $file, $type = 'thumbnail', $format = 'jpg', $maxAge = 0) {
+    public function generateImageCache(File $file, $type = 'thumbnail', $format = 'jpg')
+    {
         $cacheKey = $file->getHash() . '.' . $type . '.' . $format;
 
         $this->cache->delete($cacheKey);
-        $this->getCache($file, $type, $format, $maxAge);
+        $this->getImageData($file, $type, $format);
 
         return true;
+    }
+
+    /**
+     * Gets the image instance for data or further manipulation.
+     *
+     * @param string $format
+     */
+    public function getImage($path): Image
+    {
+        return $this->imageManager->make($path);
+    }
+
+    /**
+     * Processes the image
+     *
+     * @param File $file
+     * @param string $type
+     * @param string $format
+     */
+    private function _processImage(File $file, $type = 'thumbnail', $format = 'jpg'): Image
+    {
+        $imageTypes = $this->params->get('allowed_image_conversion_types');
+
+        if (!array_key_exists($type, $imageTypes)) {
+            throw new \Exception(sprintf('The type "%s" does not exist.', $type));
+        }
+
+        $image = $this->getImage($file->getPath());
+        $image->orientate();
+
+        if (isset($imageTypes[$type]['width'])) {
+            $image->widen($imageTypes[$type]['width'], function ($constraint) {
+                $constraint->upsize();
+            });
+        }
+
+        if (isset($imageTypes[$type]['height'])) {
+            $image->widen($imageTypes[$type]['height'], function ($constraint) {
+                $constraint->upsize();
+            });
+        }
+
+        return $image;
     }
 }

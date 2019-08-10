@@ -1,7 +1,6 @@
 import React from 'react';
 import axios from 'axios';
 import moment from 'moment';
-import InfiniteScroll from 'react-infinite-scroller';
 import {
   InfiniteLoader,
   AutoSizer,
@@ -9,7 +8,6 @@ import {
   CellMeasurerCache,
   List,
 } from 'react-virtualized';
-import Columns from 'react-columns';
 import { withStyles } from '@material-ui/styles';
 import Typography from '@material-ui/core/Typography';
 import Container from '@material-ui/core/Container';
@@ -17,6 +15,8 @@ import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Image from './Image';
 import ImageModal from './ImageModal';
+
+import 'react-virtualized/styles.css';
 
 const styles = {
   circularProgressWrapper: {
@@ -37,12 +37,18 @@ const styles = {
   },
 };
 
+// Get some inspirations from here?
+//   https://medium.com/@danrschlosser/building-the-image-grid-from-google-photos-6a09e193c74a
+//   or
+//   https://medium.com/@albertjuhe/an-easy-to-use-performant-solution-to-lazy-load-images-in-react-e6752071020c
+
 class AppContainer extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
       files: [],
+      filesMap: [],
       filesPerDate: {},
       filesSummary: {},
       isLoading: false,
@@ -53,7 +59,6 @@ class AppContainer extends React.Component {
 
     this.onImageClick = this.onImageClick.bind(this);
     this.onModalClose = this.onModalClose.bind(this);
-    this.onLoadFiles = this.onLoadFiles.bind(this);
 
     this.cache = new CellMeasurerCache({
       fixedWidth: true,
@@ -86,114 +91,6 @@ class AppContainer extends React.Component {
     this.setState({
       isModalOpen: false,
       modalData: {},
-    });
-  }
-
-  onLoadFiles() {
-    if (this.state.isLoading) {
-      return false;
-    }
-
-    this.setState({
-      isLoading: true,
-    });
-
-    return axios.get(rootUrl + '/api/files?offset=' + this.state.files.length)
-      .then(res => {
-        const files = this.state.files.concat(res.data.data);
-
-        let filesPerDate = {};
-        files.forEach(file => {
-          const month = moment(file.date).format('YYYY-MM');
-          const date = moment(file.date).format('YYYY-MM-DD');
-
-          if (typeof filesPerDate[month] === 'undefined') {
-            filesPerDate[month] = {};
-          }
-
-          if (typeof filesPerDate[month][date] === 'undefined') {
-            filesPerDate[month][date] = [];
-          }
-
-          filesPerDate[month][date].push(file);
-        });
-
-        this.setState({
-          files,
-          filesPerDate,
-          isLoading: false,
-        });
-      });
-  }
-
-  renderGrid() {
-    const { classes } = this.props;
-    const { filesPerDate } = this.state;
-    const now = moment();
-
-    return Object.keys(filesPerDate).map(month => {
-      const filesPerDates = Object.keys(filesPerDate[month]).map(date => {
-        const dateMoment = moment(date);
-        const isTooLongAgo = now.diff(dateMoment, 'days', true) > 28;
-
-        return (
-          <Grid container key={date}>
-            <Grid item xs={12}>
-              <Typography
-                variant="h4"
-                component="h4"
-                className={classes.gridDateSubHeading}
-              >
-                {!isTooLongAgo &&
-                  <span><b>{dateMoment.fromNow()}</b> -{' '}</span>
-                }
-                {dateMoment.format('ddd, DD MMM YYYY')} --{' '}
-                <small><i>{filesPerDate[month][date].length} items</i></small>
-              </Typography>
-            </Grid>
-            {filesPerDate[month][date].map((file) => {
-              return (
-                <Grid item key={file.id} xs={3}>
-                  <Image
-                    src={file.images.thumbnail.src}
-                    srcAfterLoad={file.images.small.src}
-                    onClick={this.onImageClick.bind(this, file)}
-                  />
-                </Grid>
-              )
-            })}
-          </Grid>
-        )
-      });
-
-      return (
-        <Grid container key={month}>
-          <Grid item xs={12}>
-            <Typography
-              variant="h4"
-              component="h4"
-              className={classes.gridDateHeading}
-            >
-              {moment(month).format('MMM YYYY')}
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            {filesPerDates}
-          </Grid>
-        </Grid>
-      );
-
-      /**
-       * Full usage (down, in the render() function):
-       <div style={{ padding: '0 16px' }}>
-         <InfiniteScroll
-           loadMore={this.onLoadFiles}
-           hasMore={true}
-         >
-           {this.renderGrid()}
-         </InfiniteScroll>
-       </div>
-       */
     });
   }
 
@@ -271,7 +168,6 @@ class AppContainer extends React.Component {
     const toDate = filesSummary.count_per_date[startIndex].date;
 
     clearTimeout(this.loadRowsTimeout);
-
     return new Promise((resolve, reject) => {
       this.loadRowsTimeout = setTimeout(() => {
         this.setState({
@@ -280,21 +176,30 @@ class AppContainer extends React.Component {
 
         return axios.get(rootUrl + '/api/files?from_date=' + fromDate + '&to_date=' + toDate)
           .then(res => {
-            const files = this.state.files.concat(res.data.data);
+            const requestFiles = res.data.data;
+            let {
+              files,
+              filesMap,
+              filesPerDate
+            } = this.state;
 
-            let filesPerDate = {};
-            files.forEach(file => {
-              const date = moment(file.date).format('YYYY-MM-DD');
+            requestFiles.forEach(file => {
+              if (!filesMap.includes(file.id)) {
+                const date = moment(file.date).format('YYYY-MM-DD');
 
-              if (typeof filesPerDate[date] === 'undefined') {
-                filesPerDate[date] = [];
+                if (typeof filesPerDate[date] === 'undefined') {
+                  filesPerDate[date] = [];
+                }
+
+                files.push(file);
+                filesMap.push(file.id);
+                filesPerDate[date].push(file);
               }
-
-              filesPerDate[date].push(file);
             });
 
             this.setState({
               files,
+              filesMap,
               filesPerDate,
               isLoading: false,
             });
@@ -340,42 +245,34 @@ class AppContainer extends React.Component {
     const isTooLongAgo = now.diff(dateMoment, 'days', true) > 28;
 
     function content(measure, onImageClick) {
-      if (isScrolling) {
-        // return 'Loading images ...'; // TODO: set a placeholder
-      }
-
       const files = filesPerDate[date]
         ? filesPerDate[date]
         : null;
 
+      // TODO: probably also need to split into multiple rows,
+      //    if too much images?
+
       return (
         <div>
           {files && (
-            <Columns queries={[
-              {
-                columns: 2,
-                query: 'min-width: 640px'
-              },
-              {
-                columns: 3,
-                query: 'min-width: 1080px'
-              },
-            ]}>
+            <Grid container>
               {files.map((file) => {
-                // TODO: set debounce on measure()
+                // TODO: set debounce on measure() -- note: AwesomeDebouncePromise() works (did work),
+                //   but there's an issue when the image gets unmounted (out of viewport)
+                //   it triggers an error.
                 // TODO: implement "isVisible", to cancel image loading, when out of viewport
                 return (
-                  <div key={file.id}>
+                  <Grid item xs={2} key={file.id}>
                     <Image
                       src={file.images.thumbnail.src}
-                      srcAfterLoad={file.images.small.src}
+                      srcAfterLoad={file.images.preview.src}
                       onClick={onImageClick.bind(this, file)}
                       onLoad={measure}
                     />
-                  </div>
+                  </Grid>
                 )
               })}
-            </Columns>
+            </Grid>
           )}
         </div>
       );

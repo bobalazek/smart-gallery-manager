@@ -9,3 +9,11 @@ body {
 *:focus {
   outline: none;
 }
+
+.images-row-container {
+    position: relative;
+}
+.images-row-container .images-row-item {
+    position: absolute;
+    background-color: #f6f9fd;
+}
