@@ -9,6 +9,7 @@ import {
   CellMeasurerCache,
   List,
 } from 'react-virtualized';
+import Columns from 'react-columns';
 import { withStyles } from '@material-ui/styles';
 import Typography from '@material-ui/core/Typography';
 import Container from '@material-ui/core/Container';
@@ -154,8 +155,8 @@ class AppContainer extends React.Component {
               return (
                 <Grid item key={file.id} xs={3}>
                   <Image
-                    src={file.urls.thumbnail}
-                    srcAfterLoad={file.urls.small}
+                    src={file.images.thumbnail.src}
+                    srcAfterLoad={file.images.small.src}
                     onClick={this.onImageClick.bind(this, file)}
                   />
                 </Grid>
@@ -279,7 +280,7 @@ class AppContainer extends React.Component {
 
         return axios.get(rootUrl + '/api/files?from_date=' + fromDate + '&to_date=' + toDate)
           .then(res => {
-            const files = res.data.data;
+            const files = this.state.files.concat(res.data.data);
 
             let filesPerDate = {};
             files.forEach(file => {
@@ -343,23 +344,40 @@ class AppContainer extends React.Component {
         // return 'Loading images ...'; // TODO: set a placeholder
       }
 
-      // TODO: implement "isVisible", to cancel image loading, when out of viewport
+      const files = filesPerDate[date]
+        ? filesPerDate[date]
+        : null;
 
       return (
-        <Grid container>
-          {filesPerDate && filesPerDate[date] && filesPerDate[date].map((file) => {
-            return (
-              <Grid item key={file.id} xs={3}>
-                <Image
-                  src={file.urls.thumbnail}
-                  srcAfterLoad={file.urls.small}
-                  onClick={onImageClick.bind(this, file)}
-                  onLoad={measure}
-                />
-              </Grid>
-            )
-          })}
-        </Grid>
+        <div>
+          {files && (
+            <Columns queries={[
+              {
+                columns: 2,
+                query: 'min-width: 640px'
+              },
+              {
+                columns: 3,
+                query: 'min-width: 1080px'
+              },
+            ]}>
+              {files.map((file) => {
+                // TODO: set debounce on measure()
+                // TODO: implement "isVisible", to cancel image loading, when out of viewport
+                return (
+                  <div key={file.id}>
+                    <Image
+                      src={file.images.thumbnail.src}
+                      srcAfterLoad={file.images.small.src}
+                      onClick={onImageClick.bind(this, file)}
+                      onLoad={measure}
+                    />
+                  </div>
+                )
+              })}
+            </Columns>
+          )}
+        </div>
       );
     }
 

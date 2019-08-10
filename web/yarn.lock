@@ -4565,6 +4565,10 @@ react-bottom-scroll-listener@^3.0.0:
   dependencies:
     lodash.debounce "^4.0.8"
 
+react-columns@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/react-columns/-/react-columns-1.2.1.tgz#6d0c097f91ae279170213bffd5263fcd4d415142"
+
 react-dom@^16.8.6:
   version "16.8.6"
   resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-16.8.6.tgz#71d6303f631e8b0097f56165ef608f051ff6e10f"

@@ -147,7 +147,7 @@ class ApiController extends AbstractController
                 'id' => $file->getId(),
                 'hash' => $file->getHash(),
                 'date' => $file->getTakenAt()->format(DATE_ATOM),
-                'urls' => $this->_getFileUrls($file),
+                'images' => $this->_getFileImages($file),
             ];
         }
 
@@ -174,7 +174,7 @@ class ApiController extends AbstractController
         return $this->json(array_merge(
             $file->toArray(),
             [
-                'urls' => $this->_getFileUrls($file),
+                'images' => $this->_getFileImages($file),
             ]
         ));
     }
@@ -182,36 +182,46 @@ class ApiController extends AbstractController
     /**
      * Get's the file urls
      */
-    private function _getFileUrls(File $file)
+    private function _getFileImages(File $file)
     {
+        $thumbnailSrc = $this->generateUrl(
+            'file.view',
+            [
+                'hash' => $file->getHash(),
+                'type' => 'thumbnail',
+                'format' => 'jpg',
+            ],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
+        $smallSrc = $this->generateUrl(
+            'file.view',
+            [
+                'hash' => $file->getHash(),
+                'type' => 'small',
+                'format' => 'jpg',
+            ],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
+        $originalSrc = $this->generateUrl(
+            'file.view',
+            [
+                'hash' => $file->getHash(),
+                'type' => 'original',
+                'format' => 'jpg',
+            ],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
+
         return [
-            'thumbnail' => $this->generateUrl(
-                'file.view',
-                [
-                    'hash' => $file->getHash(),
-                    'type' => 'thumbnail',
-                    'format' => 'jpg',
-                ],
-                UrlGeneratorInterface::ABSOLUTE_URL
-            ),
-            'small' => $this->generateUrl(
-                'file.view',
-                [
-                    'hash' => $file->getHash(),
-                    'type' => 'small',
-                    'format' => 'jpg',
-                ],
-                UrlGeneratorInterface::ABSOLUTE_URL
-            ),
-            'original' => $this->generateUrl(
-                'file.view',
-                [
-                    'hash' => $file->getHash(),
-                    'type' => 'original',
-                    'format' => 'jpg',
-                ],
-                UrlGeneratorInterface::ABSOLUTE_URL
-            ),
+            'thumbnail' => [
+                'src' => $thumbnailSrc,
+            ],
+            'small' => [
+                'src' => $smallSrc,
+            ],
+            'original' => [
+                'src' => $originalSrc,
+            ],
         ];
     }
 }

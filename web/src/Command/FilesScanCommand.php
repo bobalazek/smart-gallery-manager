@@ -15,9 +15,9 @@ use Symfony\Component\Mime\MimeTypes;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\File;
 
-class FilesLoadCommand extends Command
+class FilesScanCommand extends Command
 {
-    protected static $defaultName = 'app:files:load';
+    protected static $defaultName = 'app:files:scan';
 
     public function __construct(EntityManagerInterface $em)
     {
@@ -28,7 +28,7 @@ class FilesLoadCommand extends Command
 
     protected function configure()
     {
-        $this->setDescription('Loads (inserts or updates) all the local files into the database.');
+        $this->setDescription('Scans and enters/updates all the local files into the database.');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
