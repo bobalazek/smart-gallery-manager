@@ -35,14 +35,17 @@ class ApiController extends AbstractController
     public function filesSummary(Request $request)
     {
         $countPerDate = [];
-        $countPerMonth = []; // TODO
-        $countPerYear = []; // TODO
+        $countPerMonth = [];
+        $countPerMonthMap = [];
+        $countPerYear = [];
+        $countPerYearMap = [];
 
         $files = $this->em->createQueryBuilder()
             ->select('DATE_FORMAT(f.takenAt, \'%Y-%m-%d\') as filesDate, COUNT(f.id) as filesCount')
             ->from(File::class, 'f')
             ->where('f.type = :type')
             ->groupBy('filesDate')
+            ->orderBy('filesDate', 'DESC')
             ->setParameter('type', 'image')
             ->getQuery()
             ->getResult();
@@ -54,17 +57,28 @@ class ApiController extends AbstractController
             $month = $datetime->format('Y-m');
             $year = $datetime->format('Y');
 
-            $countPerDate[$date] = $count;
+            $countPerDate[] = [
+                'date' => $date,
+                'count' => $count,
+            ];
 
-            if (!isset($countPerMonth[$month])) {
-                $countPerMonth[$month] = 0;
+            if (!isset($countPerMonthMap[$month])) {
+                $countPerMonthMap[$month] = count($countPerMonth);
+                $countPerMonth[$countPerMonthMap[$month]] = [
+                    'date' => $month,
+                    'count' => 0,
+                ];
             }
-            $countPerMonth[$month] += $count;
+            $countPerMonth[$countPerMonthMap[$month]]['count'] += $count;
 
-            if (!isset($countPerYear[$year])) {
-                $countPerYear[$year] = 0;
+            if (!isset($countPerYearMap[$year])) {
+                $countPerYearMap[$year] = count($countPerYear);
+                $countPerYear[$countPerYearMap[$year]] = [
+                    'date' => $year,
+                    'count' => 0,
+                ];
             }
-            $countPerYear[$year] += $count;
+            $countPerYear[$countPerYearMap[$year]]['count'] += $count;
         }
 
         return $this->json([

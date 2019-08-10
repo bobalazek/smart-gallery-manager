@@ -261,20 +261,23 @@ class AppContainer extends React.Component {
   }
 
   _isRowLoaded({ index }) {
-    return false; // TODO
+    const { filesSummary } = this.state;
+
+    if (!filesSummary.count_per_date) {
+      return false;
+    }
+
+    return filesSummary.count_per_date[index];
   }
 
   _getRowCount() {
     const { filesSummary } = this.state;
 
-    if (!filesSummary.count_per_month) {
+    if (!filesSummary.count_per_date) {
       return 0;
     }
 
-    return Object.keys(filesSummary.count_per_month).reduce(
-      (sum, key) => sum + parseFloat(filesSummary.count_per_month[key] || 0),
-      0
-    );
+    return filesSummary.count_per_date.length;
   }
 
   _rowRenderer({ index, key, parent, style }) {
