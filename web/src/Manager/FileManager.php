@@ -90,7 +90,10 @@ class FileManager {
      */
     public function getImage($path): Image
     {
-        return $this->imageManager->make($path);
+        $image = $this->imageManager->make($path);
+        $image->orientate();
+
+        return $image;
     }
 
     /**
@@ -109,7 +112,6 @@ class FileManager {
         }
 
         $image = $this->getImage($file->getPath());
-        $image->orientate();
 
         if (isset($imageTypes[$type]['width'])) {
             $image->widen($imageTypes[$type]['width'], function ($constraint) {

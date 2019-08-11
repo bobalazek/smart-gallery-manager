@@ -3,6 +3,7 @@ import axios from 'axios';
 import moment from 'moment';
 import {
   InfiniteLoader,
+  WindowScroller,
   AutoSizer,
   CellMeasurer,
   CellMeasurerCache,
@@ -20,21 +21,26 @@ import ImageGrid from './ImageGrid';
 import 'react-virtualized/styles.css';
 
 const styles = {
+  root: {
+    padding: 16,
+    width: '100%',
+  },
   circularProgressWrapper: {
     position: 'fixed',
     top: 16,
     right: 16,
     zIndex: 9999,
   },
-  gridDateHeading: {
-    marginTop: 40,
-    marginBottom: 0,
-    fontSize: 32,
+  infiniteLoader: {
+    position: 'relative',
+    width: '100%',
+    display: 'flex',
+    flexGrow: 1,
+    minHeight: 64,
   },
-  gridDateSubHeading: {
-    marginTop: 30,
-    marginBottom: 10,
-    fontSize: 24,
+  infiniteLoaderInner: {
+    height: '100%',
+    width: '100%',
   },
 };
 
@@ -53,6 +59,8 @@ class AppContainer extends React.Component {
       isModalOpen: false,
       modalData: {},
     };
+
+    this.infiniteLoaderContainerRef = React.createRef();
 
     this.onImageClick = this.onImageClick.bind(this);
     this.onModalClose = this.onModalClose.bind(this);
@@ -83,10 +91,10 @@ class AppContainer extends React.Component {
       });
   }
 
-  onImageClick(file) {
+  onImageClick(image) {
     this.setState({
       isModalOpen: true,
-      modalData: file,
+      modalData: image,
     });
   }
 
@@ -98,37 +106,49 @@ class AppContainer extends React.Component {
   }
 
   renderInfiniteLoader() {
+    const { classes } = this.props;
+
     return (
-      <InfiniteLoader
-        loadMoreRows={this._loadMoreRows}
-        isRowLoaded={this._isRowLoaded}
-        rowCount={this._getRowCount()}
+      <div
+        className={classes.infiniteLoaderContainer}
+        ref={this.infiniteLoaderContainerRef}
       >
-        {({ onRowsRendered, registerChild }) => (
-          <div style={{ display: 'flex' }}>
-            <div style={{ flex: '1 1 auto', height: '100vh' }}>
-              <AutoSizer>
-                {({ height, width }) => (
-                  <div>
-                    <List
-                      height={height}
-                      width={width}
-                      onRowsRendered={onRowsRendered}
-                      ref={registerChild}
-                      rowCount={this._getRowCount()}
-                      overscanRowCount={3}
-                      deferredMeasurementCache={this.cache}
-                      rowHeight={this.cache.rowHeight}
-                      rowRenderer={this._rowRenderer}
-                      width={width}
-                    />
-                  </div>
-                )}
-              </AutoSizer>
+        <InfiniteLoader
+          loadMoreRows={this._loadMoreRows}
+          isRowLoaded={this._isRowLoaded}
+          rowCount={this._getRowCount()}
+        >
+          {({ onRowsRendered, registerChild }) => (
+            <div className={classes.infiniteLoader}>
+              <div className={classes.infiniteLoaderInner}>
+                <AutoSizer>
+                  {({ height, width }) => (
+                    <WindowScroller>
+                      {({ height, isScrolling, onChildScroll, scrollTop }) => (
+                        <List
+                          autoHeight
+                          height={height}
+                          width={width}
+                          overscanRowCount={3}
+                          onRowsRendered={onRowsRendered}
+                          rowCount={this._getRowCount()}
+                          rowHeight={this.cache.rowHeight}
+                          rowRenderer={this._rowRenderer}
+                          deferredMeasurementCache={this.cache}
+                          isScrolling={isScrolling}
+                          onScroll={onChildScroll}
+                          scrollTop={scrollTop}
+                          ref={registerChild}
+                        />
+                    )}
+                    </WindowScroller>
+                  )}
+                </AutoSizer>
+              </div>
             </div>
-          </div>
-        )}
-      </InfiniteLoader>
+          )}
+        </InfiniteLoader>
+      </div>
     );
   }
 
@@ -145,7 +165,7 @@ class AppContainer extends React.Component {
     } = this.state;
 
     return (
-      <div>
+      <div className={classes.root}>
         {isLoading && (
           <div className={classes.circularProgressWrapper}>
             <CircularProgress size={80} />
@@ -195,13 +215,14 @@ class AppContainer extends React.Component {
       files: [],
     };
 
-    let dateToIndex = {};
+    let dateMap = {};
     filesSummary.count_per_date.forEach((data) => {
-      dateToIndex[data.date] = Object.keys(dateToIndex).length;
+      dateMap[data.date] = Object.keys(dateMap).length;
     });
 
     files.forEach((file, index) => {
       let fileDate = file.date;
+
       // We shall remote the timezone from the string,
       //   else it won't find the date inside filesSummary,
       //   if it's before noon
@@ -211,6 +232,7 @@ class AppContainer extends React.Component {
 
       // hack, so it won't parse the timezone
       const dateMoment = moment.parseZone(file.date);
+
       const date = dateMoment.format('YYYY-MM-DD');
       const hasReachedMaxFilesPerRow = row.files.length >= this.maxFilesPerRow;
 
@@ -230,19 +252,26 @@ class AppContainer extends React.Component {
       row.files.push(file);
 
       if (date !== lastDate) {
-        const count = filesSummary.count_per_date[dateToIndex[date]].count;
+        const countOnDate = filesSummary.count_per_date[dateMap[date]].count;
+        // TODO: if that fails, it means, that it's very likely, that we are doing
+        //   scanning in the background. It finds an image on  newer date,
+        //   but that date does not yet exist in the summary,
+        //   so we'll need to reload the filesSummary.
+        // Alternativly, we could maybe pass a created_before parameter,
+        //   where you'd get only images, that were loader before (same time),
+        //   as we fetched our filesSummary data.
 
         const isTooLongAgo = now.diff(dateMoment, 'days', true) > 28;
         if (!isTooLongAgo) {
           row.heading = {
             relative_time: dateMoment.fromNow(),
             date: dateMoment.format('ddd, DD MMM YYYY'),
-            items_count: count,
+            items_count: countOnDate,
           };
         } else {
           row.heading = {
             date: dateMoment.format('ddd, DD MMM YYYY'),
-            items_count: count,
+            items_count: countOnDate,
           };
         }
       }
@@ -315,6 +344,12 @@ class AppContainer extends React.Component {
 
     const row = rows[index];
 
+    if (!row) {
+      return '';
+    }
+
+    const container = this.infiniteLoaderContainerRef.current;
+
     return (
       <CellMeasurer
         key={key}
@@ -325,43 +360,14 @@ class AppContainer extends React.Component {
       >
         {({ measure }) => (
           <div style={style}>
-            {row.heading &&
-              <Typography
-                variant="h4"
-                component="h4"
-                className={classes.gridDateSubHeading}
-              >
-                <React.Fragment>
-                  {row.heading.relative_time &&
-                    <span><b>{row.heading.relative_time}</b> -{' '}</span>
-                  }
-                  {row.heading.date} --{' '}
-                  <small><i>{row.heading.items_count} items</i></small>
-                </React.Fragment>
-              </Typography>
-            }
-            <div>
-              {row.files && (
-                <Grid container>
-                  {row.files.map((file) => {
-                    // TODO: set debounce on measure() -- note: AwesomeDebouncePromise() works (did work),
-                    //   but there's an issue when the image gets unmounted (out of viewport)
-                    //   it triggers an error.
-                    // TODO: implement "isVisible", to cancel image loading, when out of viewport
-                    return (
-                      <Grid item xs={2} key={file.id}>
-                        <Image
-                          src={file.images.thumbnail.src}
-                          srcAfterLoad={file.images.preview.src}
-                          onClick={this.onImageClick.bind(this, file)}
-                          onLoad={measure}
-                        />
-                      </Grid>
-                    )
-                  })}
-                </Grid>
-              )}
-            </div>
+            <ImageGrid
+              heading={row.heading}
+              files={row.files}
+              isVisible={isVisible}
+              container={container}
+              onReady={measure}
+              onClick={this.onImageClick}
+            />
           </div>
         )}
       </CellMeasurer>

@@ -1,9 +1,22 @@
 import React from 'react';
 import { withStyles } from '@material-ui/styles';
+import Typography from '@material-ui/core/Typography';
 
 const styles = {
   root: {
     position: 'relative',
+  },
+  imagesWrapper: {
+    position: 'relative',
+  },
+  imageWrapper: {
+    position: 'absolute',
+    cursor: 'pointer',
+    backgroundColor: '#f6f6f6',
+  },
+  heading: {
+    padding: 8,
+    fontSize: 24,
   },
 };
 
@@ -16,17 +29,53 @@ class ImageGrid extends React.Component {
   constructor(props) {
     super(props);
 
-    this.wrapperWidth = 200;
-    this.imageSpacing = 8;
+    this.state = {
+      imageSpacing: 8,
+      containerWidth: this.props.container.innerWidth
+        || this.props.container.clientWidth,
+    };
+
+    this.update = this.update.bind(this);
+  }
+
+  componentDidMount() {
+    window.addEventListener('resize', this.update);
+
+    if (this.props.onReady) {
+      this.props.onReady();
+    }
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.update);
+  }
+
+  update() {
+    this.setState({
+      containerWidth: this.props.container.innerWidth
+        || this.props.container.clientWidth,
+    });
+
+    if (this.props.onReady) {
+      this.props.onReady();
+    }
   }
 
   render() {
     const {
       classes,
-      row,
+      heading,
+      files,
+      isVisible,
+      onClick,
     } = this.props;
+    const {
+      imageSpacing,
+      containerWidth,
+    } = this.state;
 
-    const imagesCount = row.files.length;
+    const images = files;
+    const imagesCount = images.length;
     const minAspectRatio = this._getMinAspectRatio();
 
     let finalImages = [];
@@ -37,69 +86,112 @@ class ImageGrid extends React.Component {
     let translateY = 0;
     let rowAspectRatio = 0;
 
-    for (let index = 0; index < imagesCount; i++) {
-      const image = images[i];
-      const imageSrc = image.images.preview.src;
+    for (let index = 0; index < imagesCount; index++) {
+      const image = images[index];
       const imageWidth = image.images.preview.width;
       const imageHeight = image.images.preview.height;
       const imageAspectRatio = imageWidth / imageHeight;
 
-      rowAspectRatio += parseFloat(image.aspectRatio);
+      rowAspectRatio += parseFloat(imageAspectRatio);
+
       row.push({
         id: image.id,
         hash: image.hash,
-        src: imageSrc,
+        src: image.images.preview.src,
+        srcPreview: image.images.preview.src,
+        srcOriginal: image.images.original.src,
         aspectRatio: imageAspectRatio,
       });
 
       if (rowAspectRatio >= minAspectRatio || index + 1 === imagesCount) {
         rowAspectRatio = Math.max(rowAspectRatio, minAspectRatio);
 
-        let totalDesiredWidthOfImages = this.wrapperWidth - this.imageSpacing * (row.length - 1);
+        let totalDesiredWidthOfImages = containerWidth - imageSpacing * (row.length - 1);
         let rowHeight = totalDesiredWidthOfImages / rowAspectRatio;
 
         row.forEach((rowImg) => {
-          let imageWidth = rowHeight * img.aspectRatio;
+          let imageWidth = rowHeight * rowImg.aspectRatio;
 
           rowImg.style = {
             width: parseInt(imageWidth),
             height: parseInt(rowHeight),
-            translateX: translateX,
-            translateY: translateY,
+            left: translateX,
+            top: translateY,
           };
 
           finalImages.push(rowImg);
 
-          translateX += imageWidth + this.imageSpacing;
+          translateX += imageWidth + imageSpacing;
         });
 
         row = [];
         translateX = 0;
-        translateY += parseInt(rowHeight) + this.settings.spaceBetweenImages;
+        translateY += parseInt(rowHeight) + imageSpacing;
         rowAspectRatio = 0;
       }
     }
 
-    totalHeight = translateY - this.imageSpacing;
-
-    console.log(finalImages)
-    console.log(totalHeight)
+    totalHeight = translateY - imageSpacing;
 
     return (
-      <div className={classes.root}>
-        GRID
+      <div
+        className={classes.root}
+      >
+        {heading &&
+          <Typography
+            variant="h4"
+            component="h4"
+            className={classes.heading}
+          >
+            <React.Fragment>
+              {heading.relative_time &&
+                <span><b>{heading.relative_time}</b> -{' '}</span>
+              }
+              {heading.date} --{' '}
+              <small><i>{heading.items_count} items</i></small>
+            </React.Fragment>
+          </Typography>
+        }
+        <div
+          className={classes.imagesWrapper}
+          style={{ height: totalHeight }}
+        >
+          {finalImages.map((image) => {
+            return (
+              <div
+                key={image.id}
+                className={classes.imageWrapper}
+                style={image.style}
+                onClick={onClick.bind(this, image)}
+              >
+                <img
+                  src={isVisible ? image.src : ''}
+                  onLoad={() => {
+                    if (
+                      isVisible &&
+                      image.srcPreview
+                    ) {
+                      image.src = image.srcPreview;
+                    }
+                  }}
+                  style={image.style}
+                />
+              </div>
+            )
+          })}
+        </div>
       </div>
     );
   }
 
   _getMinAspectRatio() {
-    const windowHeight = window.innerHeight;
+    const containerWidth = this.state.containerWidth;
 
-    if (windowHeight <= 640) {
+    if (containerWidth <= 640) {
       return 2;
-    } else if (windowHeight <= 1280) {
+    } else if (containerWidth <= 1280) {
       return 4;
-    } else if (windowHeight <= 1920) {
+    } else if (containerWidth <= 1920) {
       return 4;
     }
 

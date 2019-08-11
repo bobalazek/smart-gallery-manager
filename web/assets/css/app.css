@@ -5,9 +5,15 @@ body {
     font-family: 'Roboto', sans-serif;
 }
 
+*,
+:after,
+:before {
+    box-sizing: border-box;
+}
+
 *:focus,
 *:focus {
-  outline: none;
+    outline: none;
 }
 
 .images-row-container {
