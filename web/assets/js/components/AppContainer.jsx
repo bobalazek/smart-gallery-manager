@@ -69,8 +69,7 @@ class AppContainer extends React.Component {
 
     this.cache = new CellMeasurerCache({
       fixedWidth: true,
-      defaultHeight: 220,
-      keyMapper: () => 1,
+      defaultHeight: 310,
     });
     this._loadMoreRows = this._loadMoreRows.bind(this);
     this._isRowLoaded = this._isRowLoaded.bind(this);
