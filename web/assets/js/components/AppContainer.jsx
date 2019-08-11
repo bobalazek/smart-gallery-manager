@@ -15,6 +15,7 @@ import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Image from './Image';
 import ImageModal from './ImageModal';
+import ImageGrid from './ImageGrid';
 
 import 'react-virtualized/styles.css';
 
@@ -312,12 +313,7 @@ class AppContainer extends React.Component {
     const { classes } = this.props;
     const { rows } = this.state;
 
-    const heading = rows[index]
-      ? rows[index].heading
-      : null;
-    const files = rows[index]
-      ? rows[index].files
-      : null;
+    const row = rows[index];
 
     return (
       <CellMeasurer
@@ -329,25 +325,25 @@ class AppContainer extends React.Component {
       >
         {({ measure }) => (
           <div style={style}>
-            {heading &&
+            {row.heading &&
               <Typography
                 variant="h4"
                 component="h4"
                 className={classes.gridDateSubHeading}
               >
                 <React.Fragment>
-                  {heading.relative_time &&
-                    <span><b>{heading.relative_time}</b> -{' '}</span>
+                  {row.heading.relative_time &&
+                    <span><b>{row.heading.relative_time}</b> -{' '}</span>
                   }
-                  {heading.date} --{' '}
-                  <small><i>{heading.items_count} items</i></small>
+                  {row.heading.date} --{' '}
+                  <small><i>{row.heading.items_count} items</i></small>
                 </React.Fragment>
               </Typography>
             }
             <div>
-              {files && (
+              {row.files && (
                 <Grid container>
-                  {files.map((file) => {
+                  {row.files.map((file) => {
                     // TODO: set debounce on measure() -- note: AwesomeDebouncePromise() works (did work),
                     //   but there's an issue when the image gets unmounted (out of viewport)
                     //   it triggers an error.
