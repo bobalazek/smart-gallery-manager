@@ -37,19 +37,15 @@ const styles = {
   },
 };
 
-// Get some inspirations from here?
-//   https://medium.com/@danrschlosser/building-the-image-grid-from-google-photos-6a09e193c74a
-//   or
-//   https://medium.com/@albertjuhe/an-easy-to-use-performant-solution-to-lazy-load-images-in-react-e6752071020c
-
 class AppContainer extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
+      rows: [],
+      rowsIndexes: [],
       files: [],
       filesMap: [],
-      filesPerDate: {},
       filesSummary: {},
       isLoading: false,
       isLoaded: false,
@@ -59,6 +55,8 @@ class AppContainer extends React.Component {
 
     this.onImageClick = this.onImageClick.bind(this);
     this.onModalClose = this.onModalClose.bind(this);
+
+    this.maxFilesPerRow = 40;
 
     this.cache = new CellMeasurerCache({
       fixedWidth: true,
@@ -74,9 +72,13 @@ class AppContainer extends React.Component {
   componentDidMount() {
     axios.get(rootUrl + '/api/files/summary')
       .then(res => {
+        const filesSummary = res.data.data;
         this.setState({
-          filesSummary: res.data.data,
+          filesSummary,
+          isLoaded: true,
         });
+
+        this._prepareRowsIndexes(filesSummary);
       });
   }
 
@@ -134,6 +136,7 @@ class AppContainer extends React.Component {
       classes,
     } = this.props;
     const {
+      files,
       isLoading,
       isLoaded,
       isModalOpen,
@@ -150,7 +153,7 @@ class AppContainer extends React.Component {
         {!isLoading && isLoaded && files.length === 0 &&
           <div>No files found.</div>
         }
-        {this.renderInfiniteLoader()}
+        {isLoaded && this.renderInfiniteLoader()}
         <ImageModal
           open={isModalOpen}
           onClose={this.onModalClose}
@@ -161,11 +164,101 @@ class AppContainer extends React.Component {
   }
 
   /***** Infinite loader stuff *****/
-  _loadMoreRows({ startIndex, stopIndex }) {
+  _prepareRowsIndexes(filesSummary) {
+    let rowsIndexes = [];
+
+    filesSummary.count_per_date.forEach((data) => {
+      if (data.count <= this.maxFilesPerRow) {
+        rowsIndexes.push(data.date);
+      } else {
+        const totalRows = Math.round(data.count / this.maxFilesPerRow);
+        for(let i = 0; i < totalRows; i++) {
+          rowsIndexes.push(data.date);
+        }
+      }
+    });
+
+    this.setState({
+      rowsIndexes,
+    });
+  }
+
+  _prepareRowsPerIndex(files) {
     const { filesSummary } = this.state;
 
-    const fromDate = filesSummary.count_per_date[stopIndex].date;
-    const toDate = filesSummary.count_per_date[startIndex].date;
+    const now = moment();
+
+    let rows = [];
+    let lastDate = '';
+    let row = {
+      files: [],
+    };
+
+    let dateToIndex = {};
+    filesSummary.count_per_date.forEach((data) => {
+      dateToIndex[data.date] = Object.keys(dateToIndex).length;
+    });
+
+    files.forEach((file, index) => {
+      let fileDate = file.date;
+      // We shall remote the timezone from the string,
+      //   else it won't find the date inside filesSummary,
+      //   if it's before noon
+      if (fileDate.indexOf('+') !== -1) {
+        fileDate = fileDate.split('+')[0];
+      }
+
+      // hack, so it won't parse the timezone
+      const dateMoment = moment.parseZone(file.date);
+      const date = dateMoment.format('YYYY-MM-DD');
+      const hasReachedMaxFilesPerRow = row.files.length >= this.maxFilesPerRow;
+
+      if (
+        (
+          lastDate !== '' &&
+          date !== lastDate
+        ) ||
+        hasReachedMaxFilesPerRow
+      ) {
+        rows.push(row);
+        row = {
+          files: [],
+        };
+      }
+
+      row.files.push(file);
+
+      if (date !== lastDate) {
+        const count = filesSummary.count_per_date[dateToIndex[date]].count;
+
+        const isTooLongAgo = now.diff(dateMoment, 'days', true) > 28;
+        if (!isTooLongAgo) {
+          row.heading = {
+            relative_time: dateMoment.fromNow(),
+            date: dateMoment.format('ddd, DD MMM YYYY'),
+            items_count: count,
+          };
+        } else {
+          row.heading = {
+            date: dateMoment.format('ddd, DD MMM YYYY'),
+            items_count: count,
+          };
+        }
+      }
+
+      lastDate = date;
+    });
+
+    this.setState({
+      rows,
+    });
+  }
+
+  _loadMoreRows({ startIndex, stopIndex }) {
+    const { rowsIndexes } = this.state;
+
+    const fromDate = rowsIndexes[stopIndex];
+    const toDate = rowsIndexes[startIndex];
 
     clearTimeout(this.loadRowsTimeout);
     return new Promise((resolve, reject) => {
@@ -180,29 +273,22 @@ class AppContainer extends React.Component {
             let {
               files,
               filesMap,
-              filesPerDate
             } = this.state;
 
             requestFiles.forEach(file => {
               if (!filesMap.includes(file.id)) {
-                const date = moment(file.date).format('YYYY-MM-DD');
-
-                if (typeof filesPerDate[date] === 'undefined') {
-                  filesPerDate[date] = [];
-                }
-
                 files.push(file);
                 filesMap.push(file.id);
-                filesPerDate[date].push(file);
               }
             });
 
             this.setState({
               files,
               filesMap,
-              filesPerDate,
               isLoading: false,
             });
+
+            this._prepareRowsPerIndex(files);
 
             resolve();
           });
@@ -211,72 +297,27 @@ class AppContainer extends React.Component {
   }
 
   _isRowLoaded({ index }) {
-    const {
-      filesSummary,
-      filesPerDate,
-    } = this.state;
+    const { rows } = this.state;
 
-    if (!filesSummary.count_per_date) {
-      return false;
-    }
-
-    const date = filesSummary.count_per_date[index].date;
-
-    return typeof filesPerDate[date] !== 'undefined';
+    return typeof rows[index] !== 'undefined';
   }
 
   _getRowCount() {
-    const { filesSummary } = this.state;
+    const { rowsIndexes } = this.state;
 
-    if (!filesSummary.count_per_date) {
-      return 0;
-    }
-
-    return filesSummary.count_per_date.length;
+    return rowsIndexes.length;
   }
 
   _rowRenderer({ index, key, parent, style, isVisible, isScrolling }) {
     const { classes } = this.props;
-    const { filesSummary, filesPerDate } = this.state;
+    const { rows } = this.state;
 
-    const date = filesSummary.count_per_date[index].date;
-    const now = moment();
-    const dateMoment = moment(date);
-    const isTooLongAgo = now.diff(dateMoment, 'days', true) > 28;
-
-    function content(measure, onImageClick) {
-      const files = filesPerDate[date]
-        ? filesPerDate[date]
-        : null;
-
-      // TODO: probably also need to split into multiple rows,
-      //    if too much images?
-
-      return (
-        <div>
-          {files && (
-            <Grid container>
-              {files.map((file) => {
-                // TODO: set debounce on measure() -- note: AwesomeDebouncePromise() works (did work),
-                //   but there's an issue when the image gets unmounted (out of viewport)
-                //   it triggers an error.
-                // TODO: implement "isVisible", to cancel image loading, when out of viewport
-                return (
-                  <Grid item xs={2} key={file.id}>
-                    <Image
-                      src={file.images.thumbnail.src}
-                      srcAfterLoad={file.images.preview.src}
-                      onClick={onImageClick.bind(this, file)}
-                      onLoad={measure}
-                    />
-                  </Grid>
-                )
-              })}
-            </Grid>
-          )}
-        </div>
-      );
-    }
+    const heading = rows[index]
+      ? rows[index].heading
+      : null;
+    const files = rows[index]
+      ? rows[index].files
+      : null;
 
     return (
       <CellMeasurer
@@ -288,18 +329,43 @@ class AppContainer extends React.Component {
       >
         {({ measure }) => (
           <div style={style}>
-            <Typography
-              variant="h4"
-              component="h4"
-              className={classes.gridDateSubHeading}
-            >
-              {!isTooLongAgo &&
-                <span><b>{dateMoment.fromNow()}</b> -{' '}</span>
-              }
-              {dateMoment.format('ddd, DD MMM YYYY')} --{' '}
-              <small><i>{filesSummary.count_per_date[index].count} items</i></small>
-            </Typography>
-            {content(measure, this.onImageClick)}
+            {heading &&
+              <Typography
+                variant="h4"
+                component="h4"
+                className={classes.gridDateSubHeading}
+              >
+                <React.Fragment>
+                  {heading.relative_time &&
+                    <span><b>{heading.relative_time}</b> -{' '}</span>
+                  }
+                  {heading.date} --{' '}
+                  <small><i>{heading.items_count} items</i></small>
+                </React.Fragment>
+              </Typography>
+            }
+            <div>
+              {files && (
+                <Grid container>
+                  {files.map((file) => {
+                    // TODO: set debounce on measure() -- note: AwesomeDebouncePromise() works (did work),
+                    //   but there's an issue when the image gets unmounted (out of viewport)
+                    //   it triggers an error.
+                    // TODO: implement "isVisible", to cancel image loading, when out of viewport
+                    return (
+                      <Grid item xs={2} key={file.id}>
+                        <Image
+                          src={file.images.thumbnail.src}
+                          srcAfterLoad={file.images.preview.src}
+                          onClick={this.onImageClick.bind(this, file)}
+                          onLoad={measure}
+                        />
+                      </Grid>
+                    )
+                  })}
+                </Grid>
+              )}
+            </div>
           </div>
         )}
       </CellMeasurer>

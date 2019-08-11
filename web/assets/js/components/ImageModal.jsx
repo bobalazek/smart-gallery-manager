@@ -132,8 +132,8 @@ class ImageModal extends React.Component {
         return;
       }
 
-      const windowWidth = this.imageContentRef.current.clientWidth; // window.innerWidth;
-      const windowHeight = this.imageContentRef.current.clientHeight; // window.innerHeight;
+      const containerWidth = this.imageContentRef.current.clientWidth;
+      const containerHeight = this.imageContentRef.current.clientHeight;
       const imageWidth = this.imageRef.current.naturalWidth;
       const imageHeight = this.imageRef.current.naturalHeight;
       const imageAspectRatio = imageWidth / imageHeight;
@@ -141,18 +141,18 @@ class ImageModal extends React.Component {
       let finalImageWidth = imageWidth;
       let finalImageHeight = imageHeight;
 
-      if (finalImageWidth > windowWidth) {
-        finalImageWidth = windowWidth;
+      if (finalImageWidth > containerWidth) {
+        finalImageWidth = containerWidth;
         finalImageHeight = finalImageWidth / imageAspectRatio;
       }
 
-      if (finalImageHeight > windowHeight) {
-        finalImageHeight = windowHeight;
+      if (finalImageHeight > containerHeight) {
+        finalImageHeight = containerHeight;
         finalImageWidth = finalImageHeight * imageAspectRatio;
       }
 
-      const wrapperLeft = (windowWidth - finalImageWidth) / 2;
-      const wrapperTop = (windowHeight - finalImageHeight) / 2;
+      const wrapperLeft = (containerWidth - finalImageWidth) / 2;
+      const wrapperTop = (containerHeight - finalImageHeight) / 2;
 
       this.setState({
         imageStyle: {

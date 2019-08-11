@@ -77,6 +77,11 @@ class FilesScanCommand extends Command
                         : File::TYPE_OTHER
                     );
 
+                if ($fileType === File::TYPE_OTHER) {
+                    $io->text(sprintf('File %s is nor a image, nor a video. Skipping ...', $filePath));
+                    continue;
+                }
+
                 $file = $filesRepository->findOneByHash($fileHash);
                 if ($file) {
                     $io->text(sprintf('File %s already exists. Skipping ...', $filePath));

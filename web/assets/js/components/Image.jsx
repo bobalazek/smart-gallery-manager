@@ -9,6 +9,7 @@ const styles = {
     position: 'relative',
     minHeight: 64,
     cursor: 'pointer',
+    backgroundColor: '#fafafa',
   },
   image: {
     width: '100%',
