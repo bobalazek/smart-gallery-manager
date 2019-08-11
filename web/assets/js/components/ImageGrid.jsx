@@ -30,7 +30,7 @@ class ImageGrid extends React.Component {
     super(props);
 
     this.state = {
-      imageSpacing: 8,
+      imageSpacing: this.props.imageSpacing || 8,
       containerWidth: this.props.container.innerWidth
         || this.props.container.clientWidth,
     };
@@ -133,9 +133,15 @@ class ImageGrid extends React.Component {
 
     totalHeight = translateY - imageSpacing;
 
+    let rootStyle = {};
+    if (!heading) {
+      rootStyle.paddingTop = imageSpacing;
+    }
+
     return (
       <div
         className={classes.root}
+        style={rootStyle}
       >
         {heading &&
           <Typography
