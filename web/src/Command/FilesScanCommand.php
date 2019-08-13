@@ -32,7 +32,16 @@ class FilesScanCommand extends Command
 
     protected function configure()
     {
-        $this->setDescription('Scans and enters/updates all the local files into the database.');
+        $this
+            ->setDescription('Scans and enters/updates all the local files into the database.')
+            ->addOption(
+                'conversion-format',
+                'c',
+                InputOption::OPTIONAL,
+                'Into which format should it convert the found files?',
+                'jpg'
+            )
+        ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -41,8 +50,22 @@ class FilesScanCommand extends Command
         $finder = new Finder();
         $filesystem = new Filesystem();
         $mimeTypes = new MimeTypes();
-        $format = 'jpg';
-        $imageTypes = array_keys($this->params->get('allowed_image_conversion_types'));
+
+        $allowedImageConversionFormats = $this->params->get('allowed_image_conversion_formats');
+        $conversionFormat = $input->getOption('conversion-format');
+        if (!in_array($conversionFormat, $allowedImageConversionFormats)) {
+            $io->error(
+                'Invalid conversion format. Allowed: ' .
+                implode(', ', $allowedImageConversionFormats)
+            );
+
+            return;
+        }
+
+        $allowedImageConversionTypes = $this->params->get('allowed_image_conversion_types');
+        // Do not cache originals. They are on-demand
+        unset($allowedImageConversionTypes['original']);
+
         $filesRepository = $this->em->getRepository(File::class);
 
         define('PROJECT_ROOT', dirname(__DIR__) . '/../..');
@@ -53,19 +76,34 @@ class FilesScanCommand extends Command
         } catch (\Exception $e) {
             $io->error($e->getMessage());
 
-            return false;
+            return;
         }
 
         // Browse the folders
         $folders = $settings['folders'];
         foreach ($folders as $folder) {
-            $files = $finder->in($folder)->files();
-            $io->section(sprintf('Starting to process folder: %s', $folder));
+            $files = $finder->files()->in($folder);
+            $filesCount = iterator_count($files);
 
-            foreach ($files as $fileObject) {
+            $io->section(
+                sprintf(
+                    'Starting to process folder (%s files found): %s',
+                    $filesCount,
+                    $folder
+                )
+            );
+
+            foreach ($files as $i => $fileObject) {
                 $filePath = $fileObject->getRealPath();
 
-                $io->text(sprintf('Starting to process file: %s', $filePath));
+                $io->text(
+                    sprintf(
+                        'Starting to process file #%s out of %s: %s',
+                        $i + 1,
+                        $filesCount,
+                        $filePath
+                    )
+                );
 
                 $fileHash = sha1($filePath);
                 $fileMime = $mimeTypes->guessMimeType($filePath);
@@ -78,13 +116,27 @@ class FilesScanCommand extends Command
                     );
 
                 if ($fileType === File::TYPE_OTHER) {
-                    $io->text(sprintf('File %s is nor a image, nor a video. Skipping ...', $filePath));
+                    $io->text(
+                        sprintf(
+                            'File %s is not an image, nor a video. Skipping ...',
+                            $filePath
+                        )
+                    );
+
                     continue;
                 }
 
                 $file = $filesRepository->findOneByHash($fileHash);
+
+                // TODO: instead of just skipping, maybe check if it's dirty?
                 if ($file) {
-                    $io->text(sprintf('File %s already exists. Skipping ...', $filePath));
+                    $io->text(
+                        sprintf(
+                            'File %s already exists. Skipping ...',
+                            $filePath
+                        )
+                    );
+
                     continue;
                 }
 
@@ -111,10 +163,7 @@ class FilesScanCommand extends Command
                 //   on some data there.
                 $fileMeta = $file->getMeta();
 
-                $takenAt = new \DateTime('1970-01-01');
-                if ($fileMeta['date']) {
-                    $takenAt = new \DateTime($fileMeta['date']);
-                }
+                $takenAt = new \DateTime($fileMeta['date'] ?? '1970-01-01');
 
                 $file
                     ->setCreatedAt(new \DateTime())
@@ -128,20 +177,21 @@ class FilesScanCommand extends Command
 
                 $io->text(sprintf('File %s saved.', $filePath));
 
+                /********** Cache **********/
                 $io->text(sprintf('Generating cache for %s ...', $filePath));
 
                 try {
-                    foreach ($imageTypes as $imageType) {
+                    foreach ($allowedImageConversionTypes as $imageType => $imaageTypeData) {
                         $this->fileManager->generateImageCache(
                             $file,
                             $imageType,
-                            $format
+                            $conversionFormat
                         );
                     }
                 } catch (\Exception $e) {
                     $io->error(
                         sprintf(
-                            'Generating thumbnail for: %s FAILED. Message: %s',
+                            'Generating cache for: %s FAILED. Message: %s',
                             $file->getPath(),
                             $e->getMessage()
                         )
