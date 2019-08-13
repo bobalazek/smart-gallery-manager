@@ -270,7 +270,7 @@ class AppContent extends React.Component {
       if (date !== lastDate) {
         const countOnDate = filesSummary.count_per_date[dateMap[date]].count;
         // TODO: if that fails, it means, that it's very likely, that we are doing
-        //   scanning in the background. It finds an image on  newer date,
+        //   scanning in the background. It finds an image on newer date,
         //   but that date does not yet exist in the summary,
         //   so we'll need to reload the filesSummary.
         // Alternativly, we could maybe pass a created_before parameter,
@@ -306,8 +306,8 @@ class AppContent extends React.Component {
       orderBy,
     } = this.state;
 
-    const fromDate = rowsIndexes[stopIndex];
-    const toDate = rowsIndexes[startIndex];
+    const dateFrom = rowsIndexes[stopIndex];
+    const dateTo = rowsIndexes[startIndex];
 
     clearTimeout(this.loadRowsTimeout);
     return new Promise((resolve, reject) => {
@@ -317,8 +317,8 @@ class AppContent extends React.Component {
         });
 
         const url = rootUrl + '/api/files?order_by=' + orderBy +
-          '&from_date=' + fromDate +
-          '&to_date=' + toDate;
+          '&date_from=' + dateFrom +
+          '&date_to=' + dateTo;
 
         return axios.get(url)
           .then(res => {

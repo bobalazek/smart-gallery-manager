@@ -112,11 +112,10 @@ class ApiController extends AbstractController
     {
         $mimeTypes = new MimeTypes();
 
-        $format = $request->get('format', 'jpg');
         $offset = $request->get('offset');
         $limit = $request->get('limit');
-        $fromDate = $request->get('from_date');
-        $toDate = $request->get('to_date');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
         $orderBy = $request->get('order_by', 'taken_at');
         if (!in_array($orderBy, ['taken_at', 'created_at'])) {
             return $this->json([
@@ -145,17 +144,17 @@ class ApiController extends AbstractController
             $files->setMaxResults((int)$limit);
         }
 
-        if ($fromDate) {
+        if ($dateFrom) {
             $files
-                ->andWhere('f.' . $orderByParameter . ' >= :from_date')
-                ->setParameter('from_date', new \DateTime($fromDate . ' 00:00:00'))
+                ->andWhere('f.' . $orderByParameter . ' >= :date_from')
+                ->setParameter('date_from', new \DateTime($dateFrom . ' 00:00:00'))
             ;
         }
 
-        if ($toDate) {
+        if ($dateTo) {
             $files
-                ->andWhere('f.' . $orderByParameter . ' <= :to_date')
-                ->setParameter('to_date', new \DateTime($toDate . ' 23:59:59'))
+                ->andWhere('f.' . $orderByParameter . ' <= :date_to')
+                ->setParameter('date_to', new \DateTime($dateTo . ' 23:59:59'))
             ;
         }
 
@@ -175,7 +174,13 @@ class ApiController extends AbstractController
 
         return $this->json([
             'data' => $data,
-            'meta' => [],
+            'meta' => [
+                'offset' => $offset,
+                'limit' => $limit,
+                'date_from' => $dateTo,
+                'date_to' => $dateTo,
+                'order_by' => $orderBy,
+            ],
         ]);
     }
 
