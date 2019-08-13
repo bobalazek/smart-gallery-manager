@@ -12,7 +12,8 @@ parameters:
         preview:
             height: 240
         original: ~
-    max_age: 3600 # how long will the image exist, until it expires?
+    max_age: 3600 # how long will the image exist, until it expires/needs refreshing?
+    cache_dir: '%env(CACHE_DIR)%'
 
 services:
     # default configuration for services in *this* file

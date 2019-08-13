@@ -20,12 +20,12 @@ class FileManager {
             new FilesystemAdapter(
                 'files',
                 0,
-                realpath($this->params->get('kernel.root_dir') . '/../../var/cache')
+                $this->params->get('cache_dir')
             ),
             new FilesystemAdapter(
                 'file_tags',
                 0,
-                realpath($this->params->get('kernel.root_dir') . '/../../var/cache')
+                $this->params->get('cache_dir')
             )
         );
         $this->mimeTypes = new MimeTypes();

@@ -36,6 +36,18 @@ class ApiController extends AbstractController
      */
     public function filesSummary(Request $request)
     {
+        $orderBy = $request->get('order_by', 'taken_at');
+        if (!in_array($orderBy, ['taken_at', 'created_at'])) {
+            return $this->json([
+                'error' => [
+                    'message' => 'Invalid order_by parameter.',
+                ],
+            ], 500);
+        }
+        $orderByParameter = $orderBy === 'taken_at'
+            ? 'takenAt'
+            : 'createdAt';
+
         $countPerDate = [];
         $countPerMonth = [];
         $countPerMonthMap = [];
@@ -43,7 +55,7 @@ class ApiController extends AbstractController
         $countPerYearMap = [];
 
         $files = $this->em->createQueryBuilder()
-            ->select('DATE_FORMAT(f.takenAt, \'%Y-%m-%d\') as filesDate, COUNT(f.id) as filesCount')
+            ->select('DATE_FORMAT(f.' . $orderByParameter . ', \'%Y-%m-%d\') as filesDate, COUNT(f.id) as filesCount')
             ->from(File::class, 'f')
             ->where('f.type = :type')
             ->groupBy('filesDate')
@@ -105,17 +117,23 @@ class ApiController extends AbstractController
         $limit = $request->get('limit');
         $fromDate = $request->get('from_date');
         $toDate = $request->get('to_date');
-
-        $allowedFormats = $this->params->get('allowed_image_conversion_formats');
-        if (!in_array($format, $allowedFormats)) {
-            throw new \Exception('Invalid format. Allowed: ' . implode(', ', $allowedFormats));
+        $orderBy = $request->get('order_by', 'taken_at');
+        if (!in_array($orderBy, ['taken_at', 'created_at'])) {
+            return $this->json([
+                'error' => [
+                    'message' => 'Invalid order_by parameter.',
+                ],
+            ], 500);
         }
+        $orderByParameter = $orderBy === 'taken_at'
+            ? 'takenAt'
+            : 'createdAt';
 
         $files = $this->em->createQueryBuilder()
             ->select('f')
             ->from(File::class, 'f')
             ->where('f.type = :type')
-            ->orderBy('f.takenAt', 'DESC')
+            ->orderBy('f.' . $orderByParameter, 'DESC')
             ->setParameter('type', 'image')
         ;
 
@@ -129,14 +147,14 @@ class ApiController extends AbstractController
 
         if ($fromDate) {
             $files
-                ->andWhere('f.takenAt >= :from_date')
+                ->andWhere('f.' . $orderByParameter . ' >= :from_date')
                 ->setParameter('from_date', new \DateTime($fromDate . ' 00:00:00'))
             ;
         }
 
         if ($toDate) {
             $files
-                ->andWhere('f.takenAt <= :to_date')
+                ->andWhere('f.' . $orderByParameter . ' <= :to_date')
                 ->setParameter('to_date', new \DateTime($toDate . ' 23:59:59'))
             ;
         }
@@ -145,10 +163,12 @@ class ApiController extends AbstractController
 
         $data = [];
         foreach ($files as $file) {
+            $method = 'get' . ucfirst($orderByParameter);
+            $datetime = $file->$method();
             $data[] = [
                 'id' => $file->getId(),
                 'hash' => $file->getHash(),
-                'date' => $file->getTakenAt()->format(DATE_ATOM),
+                'date' => $datetime->format(DATE_ATOM),
                 'images' => $this->_getFileImages($file),
             ];
         }

@@ -11,6 +11,10 @@ import {
 } from 'react-virtualized';
 import { withStyles } from '@material-ui/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
+import MenuItem from '@material-ui/core/MenuItem';
+import Select from '@material-ui/core/Select';
 import Image from './Image';
 import ImageGrid from './ImageGrid';
 
@@ -53,8 +57,13 @@ class AppContent extends React.Component {
       filesSummary: {},
       isLoading: false,
       isLoaded: false,
+      orderBy: 'taken_at',
     };
 
+    this.onOrderChange = this.onOrderChange.bind(this);
+    this.fetchFilesSummary = this.fetchFilesSummary.bind(this);
+
+    // Infinite loader
     this.infiniteLoaderContainerRef = React.createRef();
 
     this.maxFilesPerRow = 40;
@@ -70,13 +79,41 @@ class AppContent extends React.Component {
   }
 
   componentDidMount() {
-    axios.get(rootUrl + '/api/files/summary')
+    this.fetchFilesSummary();
+  }
+
+  onOrderChange(event) {
+    const orderBy = event.target.value;
+
+    this.setState({
+      orderBy,
+    });
+
+    this.fetchFilesSummary(orderBy);
+  }
+
+  fetchFilesSummary(orderBy) {
+    if (!orderBy) {
+      orderBy = this.state.orderBy;
+    }
+
+    this.setState({
+      isLoading: true,
+    });
+
+    axios.get(rootUrl + '/api/files/summary?order_by=' + orderBy)
       .then(res => {
         const filesSummary = res.data.data;
         this.setState({
+          rows: [],
+          rowsIndexes: [],
+          files: [],
+          filesMap: [],
           filesSummary,
           isLoaded: true,
         });
+
+        this.cache.clearAll();
 
         this._prepareRowsIndexes(filesSummary);
       });
@@ -90,6 +127,7 @@ class AppContent extends React.Component {
       files,
       isLoading,
       isLoaded,
+      orderBy,
     } = this.state;
 
     return (
@@ -99,6 +137,18 @@ class AppContent extends React.Component {
             <CircularProgress size={80} />
           </div>
         )}
+        <div style={{ marginBottom: 20 }}>
+          <FormControl>
+            <Select
+              value={orderBy}
+              onChange={this.onOrderChange}
+              name="orderBy"
+            >
+              <MenuItem value={'taken_at'}>Date taken</MenuItem>
+              <MenuItem value={'created_at'}>Date created</MenuItem>
+            </Select>
+          </FormControl>
+        </div>
         {!isLoading && isLoaded && files.length === 0 &&
           <div>No files found.</div>
         }
@@ -169,7 +219,9 @@ class AppContent extends React.Component {
   }
 
   _prepareRowsPerIndex(files) {
-    const { filesSummary } = this.state;
+    const {
+      filesSummary,
+    } = this.state;
 
     const now = moment();
 
@@ -249,7 +301,10 @@ class AppContent extends React.Component {
   }
 
   _loadMoreRows({ startIndex, stopIndex }) {
-    const { rowsIndexes } = this.state;
+    const {
+      rowsIndexes,
+      orderBy,
+    } = this.state;
 
     const fromDate = rowsIndexes[stopIndex];
     const toDate = rowsIndexes[startIndex];
@@ -261,7 +316,11 @@ class AppContent extends React.Component {
           isLoading: true,
         });
 
-        return axios.get(rootUrl + '/api/files?from_date=' + fromDate + '&to_date=' + toDate)
+        const url = rootUrl + '/api/files?order_by=' + orderBy +
+          '&from_date=' + fromDate +
+          '&to_date=' + toDate;
+
+        return axios.get(url)
           .then(res => {
             const requestFiles = res.data.data;
             let {
