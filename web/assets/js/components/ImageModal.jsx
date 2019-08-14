@@ -68,6 +68,8 @@ const styles = {
   },
 };
 
+// TODO: implement prev/next image (also with left/right keyboard keys)
+
 class ImageModal extends React.Component {
   constructor(props) {
     super(props);

@@ -61,7 +61,7 @@ class FileController extends AbstractController
             throw $this->createNotFoundException('The file does not exist');
         }
 
-        $fileMeta = $file->getMeta();
+        $fileMeta = $file->getProcessedMeta();
 
         $imageData = $this->fileManager->getImageData(
             $file,

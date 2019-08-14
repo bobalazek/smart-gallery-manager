@@ -23,7 +23,7 @@ import 'react-virtualized/styles.css';
 const styles = {
   root: {
     width: '100%',
-    padding: 16,
+    flexGrow: 1,
   },
   circularProgressWrapper: {
     position: 'fixed',

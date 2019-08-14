@@ -20,17 +20,12 @@ const styles = {
   },
 };
 
-// Get some inspirations from here?
-//   https://medium.com/@danrschlosser/building-the-image-grid-from-google-photos-6a09e193c74a
-//   or
-//   https://medium.com/@albertjuhe/an-easy-to-use-performant-solution-to-lazy-load-images-in-react-e6752071020c
-
 class ImageGrid extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
-      imageSpacing: this.props.imageSpacing || 8,
+      imageSpacing: this.props.imageSpacing || 4,
       containerWidth: this.props.container.innerWidth
         || this.props.container.clientWidth,
     };

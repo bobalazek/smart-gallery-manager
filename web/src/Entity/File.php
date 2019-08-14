@@ -182,7 +182,7 @@ class File
         return $this;
     }
 
-    public function getMeta(): ?array
+    public function getProcessedMeta(): ?array
     {
         $exif = null;
         try {
@@ -289,7 +289,7 @@ class File
             'created_at' => $this->getCreatedAt()->format(DATE_ATOM),
             'modified_at' => $this->getModifiedAt()->format(DATE_ATOM),
             'taken_at' => $this->getTakenAt()->format(DATE_ATOM),
-            'meta' => $this->getMeta(),
+            'processed_meta' => $this->getProcessedMeta(),
         ];
     }
 

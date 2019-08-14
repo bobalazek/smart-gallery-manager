@@ -178,7 +178,7 @@ class FilesScanCommand extends Command
 
                 // Get the meta AFTER we've set the data, because it depends
                 //   on some data there.
-                $fileMeta = $file->getMeta();
+                $fileMeta = $file->getProcessedMeta();
 
                 $takenAt = new \DateTime($fileMeta['date'] ?? '1970-01-01');
 
