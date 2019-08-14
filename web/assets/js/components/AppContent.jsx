@@ -1,4 +1,5 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import axios from 'axios';
 import moment from 'moment';
 import {
@@ -17,6 +18,10 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import Image from './Image';
 import ImageGrid from './ImageGrid';
+import {
+  setData,
+  setDataBatch,
+} from '../actions/index';
 
 import 'react-virtualized/styles.css';
 
@@ -45,20 +50,29 @@ const styles = {
   },
 };
 
+const mapStateToProps = state => {
+  return {
+    isLoading: state.isLoading,
+    isLoaded: state.isLoaded,
+    rows: state.rows,
+    rowsIndexes: state.rowsIndexes,
+    files: state.files,
+    filesMap: state.filesMap,
+    filesSummary: state.filesSummary,
+    orderBy: state.orderBy,
+  };
+};
+
+function mapDispatchToProps(dispatch) {
+  return {
+    setData: (type, data) => dispatch(setData(type, data)),
+    setDataBatch: (data) => dispatch(setDataBatch(data)),
+  };
+}
+
 class AppContent extends React.Component {
   constructor(props) {
     super(props);
-
-    this.state = {
-      rows: [],
-      rowsIndexes: [],
-      files: [],
-      filesMap: [],
-      filesSummary: {},
-      isLoading: false,
-      isLoaded: false,
-      orderBy: 'taken_at',
-    };
 
     this.onOrderChange = this.onOrderChange.bind(this);
     this.fetchFilesSummary = this.fetchFilesSummary.bind(this);
@@ -85,50 +99,56 @@ class AppContent extends React.Component {
   onOrderChange(event) {
     const orderBy = event.target.value;
 
-    this.setState({
-      orderBy,
-    });
+    this.props.setData('orderBy', orderBy);
 
     this.fetchFilesSummary(orderBy);
   }
 
   fetchFilesSummary(orderBy) {
     if (!orderBy) {
-      orderBy = this.state.orderBy;
+      orderBy = this.props.orderBy;
     }
 
-    this.setState({
-      isLoading: true,
-    });
+    this.props.setData('isLoading', true);
 
     axios.get(rootUrl + '/api/files/summary?order_by=' + orderBy)
       .then(res => {
         const filesSummary = res.data.data;
-        this.setState({
+        let rowsIndexes = [];
+
+        filesSummary.count_per_date.forEach((data) => {
+          if (data.count <= this.maxFilesPerRow) {
+            rowsIndexes.push(data.date);
+          } else {
+            const totalRows = Math.round(data.count / this.maxFilesPerRow);
+            for(let i = 0; i < totalRows; i++) {
+              rowsIndexes.push(data.date);
+            }
+          }
+        });
+
+        this.props.setDataBatch({
           rows: [],
-          rowsIndexes: [],
+          rowsIndexes: rowsIndexes,
           files: [],
           filesMap: [],
-          filesSummary,
+          filesSummary: filesSummary,
           isLoaded: true,
+          isLoading: false,
         });
 
         this.cache.clearAll();
-
-        this._prepareRowsIndexes(filesSummary);
       });
   }
 
   render() {
     const {
       classes,
-    } = this.props;
-    const {
       files,
       isLoading,
       isLoaded,
       orderBy,
-    } = this.state;
+    } = this.props;
 
     return (
       <div className={classes.root}>
@@ -199,29 +219,10 @@ class AppContent extends React.Component {
   }
 
   /***** Infinite loader stuff *****/
-  _prepareRowsIndexes(filesSummary) {
-    let rowsIndexes = [];
-
-    filesSummary.count_per_date.forEach((data) => {
-      if (data.count <= this.maxFilesPerRow) {
-        rowsIndexes.push(data.date);
-      } else {
-        const totalRows = Math.round(data.count / this.maxFilesPerRow);
-        for(let i = 0; i < totalRows; i++) {
-          rowsIndexes.push(data.date);
-        }
-      }
-    });
-
-    this.setState({
-      rowsIndexes,
-    });
-  }
-
   _prepareRowsPerIndex(files) {
     const {
       filesSummary,
-    } = this.state;
+    } = this.props;
 
     const now = moment();
 
@@ -295,16 +296,14 @@ class AppContent extends React.Component {
       lastDate = date;
     });
 
-    this.setState({
-      rows,
-    });
+    this.props.setData('rows', rows);
   }
 
   _loadMoreRows({ startIndex, stopIndex }) {
     const {
       rowsIndexes,
       orderBy,
-    } = this.state;
+    } = this.props;
 
     const dateFrom = rowsIndexes[stopIndex];
     const dateTo = rowsIndexes[startIndex];
@@ -312,9 +311,7 @@ class AppContent extends React.Component {
     clearTimeout(this.loadRowsTimeout);
     return new Promise((resolve, reject) => {
       this.loadRowsTimeout = setTimeout(() => {
-        this.setState({
-          isLoading: true,
-        });
+        this.props.setData('isLoading', true);
 
         const url = rootUrl + '/api/files?order_by=' + orderBy +
           '&date_from=' + dateFrom +
@@ -326,7 +323,7 @@ class AppContent extends React.Component {
             let {
               files,
               filesMap,
-            } = this.state;
+            } = this.props;
 
             requestFiles.forEach(file => {
               if (!filesMap.includes(file.id)) {
@@ -335,7 +332,7 @@ class AppContent extends React.Component {
               }
             });
 
-            this.setState({
+            this.props.setDataBatch({
               files,
               filesMap,
               isLoading: false,
@@ -350,20 +347,22 @@ class AppContent extends React.Component {
   }
 
   _isRowLoaded({ index }) {
-    const { rows } = this.state;
+    const { rows } = this.props;
 
     return typeof rows[index] !== 'undefined';
   }
 
   _getRowCount() {
-    const { rowsIndexes } = this.state;
+    const { rowsIndexes } = this.props;
 
     return rowsIndexes.length;
   }
 
   _rowRenderer({ index, key, parent, style, isVisible, isScrolling }) {
-    const { classes } = this.props;
-    const { rows } = this.state;
+    const {
+      classes,
+      rows,
+    } = this.props;
 
     const row = rows[index];
 
@@ -398,4 +397,6 @@ class AppContent extends React.Component {
   }
 }
 
-export default withStyles(styles)(AppContent);
+export default connect(mapStateToProps, mapDispatchToProps)(
+  withStyles(styles)(AppContent)
+);
