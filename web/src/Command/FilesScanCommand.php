@@ -35,9 +35,16 @@ class FilesScanCommand extends Command
         $this
             ->setDescription('Scans and enters/updates all the local files into the database.')
             ->addOption(
+                'folder',
+                'f',
+                InputOption::VALUE_OPTIONAL,
+                'Which folder do you want to scan? Note: that will override the existing folders from settings.yml',
+                null
+            )
+            ->addOption(
                 'conversion-format',
                 'c',
-                InputOption::OPTIONAL,
+                InputOption::VALUE_OPTIONAL,
                 'Into which format should it convert the found files?',
                 'jpg'
             )
@@ -81,8 +88,15 @@ class FilesScanCommand extends Command
 
         // Browse the folders
         $folders = $settings['folders'];
+
+        if ($input->getOption('folder')) {
+            $folders = [$input->getOption('folder')];
+        }
+
         foreach ($folders as $folder) {
-            $files = $finder->files()->in($folder);
+            $files = $finder->files()
+                ->in($folder)
+                ->sortByChangedTime();
             $filesCount = iterator_count($files);
 
             $io->section(
@@ -93,7 +107,8 @@ class FilesScanCommand extends Command
                 )
             );
 
-            foreach ($files as $i => $fileObject) {
+            $i = 0;
+            foreach ($files as $fileObject) {
                 $filePath = $fileObject->getRealPath();
 
                 $io->text(
@@ -104,6 +119,8 @@ class FilesScanCommand extends Command
                         $filePath
                     )
                 );
+
+                $i++;
 
                 $fileHash = sha1($filePath);
                 $fileMime = $mimeTypes->guessMimeType($filePath);
