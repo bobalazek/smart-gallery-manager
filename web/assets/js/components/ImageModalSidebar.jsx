@@ -58,56 +58,56 @@ class ImageModalSidebar extends React.Component {
       dateSecondary: fileInformation
         ? moment(fileInformation.taken_at).format('HH:mm:ss')
         : '',
-      filePrimary: fileInformation && fileInformation.meta
-        ? fileInformation.meta.name
+      filePrimary: fileInformation && fileInformation.processed_meta
+        ? fileInformation.processed_meta.name
         : '',
-      fileSecondary: fileInformation && fileInformation.meta
+      fileSecondary: fileInformation && fileInformation.processed_meta
         ? (
           <React.Fragment>
             Path: {fileInformation.path} <br />
-            Megapixels: {(fileInformation.meta.dimensions.total / 1000000).toFixed(1)}MP <br />
-            Size: {fileInformation.meta.dimensions.width + 'x' + fileInformation.meta.dimensions.height} <br />
-            File size: {(fileInformation.meta.size / 1024 / 1024).toFixed(1)}MB <br />
+            Megapixels: {(fileInformation.processed_meta.dimensions.total / 1000000).toFixed(1)}MP <br />
+            Size: {fileInformation.processed_meta.dimensions.width + 'x' + fileInformation.processed_meta.dimensions.height} <br />
+            File size: {(fileInformation.processed_meta.size / 1024 / 1024).toFixed(1)}MB <br />
           </React.Fragment>
         )
         : '',
-      devicePrimary: fileInformation && fileInformation.meta && fileInformation.meta.device
-        ? fileInformation.meta.device.make + ' ' + fileInformation.meta.device.model
+      devicePrimary: fileInformation && fileInformation.processed_meta && fileInformation.processed_meta.device
+        ? fileInformation.processed_meta.device.make + ' ' + fileInformation.processed_meta.device.model
         : '',
-      deviceSecondary: fileInformation && fileInformation.meta && fileInformation.meta.device
+      deviceSecondary: fileInformation && fileInformation.processed_meta && fileInformation.processed_meta.device
         ? (
           <React.Fragment>
-            Aperature: f/{fileInformation.meta.device.aperature} <br />
-            Shutter speed: {fileInformation.meta.device.shutter_speed} <br />
-            Focal length: {fileInformation.meta.device.focal_length} <br />
-            ISO: {fileInformation.meta.device.iso}
+            Aperature: f/{fileInformation.processed_meta.device.aperature} <br />
+            Shutter speed: {fileInformation.processed_meta.device.shutter_speed} <br />
+            Focal length: {fileInformation.processed_meta.device.focal_length} <br />
+            ISO: {fileInformation.processed_meta.device.iso}
           </React.Fragment>
         )
         : '',
       hasLocationData: fileInformation
-        && fileInformation.meta
-        && fileInformation.meta.location &&
+        && fileInformation.processed_meta
+        && fileInformation.processed_meta.location &&
         (
-          fileInformation.meta.location.name ||
-          fileInformation.meta.location.altitude ||
-          fileInformation.meta.location.latitude ||
-          fileInformation.meta.location.longitude
+          fileInformation.processed_meta.location.name ||
+          fileInformation.processed_meta.location.altitude ||
+          fileInformation.processed_meta.location.latitude ||
+          fileInformation.processed_meta.location.longitude
         ),
       locationPrimary: 'Location',
-      locationSecondary: fileInformation && fileInformation.meta && fileInformation.meta.location
+      locationSecondary: fileInformation && fileInformation.processed_meta && fileInformation.processed_meta.location
         ? (
           <React.Fragment>
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.name
-              ? 'Name:' + fileInformation.meta.location.name + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.location.name
+              ? 'Name:' + fileInformation.processed_meta.location.name + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.altitude
-              ? 'Altitude:' + fileInformation.meta.location.altitude + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.location.altitude
+              ? 'Altitude:' + fileInformation.processed_meta.location.altitude + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.latitude
-              ? 'Latitude:' + fileInformation.meta.location.latitude + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.location.latitude
+              ? 'Latitude:' + fileInformation.processed_meta.location.latitude + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.longitude
-              ? 'Longitude:' + fileInformation.meta.location.longitude + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.location.longitude
+              ? 'Longitude:' + fileInformation.processed_meta.location.longitude + '<br />'
               : '' }} />
           </React.Fragment>
         )

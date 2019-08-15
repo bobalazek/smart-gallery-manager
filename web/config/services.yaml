@@ -13,7 +13,7 @@ parameters:
             height: 240
         original: ~
     max_age: 3600 # how long will the image exist, until it expires/needs refreshing?
-    cache_dir: '%env(CACHE_DIR)%'
+    cache_dir: '%kernel.project_dir%/../var/cache'
 
 services:
     # default configuration for services in *this* file

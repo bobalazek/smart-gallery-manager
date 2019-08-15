@@ -1,6 +1,11 @@
-FROM php:7.2-fpm-alpine
+FROM php:7.2-fpm
 
 WORKDIR /var/www
+
+RUN apt-get update && apt-get install -y \
+    libmagickwand-dev --no-install-recommends
+RUN pecl install imagick
+RUN docker-php-ext-enable imagick
 
 RUN docker-php-ext-install opcache
 RUN docker-php-ext-configure opcache --enable-opcache
