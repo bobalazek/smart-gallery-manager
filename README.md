@@ -26,3 +26,11 @@ $ yarn encore production
 * For .heic/.heif, the [libheif](https://github.com/strukturag/libheif) library is required
 * When using NFS mounts, follow this tutorial: https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-ubuntu-16-04
   * Working config in `/etc/exports` on host server: `/srv 10.21.91.0/24(rw,sync,no_subtree_check,no_root_squash,insecure)`
+  * Mounting via cockpit -> storage:
+    * Server address: `10.21.91.110`
+    * Path on Server: `/srv`
+    * Local Mount Point: `/nfs/srv`
+    * (checked) Mount at boot
+    * (unchecked) Mount read only
+    * (checked) Custom mount options: `vers=3,nolock,rw`
+  * Commands: `nfsstat -m`, `df -h`, ...
