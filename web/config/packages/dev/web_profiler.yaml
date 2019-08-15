@@ -5,4 +5,5 @@ web_profiler:
 framework:
     profiler:
         only_exceptions: false
-        dsn: 'file:%env(CACHE_DIR)%/profiler'
+        # TODO: No idea why simply %env(CACHE_DIR)% doesn't work
+        dsn: 'file:%kernel.project_dir%/../var/cache/profiler'

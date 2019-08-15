@@ -8,8 +8,7 @@ if (!Encore.isRuntimeEnvironmentConfigured()) {
 
 Encore
     .setOutputPath('public/build/')
-    //.setPublicPath('/build')
-    .setPublicPath('/smart-gallery-manager/web/public/build') // TODO: temporary, until docker isn't ready
+    .setPublicPath('/build')
     .setManifestKeyPrefix('build/')
 
     /*
