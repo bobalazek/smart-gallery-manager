@@ -9,7 +9,7 @@ services:
       - MYSQL_PASSWORD=password
       - MYSQL_ROOT_PASSWORD=password
     networks:
-      - app
+      - app-network
   nginx:
     build: ./docker/nginx
     volumes:
@@ -25,23 +25,23 @@ services:
     depends_on:
       - php-fpm
     networks:
-      - app
+      - app-network
   php-fpm:
     build: ./docker/php-fpm
     volumes:
       - .:/var/www
     networks:
-      - app
+      - app-network
   node:
     build: ./docker/node
     volumes:
       - .:/var/www
     networks:
-      - app
+      - app-network
   python:
     build: ./docker/python
     networks:
-      - app
+      - app-network
 networks:
-  app:
+  app-network:
     driver: bridge
