@@ -8,6 +8,8 @@ RUN docker-php-ext-install exif
 
 COPY config/opcache.ini $PHP_INI_DIR/conf.d/
 
+RUN mkdir -p /var/data
+
 CMD ["php-fpm"]
 
 EXPOSE 9000

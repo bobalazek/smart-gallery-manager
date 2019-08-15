@@ -93,6 +93,10 @@ class FilesScanCommand extends Command
             $folders = [$input->getOption('folder')];
         }
 
+
+        $files = $finder->files()->in('/data');
+        var_dump($files);exit;
+
         foreach ($folders as $folder) {
             $files = $finder->files()
                 ->in($folder)

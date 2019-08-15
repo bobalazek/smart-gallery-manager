@@ -1,17 +1,19 @@
 version: '3.7'
 
 services:
-  mariadb:
-    build: ./docker/mariadb
-    environment:
-      - MYSQL_DATABASE=database
-      - MYSQL_USER=user
-      - MYSQL_PASSWORD=password
-      - MYSQL_ROOT_PASSWORD=password
-    networks:
-      - app-network
+#  mariadb:
+#    build: ./docker/mariadb
+#    privileged: true
+#    environment:
+#      - MYSQL_DATABASE=database
+#      - MYSQL_USER=user
+#      - MYSQL_PASSWORD=password
+#      - MYSQL_ROOT_PASSWORD=password
+#    networks:
+#      - app-network
   nginx:
     build: ./docker/nginx
+    privileged: true
     volumes:
       - .:/var/www
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
@@ -28,20 +30,31 @@ services:
       - app-network
   php-fpm:
     build: ./docker/php-fpm
+    privileged: true
     volumes:
       - .:/var/www
+      - server-nfs:/var/data
     networks:
       - app-network
   node:
     build: ./docker/node
+    privileged: true
     volumes:
       - .:/var/www
     networks:
       - app-network
   python:
     build: ./docker/python
+    privileged: true
     networks:
       - app-network
 networks:
   app-network:
     driver: bridge
+volumes:
+  server-nfs:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=10.21.91.110,rw,soft,nolock
+      device: :/srv
