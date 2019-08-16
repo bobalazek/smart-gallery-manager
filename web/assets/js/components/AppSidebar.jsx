@@ -203,7 +203,7 @@ class AppSidebar extends React.Component {
                             <div key={subSubEntry.date}>
                               <ListItem
                                 button
-                                onClick={this.onClickDate.bind(this, entry.date, 'date')}
+                                onClick={this.onClickDate.bind(this, subSubEntry.date, 'date')}
                                 selected={subSubEntry.date === selectedDate}
                               >
                                 <ListItemText
