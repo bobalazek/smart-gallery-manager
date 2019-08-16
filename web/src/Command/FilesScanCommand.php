@@ -8,6 +8,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Filesystem\Filesystem;
@@ -57,6 +58,7 @@ class FilesScanCommand extends Command
         $finder = new Finder();
         $filesystem = new Filesystem();
         $mimeTypes = new MimeTypes();
+        ProgressBar::setFormatDefinition('custom', ' %current%/%max% -- %message% (%filename%)');
 
         $allowedImageConversionFormats = $this->params->get('allowed_image_conversion_formats');
         $conversionFormat = $input->getOption('conversion-format');
@@ -97,30 +99,23 @@ class FilesScanCommand extends Command
             $files = $finder->files()
                 ->in($folder)
                 ->sortByChangedTime();
-            $filesCount = iterator_count($files);
-
             $io->section(
                 sprintf(
-                    'Starting to process folder (%s files found): %s',
-                    $filesCount,
+                    'Starting to process folder: %s',
                     $folder
                 )
             );
 
-            $i = 0;
-            foreach ($files as $fileObject) {
+            $progressBar = new ProgressBar($output);
+            $progressBar->setFormat('custom');
+
+            $progressBar->setMessage('Processing files...');
+
+            foreach ($progressBar->iterate($files) as $fileObject) {
                 $filePath = $fileObject->getRealPath();
 
-                $io->text(
-                    sprintf(
-                        'Starting to process file #%s out of %s: %s',
-                        $i + 1,
-                        $filesCount,
-                        $filePath
-                    )
-                );
-
-                $i++;
+                $progressBar->setMessage('Processing files...');
+                $progressBar->setMessage($filePath, 'filename');
 
                 $fileHash = sha1($filePath);
                 $fileMime = $mimeTypes->guessMimeType($filePath);
@@ -129,17 +124,14 @@ class FilesScanCommand extends Command
                     ? File::TYPE_IMAGE
                     : (strpos($fileMime, 'video/') !== false
                         ? File::TYPE_VIDEO
-                        : File::TYPE_OTHER
-                    );
-
-                if ($fileType === File::TYPE_OTHER) {
-                    $io->text(
-                        sprintf(
-                            'File %s is not an image, nor a video. Skipping ...',
-                            $filePath
+                        : (strpos($fileMime, 'audio/') !== false
+                            ? File::TYPE_AUDIO
+                            : File::TYPE_OTHER
                         )
                     );
 
+                // TODO: also process other types
+                if ($fileType !== File::TYPE_IMAGE) {
                     continue;
                 }
 
@@ -147,13 +139,6 @@ class FilesScanCommand extends Command
 
                 // TODO: instead of just skipping, maybe check if it's dirty?
                 if ($file) {
-                    $io->text(
-                        sprintf(
-                            'File %s already exists. Skipping ...',
-                            $filePath
-                        )
-                    );
-
                     continue;
                 }
 
@@ -192,11 +177,7 @@ class FilesScanCommand extends Command
                 $this->em->flush();
                 $this->em->clear();
 
-                $io->text(sprintf('File %s saved.', $filePath));
-
                 /********** Cache **********/
-                $io->text(sprintf('Generating cache for %s ...', $filePath));
-
                 try {
                     foreach ($allowedImageConversionTypes as $imageType => $imaageTypeData) {
                         $this->fileManager->generateImageCache(
@@ -205,15 +186,7 @@ class FilesScanCommand extends Command
                             $conversionFormat
                         );
                     }
-                } catch (\Exception $e) {
-                    $io->error(
-                        sprintf(
-                            'Generating cache for: %s FAILED. Message: %s',
-                            $file->getPath(),
-                            $e->getMessage()
-                        )
-                    );
-                }
+                } catch (\Exception $e) {}
             }
         }
 

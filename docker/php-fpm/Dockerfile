@@ -11,6 +11,7 @@ RUN docker-php-ext-install opcache
 RUN docker-php-ext-configure opcache --enable-opcache
 RUN docker-php-ext-install exif
 
+COPY config/general.ini $PHP_INI_DIR/conf.d/
 COPY config/opcache.ini $PHP_INI_DIR/conf.d/
 
 RUN mkdir -p /var/data

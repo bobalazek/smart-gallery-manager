@@ -116,7 +116,7 @@ class AppContent extends React.Component {
         const filesSummary = res.data.data;
         let rowsIndexes = [];
 
-        filesSummary.count_per_date.forEach((data) => {
+        filesSummary.count.date.forEach((data) => {
           if (data.count <= this.maxFilesPerRow) {
             rowsIndexes.push(data.date);
           } else {
@@ -233,7 +233,7 @@ class AppContent extends React.Component {
     };
 
     let dateMap = {};
-    filesSummary.count_per_date.forEach((data) => {
+    filesSummary.count.date.forEach((data) => {
       dateMap[data.date] = Object.keys(dateMap).length;
     });
 
@@ -269,7 +269,7 @@ class AppContent extends React.Component {
       row.files.push(file);
 
       if (date !== lastDate) {
-        const countOnDate = filesSummary.count_per_date[dateMap[date]].count;
+        const countOnDate = filesSummary.count.date[dateMap[date]].count;
         // TODO: if that fails, it means, that it's very likely, that we are doing
         //   scanning in the background. It finds an image on newer date,
         //   but that date does not yet exist in the summary,

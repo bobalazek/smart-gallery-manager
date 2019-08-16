@@ -13,6 +13,10 @@ const initialState = {
   filesMap: [],
   filesSummary: {},
   orderBy: 'taken_at',
+  selectedType: null,
+  selectedYear: null,
+  selectedMonth: null,
+  selectedDate: null,
 };
 
 const rootReducer = (state = JSON.parse(JSON.stringify(initialState)), action) => {

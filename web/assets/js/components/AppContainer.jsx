@@ -22,6 +22,7 @@ const styles = {
     flexShrink: 0,
     width: 200,
     position: 'static',
+    paddingRight: 20,
   },
   contentWrapper: {
     flexGrow: 1,

@@ -97,11 +97,18 @@ class ApiController extends AbstractController
 
         return $this->json([
             'data' => [
-                'count_per_date' => $countPerDate,
-                'count_per_month' => $countPerMonth,
-                'count_per_year' => $countPerYear,
+                'count' => [
+                    'date' => $countPerDate,
+                    'month' => $countPerMonth,
+                    'year' => $countPerYear,
+                ],
+                'types' => [
+                    ['type' => 'image', 'count' => 0],
+                    ['type' => 'video', 'count' => 0],
+                    ['type' => 'audio', 'count' => 0],
+                    ['type' => 'other', 'count' => 0],
+                ],
             ],
-            'meta' => [],
         ]);
     }
 

@@ -68,4 +68,8 @@ Encore
     //.addEntry('admin', './assets/js/admin.js')
 ;
 
+Encore.configureWatchOptions(watchOptions => {
+    watchOptions.poll = 250;
+});
+
 module.exports = Encore.getWebpackConfig();

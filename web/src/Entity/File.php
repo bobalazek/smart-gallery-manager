@@ -15,6 +15,7 @@ class File
     /***** Types *****/
     const TYPE_IMAGE = 'image';
     const TYPE_VIDEO = 'video';
+    const TYPE_AUDIO = 'audio';
     const TYPE_OTHER = 'other';
 
     /**
