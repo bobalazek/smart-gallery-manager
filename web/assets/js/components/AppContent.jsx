@@ -37,12 +37,18 @@ const styles = {
     marginLeft: -40,
     zIndex: 9999,
   },
+  infiniteLoaderContainer: {
+    width: '100%',
+    display: 'flex',
+    flexGrow: 1,
+    position: 'relative',
+  },
   infiniteLoader: {
     position: 'relative',
     width: '100%',
     display: 'flex',
     flexGrow: 1,
-    minHeight: 64,
+    minHeight: 320,
   },
   infiniteLoaderInner: {
     height: '100%',
@@ -60,6 +66,10 @@ const mapStateToProps = state => {
     filesMap: state.filesMap,
     filesSummary: state.filesSummary,
     orderBy: state.orderBy,
+    selectedType: state.selectedType,
+    selectedYear: state.selectedYear,
+    selectedMonth: state.selectedMonth,
+    selectedDate: state.selectedDate,
   };
 };
 
@@ -79,6 +89,8 @@ class AppContent extends React.Component {
 
     // Infinite loader
     this.infiniteLoaderContainerRef = React.createRef();
+    this.infiniteLoaderRef = React.createRef();
+    this.infiniteLoaderListRef = React.createRef();
 
     this.maxFilesPerRow = 40;
 
@@ -96,6 +108,17 @@ class AppContent extends React.Component {
     this.fetchFilesSummary();
   }
 
+  componentDidUpdate(prevProps) {
+    if (
+      prevProps.selectedType !== this.props.selectedType ||
+      prevProps.selectedYear !== this.props.selectedYear ||
+      prevProps.selectedMonth !== this.props.selectedMonth ||
+      prevProps.selectedDate !== this.props.selectedDate
+    ) {
+      this.fetchFilesSummary();
+    }
+  }
+
   onOrderChange(event) {
     const orderBy = event.target.value;
 
@@ -105,13 +128,31 @@ class AppContent extends React.Component {
   }
 
   fetchFilesSummary(orderBy) {
+    const {
+      selectedYear,
+      selectedMonth,
+      selectedDate,
+    } = this.props;
+
     if (!orderBy) {
       orderBy = this.props.orderBy;
     }
 
     this.props.setData('isLoading', true);
 
-    axios.get(rootUrl + '/api/files/summary?order_by=' + orderBy)
+    let url = rootUrl + '/api/files/summary?order_by=' + orderBy;
+
+    if (selectedYear) {
+      url += '&year=' + selectedYear;
+    }
+    if (selectedMonth) {
+      url += '&month=' + selectedMonth;
+    }
+    if (selectedDate) {
+      url += '&date=' + selectedDate;
+    }
+
+    axios.get(url)
       .then(res => {
         const filesSummary = res.data.data;
         let rowsIndexes = [];
@@ -138,6 +179,8 @@ class AppContent extends React.Component {
         });
 
         this.cache.clearAll();
+        this.infiniteLoaderRef.current.resetLoadMoreRowsCache(true);
+        this.infiniteLoaderListRef.recomputeRowHeights();
       });
   }
 
@@ -177,41 +220,40 @@ class AppContent extends React.Component {
             className={classes.infiniteLoaderContainer}
             ref={this.infiniteLoaderContainerRef}
           >
-            <InfiniteLoader
-              loadMoreRows={this._loadMoreRows}
-              isRowLoaded={this._isRowLoaded}
-              rowCount={this._getRowCount()}
-            >
-              {({ onRowsRendered, registerChild }) => (
-                <div className={classes.infiniteLoader}>
-                  <div className={classes.infiniteLoaderInner}>
-                    <AutoSizer>
-                      {({ height, width }) => (
-                        <WindowScroller>
-                          {({ height, isScrolling, onChildScroll, scrollTop }) => (
-                            <List
-                              autoHeight
-                              height={height}
-                              width={width}
-                              overscanRowCount={3}
-                              onRowsRendered={onRowsRendered}
-                              rowCount={this._getRowCount()}
-                              rowHeight={this.cache.rowHeight}
-                              rowRenderer={this._rowRenderer}
-                              deferredMeasurementCache={this.cache}
-                              isScrolling={isScrolling}
-                              onScroll={onChildScroll}
-                              scrollTop={scrollTop}
-                              ref={registerChild}
-                            />
-                        )}
-                        </WindowScroller>
-                      )}
-                    </AutoSizer>
-                  </div>
-                </div>
+            <AutoSizer disableHeight>
+              {({ width }) => (
+                <InfiniteLoader
+                  loadMoreRows={this._loadMoreRows}
+                  isRowLoaded={this._isRowLoaded}
+                  rowCount={this._getRowCount()}
+                  ref={this.infiniteLoaderRef}
+                >
+                  {({ onRowsRendered, registerChild }) => (
+                    <WindowScroller>
+                      {({ height, isScrolling, onChildScroll, scrollTop }) => (
+                        <List
+                          autoHeight
+                          height={height}
+                          width={width}
+                          onRowsRendered={onRowsRendered}
+                          rowCount={this._getRowCount()}
+                          rowHeight={this.cache.rowHeight}
+                          rowRenderer={this._rowRenderer}
+                          deferredMeasurementCache={this.cache}
+                          isScrolling={isScrolling}
+                          onScroll={onChildScroll}
+                          scrollTop={scrollTop}
+                          ref={el => {
+                            this.infiniteLoaderListRef = el;
+                            registerChild(el);
+                          }}
+                        />
+                    )}
+                    </WindowScroller>
+                  )}
+                </InfiniteLoader>
               )}
-            </InfiniteLoader>
+            </AutoSizer>
           </div>
         )}
       </div>
@@ -296,6 +338,12 @@ class AppContent extends React.Component {
       lastDate = date;
     });
 
+    // It's very likely that there will be remaining rows after the loop,
+    //   so add them to the rows.
+    if (row.files.length > 0) {
+      rows.push(row);
+    }
+
     this.props.setData('rows', rows);
   }
 
@@ -342,14 +390,14 @@ class AppContent extends React.Component {
 
             resolve();
           });
-      }, 500);
+      }, 200);
     });
   }
 
   _isRowLoaded({ index }) {
     const { rows } = this.props;
 
-    return typeof rows[index] !== 'undefined';
+    return !!rows[index];
   }
 
   _getRowCount() {

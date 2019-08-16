@@ -44,7 +44,17 @@ class AppSidebar extends React.Component {
   constructor(props) {
     super(props);
 
+    this.onClickType = this.onClickType.bind(this);
     this.onClickDate = this.onClickDate.bind(this);
+  }
+
+  onClickType(type) {
+    this.props.setData(
+      'selectedType',
+      this.props.selectedType === type
+        ? null
+        : type
+    );
   }
 
   onClickDate(date, type) {
@@ -113,6 +123,7 @@ class AppSidebar extends React.Component {
             <ListItem
               key={entry.type}
               button
+              onClick={this.onClickType.bind(this, entry.type)}
             >
               <ListItemText
                 primary={(

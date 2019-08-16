@@ -6,6 +6,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Mime\MimeTypes;
@@ -16,8 +17,14 @@ use App\Entity\File;
 
 class ApiController extends AbstractController
 {
-    public function __construct(ParameterBagInterface $params, EntityManagerInterface $em, FileManager $fileManager)
+    public function __construct(
+        RequestStack $requestStack,
+        ParameterBagInterface $params,
+        EntityManagerInterface $em,
+        FileManager $fileManager
+    )
     {
+        $this->requestStack = $requestStack;
         $this->params = $params;
         $this->em = $em;
         $this->fileManager = $fileManager;
@@ -60,9 +67,11 @@ class ApiController extends AbstractController
             ->where('f.type = :type')
             ->groupBy('filesDate')
             ->orderBy('filesDate', 'DESC')
-            ->setParameter('type', 'image')
-            ->getQuery()
-            ->getResult();
+            ->setParameter('type', 'image');
+
+        $files = $this->_applyQueryFilters($files, $orderByParameter);
+
+        $files = $files->getQuery()->getResult();
         foreach ($files as $file) {
             $count = (int)$file['filesCount'];
             $date = $file['filesDate'];
@@ -123,6 +132,9 @@ class ApiController extends AbstractController
         $limit = $request->get('limit');
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
+        $year = $request->get('year');
+        $month = $request->get('month');
+        $date = $request->get('date');
         $orderBy = $request->get('order_by', 'taken_at');
         if (!in_array($orderBy, ['taken_at', 'created_at'])) {
             return $this->json([
@@ -164,6 +176,8 @@ class ApiController extends AbstractController
                 ->setParameter('date_to', new \DateTime($dateTo . ' 23:59:59'))
             ;
         }
+
+        $files = $this->_applyQueryFilters($files, $orderByParameter);
 
         $files = $files->getQuery()->getResult();
 
@@ -215,6 +229,9 @@ class ApiController extends AbstractController
 
     /**
      * Get's the file urls
+     *
+     * @param File $file
+     * @param string $format
      */
     private function _getFileImages(File $file, $format = 'jpg')
     {
@@ -261,5 +278,46 @@ class ApiController extends AbstractController
         }
 
         return $response;
+    }
+
+    /**
+     * Applies all the query filters
+     *
+     * @param $query
+     * @param string $dateField
+     */
+    private function _applyQueryFilters($query, $dateField)
+    {
+        $request = $this->requestStack->getCurrentRequest();
+
+        $year = $request->get('year');
+        $month = $request->get('month');
+        $date = $request->get('date');
+
+        if ($year) {
+            $query
+                ->andWhere('YEAR(f.' . $dateField . ') = :year')
+                ->setParameter('year', $year);
+            ;
+        }
+        if ($month) {
+            if (strpos($month, '-') !== false) {
+                $monthExploded = explode('-', $month);
+                $month = $monthExploded[1];
+            }
+
+            $query
+                ->andWhere('MONTH(f.' . $dateField . ') = :month')
+                ->setParameter('month', $month);
+            ;
+        }
+        if ($date) {
+            $query
+                ->andWhere('DATE(f.' . $dateField . ') = :date')
+                ->setParameter('date', $date);
+            ;
+        }
+
+        return $query;
     }
 }
