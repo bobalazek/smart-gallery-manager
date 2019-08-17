@@ -1,4 +1,5 @@
 import React from 'react';
+import moment from 'moment';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -7,7 +8,10 @@ import List from '@material-ui/core/List';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import { setData } from '../actions/index';
+import {
+  setData,
+  setDataBatch,
+} from '../actions/index';
 
 const styles = {
   root: {
@@ -37,6 +41,7 @@ const mapStateToProps = state => {
 function mapDispatchToProps(dispatch) {
   return {
     setData: (type, data) => dispatch(setData(type, data)),
+    setDataBatch: (data) => dispatch(setDataBatch(data)),
   };
 }
 
@@ -59,19 +64,32 @@ class AppSidebar extends React.Component {
 
   onClickDate(date, type) {
     if (type === 'year') {
-      this.props.setData(
-        'selectedYear',
-        this.props.selectedYear === date
-          ? null
-          : date
-      );
+      const isAlreadySet = this.props.selectedYear === date;
+      if (isAlreadySet) {
+        this.props.setDataBatch({
+          selectedYear: null,
+          selectedMonth: null,
+          selectedDate: null,
+        });
+      } else {
+        this.props.setData(
+          'selectedYear',
+          date
+        );
+      }
     } else if (type === 'month') {
-      this.props.setData(
-        'selectedMonth',
-        this.props.selectedMonth === date
-          ? null
-          : date
-      );
+      const isAlreadySet = this.props.selectedMonth === date;
+      if (isAlreadySet) {
+        this.props.setDataBatch({
+          selectedMonth: null,
+          selectedDate: null,
+        });
+      } else {
+        this.props.setData(
+          'selectedMonth',
+          date
+        );
+      }
     } else if (type === 'date') {
       this.props.setData(
         'selectedDate',
@@ -99,6 +117,7 @@ class AppSidebar extends React.Component {
     const {
       classes,
       filesSummary,
+      selectedType,
     } = this.props;
 
     const types = filesSummary && filesSummary.types
@@ -124,6 +143,7 @@ class AppSidebar extends React.Component {
               key={entry.type}
               button
               onClick={this.onClickType.bind(this, entry.type)}
+              selected={selectedType === entry.type}
             >
               <ListItemText
                 primary={(
@@ -144,7 +164,6 @@ class AppSidebar extends React.Component {
     const {
       classes,
       filesSummary,
-      selectedType,
       selectedYear,
       selectedMonth,
       selectedDate,
@@ -220,7 +239,7 @@ class AppSidebar extends React.Component {
                                 <ListItemText
                                   primary={(
                                     <React.Fragment>
-                                      {subSubEntry.date}
+                                      {moment(subSubEntry.date).format('Do')}
                                       <span className={classes.listItemCount}>{subSubEntry.count}</span>
                                     </React.Fragment>
                                   )}
@@ -243,7 +262,7 @@ class AppSidebar extends React.Component {
                         <ListItemText
                           primary={(
                             <React.Fragment>
-                              {subEntry.date}
+                              {moment(subEntry.date).format('MMMM')}
                               <span className={classes.listItemCount}>{subEntry.count}</span>
                             </React.Fragment>
                           )}

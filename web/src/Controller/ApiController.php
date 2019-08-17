@@ -11,6 +11,7 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Mime\MimeTypes;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\QueryBuilder;
 use Intervention\Image\ImageManager;
 use App\Manager\FileManager;
 use App\Entity\File;
@@ -51,30 +52,28 @@ class ApiController extends AbstractController
                 ],
             ], 500);
         }
-        $orderByParameter = $orderBy === 'taken_at'
+        $dateField = $orderBy === 'taken_at'
             ? 'takenAt'
             : 'createdAt';
 
+        /***** Count *****/
         $countPerDate = [];
         $countPerMonth = [];
         $countPerMonthMap = [];
         $countPerYear = [];
         $countPerYearMap = [];
 
-        $files = $this->em->createQueryBuilder()
-            ->select('DATE_FORMAT(f.' . $orderByParameter . ', \'%Y-%m-%d\') as filesDate, COUNT(f.id) as filesCount')
+        $filesCountQueryBuilder = $this->em->createQueryBuilder()
+            ->select('DATE_FORMAT(f.' . $dateField . ', \'%Y-%m-%d\') as filesDate, COUNT(f.id) as filesCount')
             ->from(File::class, 'f')
-            ->where('f.type = :type')
             ->groupBy('filesDate')
-            ->orderBy('filesDate', 'DESC')
-            ->setParameter('type', 'image');
+            ->orderBy('filesDate', 'DESC');
+        $this->_applyQueryFilters($filesCountQueryBuilder, $dateField);
 
-        $files = $this->_applyQueryFilters($files, $orderByParameter);
-
-        $files = $files->getQuery()->getResult();
-        foreach ($files as $file) {
-            $count = (int)$file['filesCount'];
-            $date = $file['filesDate'];
+        $filesCount = $filesCountQueryBuilder->getQuery()->getResult();
+        foreach ($filesCount as $filesCount) {
+            $count = (int)$filesCount['filesCount'];
+            $date = $filesCount['filesDate'];
 
             $datetime = new \DateTime($date);
             $month = $datetime->format('Y-m');
@@ -104,6 +103,23 @@ class ApiController extends AbstractController
             $countPerYear[$countPerYearMap[$year]]['count'] += $count;
         }
 
+        /***** Types *****/
+        $types = [];
+
+        $fileTypeCountQueryBuilder = $this->em->createQueryBuilder()
+            ->select('f.type as fileType, COUNT(f.id) as fileTypeCount')
+            ->from(File::class, 'f')
+            ->groupBy('f.type');
+        $this->_applyQueryFilters($fileTypeCountQueryBuilder, $dateField);
+
+        $fileTypeCount = $fileTypeCountQueryBuilder->getQuery()->getResult();
+        foreach ($fileTypeCount as $fileTypeCountSingle) {
+            $types[] = [
+                'type' => $fileTypeCountSingle['fileType'],
+                'count' => $fileTypeCountSingle['fileTypeCount'],
+            ];
+        }
+
         return $this->json([
             'data' => [
                 'count' => [
@@ -111,12 +127,7 @@ class ApiController extends AbstractController
                     'month' => $countPerMonth,
                     'year' => $countPerYear,
                 ],
-                'types' => [
-                    ['type' => 'image', 'count' => 0],
-                    ['type' => 'video', 'count' => 0],
-                    ['type' => 'audio', 'count' => 0],
-                    ['type' => 'other', 'count' => 0],
-                ],
+                'types' => $types,
             ],
         ]);
     }
@@ -143,7 +154,7 @@ class ApiController extends AbstractController
                 ],
             ], 500);
         }
-        $orderByParameter = $orderBy === 'taken_at'
+        $dateField = $orderBy === 'taken_at'
             ? 'takenAt'
             : 'createdAt';
 
@@ -151,7 +162,7 @@ class ApiController extends AbstractController
             ->select('f')
             ->from(File::class, 'f')
             ->where('f.type = :type')
-            ->orderBy('f.' . $orderByParameter, 'DESC')
+            ->orderBy('f.' . $dateField, 'DESC')
             ->setParameter('type', 'image')
         ;
 
@@ -165,25 +176,25 @@ class ApiController extends AbstractController
 
         if ($dateFrom) {
             $files
-                ->andWhere('f.' . $orderByParameter . ' >= :date_from')
+                ->andWhere('f.' . $dateField . ' >= :date_from')
                 ->setParameter('date_from', new \DateTime($dateFrom . ' 00:00:00'))
             ;
         }
 
         if ($dateTo) {
             $files
-                ->andWhere('f.' . $orderByParameter . ' <= :date_to')
+                ->andWhere('f.' . $dateField . ' <= :date_to')
                 ->setParameter('date_to', new \DateTime($dateTo . ' 23:59:59'))
             ;
         }
 
-        $files = $this->_applyQueryFilters($files, $orderByParameter);
+        $this->_applyQueryFilters($files, $dateField);
 
         $files = $files->getQuery()->getResult();
 
         $data = [];
         foreach ($files as $file) {
-            $method = 'get' . ucfirst($orderByParameter);
+            $method = 'get' . ucfirst($dateField);
             $datetime = $file->$method();
             $data[] = [
                 'id' => $file->getId(),
@@ -283,19 +294,26 @@ class ApiController extends AbstractController
     /**
      * Applies all the query filters
      *
-     * @param $query
+     * @param QueryBuilder $query
      * @param string $dateField
      */
-    private function _applyQueryFilters($query, $dateField)
+    private function _applyQueryFilters(QueryBuilder $queryBuilder, $dateField)
     {
         $request = $this->requestStack->getCurrentRequest();
 
+        $type = $request->get('type');
         $year = $request->get('year');
         $month = $request->get('month');
         $date = $request->get('date');
 
+        if ($type) {
+            $queryBuilder
+                ->andWhere('f.type = :type')
+                ->setParameter('type', $type);
+            ;
+        }
         if ($year) {
-            $query
+            $queryBuilder
                 ->andWhere('YEAR(f.' . $dateField . ') = :year')
                 ->setParameter('year', $year);
             ;
@@ -306,18 +324,18 @@ class ApiController extends AbstractController
                 $month = $monthExploded[1];
             }
 
-            $query
+            $queryBuilder
                 ->andWhere('MONTH(f.' . $dateField . ') = :month')
                 ->setParameter('month', $month);
             ;
         }
         if ($date) {
-            $query
+            $queryBuilder
                 ->andWhere('DATE(f.' . $dateField . ') = :date')
                 ->setParameter('date', $date);
             ;
         }
 
-        return $query;
+        return $queryBuilder;
     }
 }

@@ -128,29 +128,9 @@ class AppContent extends React.Component {
   }
 
   fetchFilesSummary(orderBy) {
-    const {
-      selectedYear,
-      selectedMonth,
-      selectedDate,
-    } = this.props;
-
-    if (!orderBy) {
-      orderBy = this.props.orderBy;
-    }
-
     this.props.setData('isLoading', true);
 
-    let url = rootUrl + '/api/files/summary?order_by=' + orderBy;
-
-    if (selectedYear) {
-      url += '&year=' + selectedYear;
-    }
-    if (selectedMonth) {
-      url += '&month=' + selectedMonth;
-    }
-    if (selectedDate) {
-      url += '&date=' + selectedDate;
-    }
+    let url = rootUrl + '/api/files/summary' + this.getFiltersQuery(orderBy);
 
     axios.get(url)
       .then(res => {
@@ -182,6 +162,35 @@ class AppContent extends React.Component {
         this.infiniteLoaderRef.current.resetLoadMoreRowsCache(true);
         this.infiniteLoaderListRef.recomputeRowHeights();
       });
+  }
+
+  getFiltersQuery(orderBy) {
+    const {
+      selectedType,
+      selectedYear,
+      selectedMonth,
+      selectedDate,
+    } = this.props;
+
+    if (!orderBy) {
+      orderBy = this.props.orderBy;
+    }
+
+    let query = '?order_by=' + orderBy;
+    if (selectedType) {
+      query += '&type=' + selectedType;
+    }
+    if (selectedYear) {
+      query += '&year=' + selectedYear;
+    }
+    if (selectedMonth) {
+      query += '&month=' + selectedMonth;
+    }
+    if (selectedDate) {
+      query += '&date=' + selectedDate;
+    }
+
+    return query;
   }
 
   render() {
@@ -348,10 +357,7 @@ class AppContent extends React.Component {
   }
 
   _loadMoreRows({ startIndex, stopIndex }) {
-    const {
-      rowsIndexes,
-      orderBy,
-    } = this.props;
+    const { rowsIndexes } = this.props;
 
     const dateFrom = rowsIndexes[stopIndex];
     const dateTo = rowsIndexes[startIndex];
@@ -361,7 +367,8 @@ class AppContent extends React.Component {
       this.loadRowsTimeout = setTimeout(() => {
         this.props.setData('isLoading', true);
 
-        const url = rootUrl + '/api/files?order_by=' + orderBy +
+        const url = rootUrl + '/api/files' +
+          this.getFiltersQuery() +
           '&date_from=' + dateFrom +
           '&date_to=' + dateTo;
 
