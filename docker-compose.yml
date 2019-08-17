@@ -2,6 +2,7 @@ version: '3.7'
 
 services:
 #  mariadb:
+#    container_name: sgm_mariadb
 #    build: ./docker/mariadb
 #    privileged: true
 #    environment:
@@ -12,6 +13,7 @@ services:
 #    networks:
 #      - app-network
   nginx:
+    container_name: sgm_nginx
     build: ./docker/nginx
     privileged: true
     volumes:
@@ -29,14 +31,18 @@ services:
     networks:
       - app-network
   php-fpm:
+    container_name: sgm_phpfpm
     build: ./docker/php-fpm
     privileged: true
     volumes:
       - .:/var/www
-      - server-nfs:/var/data
+      # Add your own data below, inside the /var/data directory, for example:
+      # - server-nfs:/var/data/server
+      - server-nfs:/var/data/server
     networks:
       - app-network
   node:
+    container_name: sgm_node
     build: ./docker/node
     privileged: true
     volumes:
@@ -44,14 +50,22 @@ services:
     networks:
       - app-network
   python:
+    container_name: sgm_python
     build: ./docker/python
     privileged: true
+    volumes:
+      - .:/usr/src/app
+      # Read the comment above in php-fpm.volumes. They MUST be the same paths!!!
+      - server-nfs:/var/data/server
+    ports:
+      - "${PYTHON_PORT_8000}:8000"
     networks:
       - app-network
 networks:
   app-network:
     driver: bridge
 volumes:
+  # Add your own volumes, where your data is located down below
   server-nfs:
     driver: local
     driver_opts:

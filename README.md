@@ -2,7 +2,11 @@
 
 ## Development
 
+* (optional) Set stuff in `.env` (nginx ports only for now)
 * Run: `docker-compose build`, and then `docker-compose up`
+* Add your data sources inside `docker-compose.yml`, and then in `settings.yml`
+* Prepare the database by running `php bin/console doctrine:schema:update -f` inside the `sgm_phpfpm` container
+* (optional) To add the images via PHP, also run `php bin/console app:files:scan` in the same container
 * Visit: http://localhost:81 (or whichever port you set in `.env`)
 
 ### Frontend

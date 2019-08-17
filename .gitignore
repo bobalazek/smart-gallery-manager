@@ -1,3 +1,6 @@
 /settings.yml
 /var/**
 !/var/.gitkeep
+
+__pycache__/
+*.py[cod]
