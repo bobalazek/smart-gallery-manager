@@ -218,7 +218,7 @@ class File
                         : null));
             $size = isset($exif['FILE']['FileSize'])
                 ? $exif['FILE']['FileSize']
-                : null;
+                : filesize($this->getPath());
             $width = isset($exif['EXIF']['ExifImageWidth'])
                 ? $exif['EXIF']['ExifImageWidth']
                 : (isset($exif['COMPUTED']['Width'])

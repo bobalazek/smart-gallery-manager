@@ -11,11 +11,14 @@ import {
   List,
 } from 'react-virtualized';
 import { withStyles } from '@material-ui/styles';
+import Grid from '@material-ui/core/Grid';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
+import TextField from '@material-ui/core/TextField';
+import OutlinedInput from '@material-ui/core/OutlinedInput';
 import Image from './Image';
 import ImageGrid from './ImageGrid';
 import {
@@ -67,6 +70,7 @@ const mapStateToProps = state => {
     filesSummary: state.filesSummary,
     filesSummaryDatetime: state.filesSummaryDatetime,
     orderBy: state.orderBy,
+    search: state.search,
     selectedType: state.selectedType,
     selectedYear: state.selectedYear,
     selectedMonth: state.selectedMonth,
@@ -85,7 +89,7 @@ class AppContent extends React.Component {
   constructor(props) {
     super(props);
 
-    this.onOrderChange = this.onOrderChange.bind(this);
+    this.onChange = this.onChange.bind(this);
     this.fetchFilesSummary = this.fetchFilesSummary.bind(this);
 
     // Infinite loader
@@ -120,12 +124,20 @@ class AppContent extends React.Component {
     }
   }
 
-  onOrderChange(event) {
-    const orderBy = event.target.value;
+  onChange(event) {
+    const name = event.target.name;
+    const value = event.target.value;
 
-    this.props.setData('orderBy', orderBy);
+    this.props.setData(name, value);
 
-    this.fetchFilesSummary(orderBy);
+    if (name === 'orderBy') {
+      this.fetchFilesSummary(value);
+    } else {
+      clearTimeout(this.searchTimer)
+      this.searchTimer = setTimeout(() => {
+        this.fetchFilesSummary();
+      }, 500);
+    }
   }
 
   fetchFilesSummary(orderBy) {
@@ -166,19 +178,17 @@ class AppContent extends React.Component {
       });
   }
 
-  getFiltersQuery(orderBy) {
+  getFiltersQuery(forcedOrderBy) {
     const {
       selectedType,
       selectedYear,
       selectedMonth,
       selectedDate,
+      orderBy,
+      search,
     } = this.props;
 
-    if (!orderBy) {
-      orderBy = this.props.orderBy;
-    }
-
-    let query = '?order_by=' + orderBy;
+    let query = '?order_by=' + (forcedOrderBy ? forcedOrderBy : orderBy);
     if (selectedType) {
       query += '&type=' + selectedType;
     }
@@ -191,6 +201,9 @@ class AppContent extends React.Component {
     if (selectedDate) {
       query += '&date=' + selectedDate;
     }
+    if (search) {
+      query += '&search=' + encodeURIComponent(search);
+    }
 
     return query;
   }
@@ -202,6 +215,7 @@ class AppContent extends React.Component {
       isLoading,
       isLoaded,
       orderBy,
+      search,
     } = this.props;
 
     return (
@@ -211,18 +225,36 @@ class AppContent extends React.Component {
             <CircularProgress size={80} />
           </div>
         )}
-        <div style={{ marginBottom: 20 }}>
-          <FormControl>
-            <Select
-              value={orderBy}
-              onChange={this.onOrderChange}
-              name="orderBy"
-            >
-              <MenuItem value={'taken_at'}>Date taken</MenuItem>
-              <MenuItem value={'created_at'}>Date created</MenuItem>
-            </Select>
-          </FormControl>
-        </div>
+        <Grid
+          container
+          justify="space-between"
+          style={{ marginBottom: 20 }}
+        >
+          <Grid item>
+            <FormControl variant="outlined">
+              <Select
+                name="orderBy"
+                value={orderBy}
+                onChange={this.onChange}
+                input={<OutlinedInput name="age" />}
+              >
+                <MenuItem value={'taken_at'}>Date taken</MenuItem>
+                <MenuItem value={'created_at'}>Date created</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item>
+            <TextField
+              name="search"
+              label="Search"
+              type="search"
+              variant="outlined"
+              fullWidth
+              value={search}
+              onChange={this.onChange}
+            />
+          </Grid>
+        </Grid>
         {!isLoading && isLoaded && files.length === 0 &&
           <div>No files found.</div>
         }

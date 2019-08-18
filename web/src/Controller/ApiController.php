@@ -143,9 +143,6 @@ class ApiController extends AbstractController
         $limit = $request->get('limit');
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
-        $year = $request->get('year');
-        $month = $request->get('month');
-        $date = $request->get('date');
         $orderBy = $request->get('order_by', 'taken_at');
         if (!in_array($orderBy, ['taken_at', 'created_at'])) {
             return $this->json([
@@ -158,37 +155,37 @@ class ApiController extends AbstractController
             ? 'takenAt'
             : 'createdAt';
 
-        $files = $this->em->createQueryBuilder()
+        $filesQueryBuilder = $this->em->createQueryBuilder()
             ->select('f')
             ->from(File::class, 'f')
             ->orderBy('f.' . $dateField, 'DESC')
         ;
 
         if ($offset) {
-            $files->setFirstResult((int)$offset);
+            $filesQueryBuilder->setFirstResult((int)$offset);
         }
 
         if ($limit) {
-            $files->setMaxResults((int)$limit);
+            $filesQueryBuilder->setMaxResults((int)$limit);
         }
 
         if ($dateFrom) {
-            $files
+            $filesQueryBuilder
                 ->andWhere('f.' . $dateField . ' >= :date_from')
                 ->setParameter('date_from', new \DateTime($dateFrom . ' 00:00:00'))
             ;
         }
 
         if ($dateTo) {
-            $files
+            $filesQueryBuilder
                 ->andWhere('f.' . $dateField . ' <= :date_to')
                 ->setParameter('date_to', new \DateTime($dateTo . ' 23:59:59'))
             ;
         }
 
-        $this->_applyQueryFilters($files, $dateField);
+        $this->_applyQueryFilters($filesQueryBuilder, $dateField);
 
-        $files = $files->getQuery()->getResult();
+        $files = $filesQueryBuilder->getQuery()->getResult();
 
         $data = [];
         foreach ($files as $file) {
@@ -315,6 +312,7 @@ class ApiController extends AbstractController
         $month = $request->get('month');
         $date = $request->get('date');
         $createdBefore = $request->get('created_before');
+        $search = $request->get('search');
 
         if ($type) {
             $queryBuilder
@@ -349,6 +347,18 @@ class ApiController extends AbstractController
             $queryBuilder
                 ->andWhere('f.createdAt < :created_before')
                 ->setParameter('created_before', new \DateTime($createdBefore));
+            ;
+        }
+        if ($search) {
+            $search = rawurldecode($search);
+            $queryBuilder
+                ->andWhere('
+                    f.path LIKE :search OR
+                    f.type LIKE :search OR
+                    f.mime LIKE :search OR
+                    f.extension LIKE :search
+                ')
+                ->setParameter('search', '%' . $search . '%');
             ;
         }
 
