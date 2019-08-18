@@ -279,6 +279,17 @@ class ApiController extends AbstractController
                 }
             }
 
+            if ($width === 0 || $height === 0) {
+                // It seems to be an invalid image. Simply return a "404 not found" image
+                $width = 800;
+                $height = 600;
+                $src = $src = $this->generateUrl(
+                    'index',
+                    [],
+                    UrlGeneratorInterface::ABSOLUTE_URL
+                ) . 'img/404.jpg';
+            }
+
             $response[$imageType] = [
                 'src' => $src,
                 'width' => $width,
