@@ -39,6 +39,10 @@ services:
       # Add your own data below, inside the /var/data directory, for example:
       # - server-nfs:/var/data/server
       - server-nfs:/var/data/server
+    links:
+      - python
+    depends_on:
+      - python
     networks:
       - app-network
   node:

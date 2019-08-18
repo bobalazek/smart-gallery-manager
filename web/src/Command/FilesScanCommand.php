@@ -130,11 +130,6 @@ class FilesScanCommand extends Command
                         )
                     );
 
-                // TODO: also process other types
-                if ($fileType !== File::TYPE_IMAGE) {
-                    continue;
-                }
-
                 $file = $filesRepository->findOneByHash($fileHash);
 
                 // TODO: instead of just skipping, maybe check if it's dirty?
@@ -143,13 +138,13 @@ class FilesScanCommand extends Command
                 }
 
                 $fileData = [];
-                if ($fileType === File::TYPE_IMAGE) {
+                try {
                     $image = $this->fileManager->getImage($filePath);
                     $fileData['image'] = [
                         'width' => $image->width(),
                         'height' => $image->height(),
                     ];
-                }
+                } catch (\Exception $e) {}
 
                 $file = new File();
                 $file
@@ -179,7 +174,7 @@ class FilesScanCommand extends Command
 
                 /********** Cache **********/
                 try {
-                    foreach ($allowedImageConversionTypes as $imageType => $imaageTypeData) {
+                    foreach ($allowedImageConversionTypes as $imageType => $imageTypeData) {
                         $this->fileManager->generateImageCache(
                             $file,
                             $imageType,

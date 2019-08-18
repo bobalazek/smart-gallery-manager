@@ -161,9 +161,7 @@ class ApiController extends AbstractController
         $files = $this->em->createQueryBuilder()
             ->select('f')
             ->from(File::class, 'f')
-            ->where('f.type = :type')
             ->orderBy('f.' . $dateField, 'DESC')
-            ->setParameter('type', 'image')
         ;
 
         if ($offset) {

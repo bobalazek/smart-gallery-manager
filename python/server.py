@@ -1,6 +1,6 @@
-import json
+import simplejson as json
 from http.server import BaseHTTPRequestHandler
-from router import do_action
+from processor import do_action
 
 # https://medium.com/@andrewklatzke/creating-a-python3-webserver-from-the-ground-up-4ff8933ecb96
 
@@ -15,15 +15,13 @@ class Server(BaseHTTPRequestHandler):
         return
 
     def handle_http(self):
-        status = 200
-        content_type = "application/json"
-        response_content = do_action(self.path)
+        action_response = do_action(self.path)
 
-        self.send_response(status)
-        self.send_header("Content-type", content_type)
+        self.send_response(action_response["status"])
+        self.send_header("Content-type", action_response["type"])
         self.end_headers()
 
-        return bytes(json.dumps(response_content), "UTF-8")
+        return bytes(json.dumps(action_response["content"]), "UTF-8")
 
     def respond(self):
         content = self.handle_http()

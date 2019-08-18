@@ -66,16 +66,42 @@ class ImageModalSidebar extends React.Component {
         fileInformation.processed_meta
         ? (
           <React.Fragment>
-            Path: {fileInformation.path} <br />
-            Megapixels: {(fileInformation.processed_meta.dimensions.total / 1000000).toFixed(1)}MP <br />
-            Size: {fileInformation.processed_meta.dimensions.width + 'x' + fileInformation.processed_meta.dimensions.height} <br />
-            File size: {(fileInformation.processed_meta.size / 1024 / 1024).toFixed(1)}MB
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.path
+              ? 'Path: ' + fileInformation.path + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.size
+              ? 'File size: ' + (fileInformation.processed_meta.size / 1024 / 1024).toFixed(1) + 'MB <br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.megapixels
+              ? 'Megapixels: ' + (fileInformation.processed_meta.megapixels / 1000000).toFixed(1) + 'MP <br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.width
+              && fileInformation.processed_meta.height
+              ? 'Size: ' + (fileInformation.processed_meta.width + 'x' + fileInformation.processed_meta.height)
+              : '' }} />
           </React.Fragment>
         )
         : '',
+      hasDeviceData: fileInformation &&
+        fileInformation.processed_meta &&
+        fileInformation.processed_meta.device &&
+        (
+          fileInformation.processed_meta.device.make ||
+          fileInformation.processed_meta.device.model ||
+          fileInformation.processed_meta.device.shutter_speed ||
+          fileInformation.processed_meta.device.aperature ||
+          fileInformation.processed_meta.device.iso ||
+          fileInformation.processed_meta.device.focal_length ||
+          fileInformation.processed_meta.device.lens_make ||
+          fileInformation.processed_meta.device.lens_model
+        ),
       devicePrimary: fileInformation &&
         fileInformation.processed_meta &&
-        fileInformation.processed_meta.device
+        fileInformation.processed_meta.device &&
+        (
+          fileInformation.processed_meta.device.make ||
+          fileInformation.processed_meta.device.model
+        )
         ? fileInformation.processed_meta.device.make + ' ' + fileInformation.processed_meta.device.model
         : '',
       deviceSecondary: fileInformation &&
@@ -93,7 +119,13 @@ class ImageModalSidebar extends React.Component {
               ? 'Focal length: ' + fileInformation.processed_meta.device.focal_length + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.device.iso
-              ? 'ISO: ' + fileInformation.processed_meta.device.iso
+              ? 'ISO: ' + fileInformation.processed_meta.device.iso + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.device.lens_make
+              ? 'Lens make: ' + fileInformation.processed_meta.device.lens_make + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.device.lens_model
+              ? 'Lens model: ' + fileInformation.processed_meta.device.lens_model
               : '' }} />
           </React.Fragment>
         )
@@ -173,17 +205,19 @@ class ImageModalSidebar extends React.Component {
                 }}
               />
             </ListItem>
-            <ListItem>
-              <ListItemAvatar>
-                <Avatar>
-                  <CameraIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={infoData.devicePrimary}
-                secondary={infoData.deviceSecondary}
-              />
-            </ListItem>
+            {infoData.hasDeviceData &&
+              <ListItem>
+                <ListItemAvatar>
+                  <Avatar>
+                    <CameraIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={infoData.devicePrimary}
+                  secondary={infoData.deviceSecondary}
+                />
+              </ListItem>
+            }
             {infoData.hasLocationData &&
               <ListItem>
                 <ListItemAvatar>

@@ -9,6 +9,7 @@ RUN pip install pyyaml
 RUN pip install python-magic
 RUN pip install exif
 RUN pip install Pillow
+RUN pip install simplejson
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt

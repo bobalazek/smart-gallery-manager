@@ -185,94 +185,142 @@ class File
 
     public function getProcessedMeta(): ?array
     {
-        $exif = null;
+        $date = null;
+        $size = null;
+        $width = null;
+        $height = null;
+        $orientation = null;
+        $device = [
+            'make' => null,
+            'model' => null,
+            'shutter_speed' => null,
+            'aperature' => null,
+            'iso' => null,
+            'focal_length' => null,
+            'lens_make' => null,
+            'lens_model' => null,
+        ];
+        $location = [
+            'name' => null,
+            'altitude' => null,
+            'latitude' => null,
+            'longitude' => null,
+        ];
+
         try {
             $exif = exif_read_data($this->getPath(), 0, true);
-        } catch (\Exception $e) {}
 
-        $device = [
-            'make' => $exif['IFD0']['Make'] ?? null,
-            'model' => $exif['IFD0']['Model'] ?? null,
-            'shutter_speed' => isset($exif['EXIF']['ExposureTime'])
+            $date = isset($exif['IFD0']['DateTime'])
+                ? $this->_eval($exif['IFD0']['DateTime'], 'datetime')
+                : null;
+            $size = isset($exif['FILE']['FileSize'])
+                ? $exif['FILE']['FileSize']
+                : null;
+            $width = isset($exif['EXIF']['ExifImageWidth'])
+                ? $exif['EXIF']['ExifImageWidth']
+                : (isset($exif['COMPUTED']['Width'])
+                    ? $exif['COMPUTED']['Width']
+                    : null);
+            $height = isset($exif['EXIF']['ExifImageLength'])
+                ? $exif['EXIF']['ExifImageLength']
+                : (isset($exif['COMPUTED']['Height'])
+                    ? $exif['COMPUTED']['Height']
+                    : null);
+            $orientation = isset($exif['IFD0']['Orientation'])
+                ? $exif['IFD0']['Orientation']
+                : null;
+
+            // Device
+            $device['make'] = $exif['IFD0']['Make'] ?? null;
+            $device['model'] = $exif['IFD0']['Model'] ?? null;
+            $device['shutter_speed'] = isset($exif['EXIF']['ExposureTime'])
                 ? $this->_eval($exif['EXIF']['ExposureTime'], 'shutter_speed')
-                : null,
-            'aperature' => isset($exif['EXIF']['FNumber'])
+                : null;
+            $device['aperature'] = isset($exif['EXIF']['FNumber'])
                 ? $this->_eval($exif['EXIF']['FNumber'], 'aperature')
-                : null,
-            'iso' => isset($exif['EXIF']['ISOSpeedRatings'])
+                : null;
+            $device['iso'] = isset($exif['EXIF']['ISOSpeedRatings'])
                 ? $this->_eval($exif['EXIF']['ISOSpeedRatings'], 'iso')
-                : null,
-            'focal_length' => isset($exif['EXIF']['FocalLength'])
+                : null;
+            $device['focal_length'] = isset($exif['EXIF']['FocalLength'])
                 ? $this->_eval($exif['EXIF']['FocalLength'], 'focal_length')
-                : null,
-        ];
-        $date = null;
-        if (isset($exif['IFD0']['DateTime'])) {
-            if (preg_match(
-                '|^([0-9]{4}):([0-9]{2}):([0-9]{2}) ([0-9]{2}):([0-9]{2}):([0-9]{2})$|',
-                $exif['IFD0']['DateTime'],
-                $matches
-            )) {
-                $date = (new \DateTime(
-                    $matches[1] . '-' . $matches[2] . '-' . $matches[3] .
-                        'T' . $matches[4] . ':' . $matches[5] . ':' . $matches[6]
-                ))->format(DATE_ATOM);
-            }
+                : null;
+            $device['lens_make'] = isset($exif['EXIF']['LensInfo'])
+                ? $exif['EXIF']['LensInfo']
+                : (isset($exif['EXIF']['UndefinedTag:0xA434'])
+                    ? $exif['EXIF']['UndefinedTag:0xA434']
+                    : null);
+            $device['lens_model'] = isset($exif['EXIF']['LensModel'])
+                ? $exif['EXIF']['LensModel']
+                : (isset($exif['EXIF']['UndefinedTag:0xA500'])
+                    ? $exif['EXIF']['UndefinedTag:0xA500']
+                    : null);
+
+            // Location
+            $location['altitude'] = isset($exif['GPS']['GPSAltitude'])
+                ? $this->_eval($exif['GPS']['GPSAltitude'], 'altitude')
+                : null;
+            $location['latitude'] = isset($exif['GPS']['GPSLatitude'])
+                ? $this->_eval($exif['GPS']['GPSLatitude'], 'latitude')
+                : null;
+            $location['longitude'] = isset($exif['GPS']['GPSLongitude'])
+                ? $this->_eval($exif['GPS']['GPSLongitude'], 'longitude')
+                : null;
+        } catch (\Exception $e) {
+            try {
+                $imageMagick = new \imagick($this->getPath());
+                $imageMagickProperties = $im->getImageProperties();
+
+                $date = isset($imageMagickProperties['exif:DateTime'])
+                    ? $this->_eval($imageMagickProperties['exif:DateTime'], 'datetime')
+                    : null;
+                $size = $imageMagick->getImageSize();
+                $width = $imageMagick->getImageWidth();
+                $height = $imageMagick->getImageHeight();
+                $orientation = $imageMagick->getImageOrientation();
+
+                // Device
+                $device['make'] = $imageMagickProperties['exif:Make'] ?? null;
+                $device['model'] = $imageMagickProperties['exif:Model'] ?? null;
+                $device['shutter_speed'] = isset($exif['ShutterSpeedValue'])
+                    ? $this->_eval($exif['ShutterSpeedValue'], 'shutter_speed')
+                    : null;
+                $device['aperature'] = isset($exif['exif:ApertureValue'])
+                    ? $this->_eval($exif['exif:ApertureValue'], 'aperature')
+                    : null;
+                $device['iso'] = isset($exif['exif:ExposureTime'])
+                    ? $this->_eval($exif['exif:ExposureTime'], 'iso')
+                    : null;
+                $device['focal_length'] = isset($exif['exif:FocalLength'])
+                    ? $this->_eval($exif['exif:FocalLength'], 'focal_length')
+                    : null;
+                $device['lens_make'] = $exif['exif:LensMake'] ?? null;
+                $device['lens_model'] = $exif['exif:LensModel'] ?? null;
+
+                // Location
+                $location['altitude'] = isset($exif['exif:GPSAltitude'])
+                    ? $this->_eval($exif['exif:GPSAltitude'], 'altitude')
+                    : null;
+                $location['latitude'] = isset($exif['exif:GPSLatitude'])
+                    ? $this->_eval($exif['exif:GPSLatitude'], 'latitude')
+                    : null;
+                $location['longitude'] = isset($exif['exif:GPSLongitude'])
+                    ? $this->_eval($exif['exif:GPSLongitude'], 'longitude')
+                    : null;
+            } catch (\Exception $ee) {}
         }
-
-        // TODO: if date not present, maybe also look in the name of the file?
-
-        // Dimensions
-        $dimensionsWidth = isset($exif['EXIF']['ExifImageWidth'])
-            ? $exif['EXIF']['ExifImageWidth']
-            : (isset($exif['COMPUTED']['Width'])
-                ? $exif['COMPUTED']['Width']
-                : null);
-        $dimensionsHeight = isset($exif['EXIF']['ExifImageLength'])
-            ? $exif['EXIF']['ExifImageLength']
-            : (isset($exif['COMPUTED']['Height'])
-                ? $exif['COMPUTED']['Height']
-                : null);
-        $dimensions = [
-            'width' => $dimensionsWidth,
-            'height' => $dimensionsHeight,
-            'total' => is_numeric($dimensionsWidth) && is_numeric($dimensionsHeight)
-                ? $dimensionsWidth * $dimensionsHeight
-                : null,
-        ];
-        $size = isset($exif['FILE']['FileSize'])
-            ? $exif['FILE']['FileSize']
-            : null;
-
-        // Orientation
-        $orientation = isset($exif['IFD0']['Orientation'])
-            ? $exif['IFD0']['Orientation']
-            : null;
-
-        // Location
-        $altitude = isset($exif['GPS']['ExifImageLength'])
-            ? $this->_eval($exif['GPS']['GPSAltitude'], 'altitude')
-            : null;
-        $latitude = isset($exif['GPS']['GPSLatitude'])
-            ? $this->_eval($exif['GPS']['GPSLatitude'], 'latitude')
-            : null;
-        $longitude = isset($exif['GPS']['GPSLongitude'])
-            ? $this->_eval($exif['GPS']['GPSLongitude'], 'longitude')
-            : null;
-        $location = [
-            'name' => null, // TODO
-            'altitude' => $altitude,
-            'latitude' => $latitude,
-            'longitude' => $longitude,
-        ];
 
         return [
             'name' => basename($this->getPath()),
             'date' => $date,
             'size' => $size,
-            'dimensions' => $dimensions,
-            'device' => $device,
+            'width' => $width,
+            'height' => $height,
+            'megapixels' => is_numeric($width) && is_numeric($height)
+                ? $width * $height
+                : null,
             'orientation' => $orientation,
+            'device' => $device,
             'location' => $location,
         ];
     }
@@ -303,6 +351,10 @@ class File
         $return = $data;
 
         if (in_array($type, ['latitude', 'longitude'])) {
+            if (is_string($data)) {
+                $data = explode(', ', $data);
+            }
+
             $degrees = $this->_eval($data[0]);
             $minutes = $this->_eval($data[1]);
             $seconds = $this->_eval($data[2]);
@@ -326,6 +378,19 @@ class File
                 }
             } else {
                 $return = $n1 / $n2;
+            }
+        } elseif ($type === 'datetime') {
+            if (preg_match(
+                '|^([0-9]{4}):([0-9]{2}):([0-9]{2}) ([0-9]{2}):([0-9]{2}):([0-9]{2})$|',
+                $return,
+                $matches
+            )) {
+                $return = (new \DateTime(
+                    $matches[1] . '-' . $matches[2] . '-' . $matches[3] .
+                        'T' . $matches[4] . ':' . $matches[5] . ':' . $matches[6]
+                ))->format(DATE_ATOM);
+            } else {
+                $return = null;
             }
         }
 
