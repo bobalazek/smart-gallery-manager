@@ -110,6 +110,7 @@ class FilesScanCommand extends Command
             $progressBar->setFormat('custom');
 
             $progressBar->setMessage('Processing files...');
+            $progressBar->setMessage('...', 'filename');
 
             foreach ($progressBar->iterate($files) as $fileObject) {
                 $filePath = $fileObject->getRealPath();

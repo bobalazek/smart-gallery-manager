@@ -65,6 +65,7 @@ const mapStateToProps = state => {
     files: state.files,
     filesMap: state.filesMap,
     filesSummary: state.filesSummary,
+    filesSummaryDatetime: state.filesSummaryDatetime,
     orderBy: state.orderBy,
     selectedType: state.selectedType,
     selectedYear: state.selectedYear,
@@ -154,6 +155,7 @@ class AppContent extends React.Component {
           files: [],
           filesMap: [],
           filesSummary: filesSummary,
+          filesSummaryDatetime: moment(),
           isLoaded: true,
           isLoading: false,
         });
@@ -321,13 +323,6 @@ class AppContent extends React.Component {
 
       if (date !== lastDate) {
         const countOnDate = filesSummary.count.date[dateMap[date]].count;
-        // TODO: if that fails, it means, that it's very likely, that we are doing
-        //   scanning in the background. It finds an image on newer date,
-        //   but that date does not yet exist in the summary,
-        //   so we'll need to reload the filesSummary.
-        // Alternativly, we could maybe pass a created_before parameter,
-        //   where you'd get only images, that were loader before (same time),
-        //   as we fetched our filesSummary data.
 
         const isTooLongAgo = now.diff(dateMoment, 'days', true) > 28;
         if (!isTooLongAgo) {
@@ -357,7 +352,10 @@ class AppContent extends React.Component {
   }
 
   _loadMoreRows({ startIndex, stopIndex }) {
-    const { rowsIndexes } = this.props;
+    const {
+      rowsIndexes,
+      filesSummaryDatetime,
+    } = this.props;
 
     const dateFrom = rowsIndexes[stopIndex];
     const dateTo = rowsIndexes[startIndex];
@@ -370,7 +368,8 @@ class AppContent extends React.Component {
         const url = rootUrl + '/api/files' +
           this.getFiltersQuery() +
           '&date_from=' + dateFrom +
-          '&date_to=' + dateTo;
+          '&date_to=' + dateTo +
+          '&created_before=' + filesSummaryDatetime.format('YYYY-MM-DDTHH:mm:ss');
 
         return axios.get(url)
           .then(res => {

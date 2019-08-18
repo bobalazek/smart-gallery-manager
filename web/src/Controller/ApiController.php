@@ -303,6 +303,7 @@ class ApiController extends AbstractController
         $year = $request->get('year');
         $month = $request->get('month');
         $date = $request->get('date');
+        $createdBefore = $request->get('created_before');
 
         if ($type) {
             $queryBuilder
@@ -331,6 +332,12 @@ class ApiController extends AbstractController
             $queryBuilder
                 ->andWhere('DATE(f.' . $dateField . ') = :date')
                 ->setParameter('date', $date);
+            ;
+        }
+        if ($createdBefore) {
+            $queryBuilder
+                ->andWhere('f.createdAt < :created_before')
+                ->setParameter('created_before', new \DateTime($createdBefore));
             ;
         }
 

@@ -209,10 +209,13 @@ class File
 
         try {
             $exif = exif_read_data($this->getPath(), 0, true);
-
             $date = isset($exif['IFD0']['DateTime'])
                 ? $this->_eval($exif['IFD0']['DateTime'], 'datetime')
-                : null;
+                : (isset($exif['EXIF']['DateTime'])
+                    ? $exif['EXIF']['DateTime']
+                    : (isset($exif['EXIF']['DateTimeOriginal'])
+                        ? $exif['EXIF']['DateTimeOriginal']
+                        : null));
             $size = isset($exif['FILE']['FileSize'])
                 ? $exif['FILE']['FileSize']
                 : null;
@@ -289,7 +292,7 @@ class File
                     ? $this->_eval($imageMagickProperties['exif:ApertureValue'], 'aperature')
                     : null;
                 $device['iso'] = isset($imageMagickProperties['exif:ExposureTime'])
-                    ? $this->_eval($imageMagickProperties['exif:ExposureTime'], 'iso')
+                    ? str_replace('1/', '', $imageMagickProperties['exif:ExposureTime'])
                     : null;
                 $device['focal_length'] = isset($imageMagickProperties['exif:FocalLength'])
                     ? $this->_eval($imageMagickProperties['exif:FocalLength'], 'focal_length')

@@ -12,6 +12,7 @@ const initialState = {
   files: [],
   filesMap: [],
   filesSummary: {},
+  filesSummaryDatetime: null, // When was it last fetched?
   orderBy: 'taken_at',
   selectedType: null,
   selectedYear: null,
