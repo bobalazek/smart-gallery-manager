@@ -269,7 +269,7 @@ class File
         } catch (\Exception $e) {
             try {
                 $imageMagick = new \imagick($this->getPath());
-                $imageMagickProperties = $im->getImageProperties();
+                $imageMagickProperties = $imageMagick->getImageProperties();
 
                 $date = isset($imageMagickProperties['exif:DateTime'])
                     ? $this->_eval($imageMagickProperties['exif:DateTime'], 'datetime')
@@ -282,30 +282,30 @@ class File
                 // Device
                 $device['make'] = $imageMagickProperties['exif:Make'] ?? null;
                 $device['model'] = $imageMagickProperties['exif:Model'] ?? null;
-                $device['shutter_speed'] = isset($exif['ShutterSpeedValue'])
-                    ? $this->_eval($exif['ShutterSpeedValue'], 'shutter_speed')
+                $device['shutter_speed'] = isset($imageMagickProperties['ShutterSpeedValue'])
+                    ? $this->_eval($imageMagickProperties['ShutterSpeedValue'], 'shutter_speed')
                     : null;
-                $device['aperature'] = isset($exif['exif:ApertureValue'])
-                    ? $this->_eval($exif['exif:ApertureValue'], 'aperature')
+                $device['aperature'] = isset($imageMagickProperties['exif:ApertureValue'])
+                    ? $this->_eval($imageMagickProperties['exif:ApertureValue'], 'aperature')
                     : null;
-                $device['iso'] = isset($exif['exif:ExposureTime'])
-                    ? $this->_eval($exif['exif:ExposureTime'], 'iso')
+                $device['iso'] = isset($imageMagickProperties['exif:ExposureTime'])
+                    ? $this->_eval($imageMagickProperties['exif:ExposureTime'], 'iso')
                     : null;
-                $device['focal_length'] = isset($exif['exif:FocalLength'])
-                    ? $this->_eval($exif['exif:FocalLength'], 'focal_length')
+                $device['focal_length'] = isset($imageMagickProperties['exif:FocalLength'])
+                    ? $this->_eval($imageMagickProperties['exif:FocalLength'], 'focal_length')
                     : null;
-                $device['lens_make'] = $exif['exif:LensMake'] ?? null;
-                $device['lens_model'] = $exif['exif:LensModel'] ?? null;
+                $device['lens_make'] = $imageMagickProperties['exif:LensMake'] ?? null;
+                $device['lens_model'] = $imageMagickProperties['exif:LensModel'] ?? null;
 
                 // Location
-                $location['altitude'] = isset($exif['exif:GPSAltitude'])
-                    ? $this->_eval($exif['exif:GPSAltitude'], 'altitude')
+                $location['altitude'] = isset($imageMagickProperties['exif:GPSAltitude'])
+                    ? $this->_eval($imageMagickProperties['exif:GPSAltitude'], 'altitude')
                     : null;
-                $location['latitude'] = isset($exif['exif:GPSLatitude'])
-                    ? $this->_eval($exif['exif:GPSLatitude'], 'latitude')
+                $location['latitude'] = isset($imageMagickProperties['exif:GPSLatitude'])
+                    ? $this->_eval($imageMagickProperties['exif:GPSLatitude'], 'latitude')
                     : null;
-                $location['longitude'] = isset($exif['exif:GPSLongitude'])
-                    ? $this->_eval($exif['exif:GPSLongitude'], 'longitude')
+                $location['longitude'] = isset($imageMagickProperties['exif:GPSLongitude'])
+                    ? $this->_eval($imageMagickProperties['exif:GPSLongitude'], 'longitude')
                     : null;
             } catch (\Exception $ee) {}
         }
