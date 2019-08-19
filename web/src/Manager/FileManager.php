@@ -33,6 +33,7 @@ class FileManager {
         $this->imageManager = new ImageManager([
             'driver' => 'imagick',
         ]);
+        $this->httpClient = new CurlHttpClient();
     }
 
     /**
@@ -129,10 +130,8 @@ class FileManager {
         } catch (\Exception $e) {
             try {
                 if ($file->getExtension() === 'dng') {
-                    $httpClient = new CurlHttpClient();
-
                     $url = 'http://python:8000/file-info';
-                    $response = $httpClient->request('GET', $url, [
+                    $response = $this->httpClient->request('GET', $url, [
                         'query' => [
                             'file' => $file->getPath(),
                         ],
@@ -143,7 +142,9 @@ class FileManager {
 
                     $date = isset($exif['Image DateTime'])
                         ? $this->_eval($exif['Image DateTime'], 'datetime')
-                        : null;
+                        : (isset($exif['Image DateTimeOriginal'])
+                            ? $this->_eval($exif['Image DateTimeOriginal'], 'datetime')
+                            : null);
                     $size = filesize($file->getPath());
                     $width = isset($exif['Image ImageWidth'])
                         ? (int)$exif['Image ImageWidth']
@@ -234,9 +235,7 @@ class FileManager {
                         ? $this->_eval($imageMagickProperties['exif:GPSLongitude'], 'longitude')
                         : null;
                 }
-            } catch (\Exception $ee) {
-                var_dump($ee->getMessage());
-            }
+            } catch (\Exception $ee) {}
         }
 
         return [
@@ -306,10 +305,32 @@ class FileManager {
     /**
      * Gets the image instance for data or further manipulation.
      *
-     * @param string $format
+     * @param File $file
      */
-    public function getImage($path): Image
+    public function getImage($file): Image
     {
+        $path = $file->getPath();
+
+        if ($file->getExtension() === 'dng') {
+            $cacheDir = $this->params->get('cache_dir');
+            $dngDir = $cacheDir . '/dng';
+            if (!is_dir($dngDir)) {
+                mkdir($dngDir);
+            }
+
+            $path = $dngDir . '/' . $file->getHash() . '.jpg';
+            if (!file_exists($path)) {
+                $url = 'http://python:8000/file-view';
+                $response = $this->httpClient->request('GET', $url, [
+                    'query' => [
+                        'file' => $file->getPath(),
+                    ],
+                ]);
+
+                file_put_contents($path, $response->getContent());
+            }
+        }
+
         $image = $this->imageManager->make($path);
         $image->orientate();
 
@@ -331,7 +352,7 @@ class FileManager {
             throw new \Exception(sprintf('The type "%s" does not exist.', $type));
         }
 
-        $image = $this->getImage($file->getPath());
+        $image = $this->getImage($file);
 
         if (isset($imageTypes[$type]['width'])) {
             $image->widen($imageTypes[$type]['width'], function ($constraint) {

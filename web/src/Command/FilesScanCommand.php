@@ -166,7 +166,9 @@ class FilesScanCommand extends Command
                             $conversionFormat
                         );
                     }
-                } catch (\Exception $e) {}
+                } catch (\Exception $e) {
+                    $io->error($e->getMessage());
+                }
             }
         }
 
