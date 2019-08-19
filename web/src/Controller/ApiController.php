@@ -259,7 +259,7 @@ class ApiController extends AbstractController
             // If it's not the default orientation, we need to reflect that here!
             //   The meta is saved for the original image, not the oriented one,
             //   that is later streamed in the /file/{hash} endpoint.
-            $isFinalImageOriented = $fileMeta['orientation'] !== 1;
+            $isFinalImageOriented = !in_array($fileMeta['orientation'], [1, 3]);
             $width = $isFinalImageOriented
                 ? $fileMeta['height']
                 : $fileMeta['width'];

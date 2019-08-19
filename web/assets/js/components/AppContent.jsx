@@ -354,7 +354,11 @@ class AppContent extends React.Component {
       row.files.push(file);
 
       if (date !== lastDate) {
-        const countOnDate = filesSummary.count.date[dateMap[date]].count;
+        const countOnDate = typeof filesSummary.count.date[dateMap[date]] !== 'undefined'
+          ? filesSummary.count.date[dateMap[date]].count
+          : '?'; // That just means, that new images were added since the we last fetched the summary
+        // Partially we prevent this with created_before, but it's still possible,
+        //   that 2 or more images were added the same second, and that would cause the issue.
 
         const isTooLongAgo = now.diff(dateMoment, 'days', true) > 28;
         if (!isTooLongAgo) {
