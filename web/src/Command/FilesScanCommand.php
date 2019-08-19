@@ -67,7 +67,6 @@ class FilesScanCommand extends Command
                 'Invalid conversion format. Allowed: ' .
                 implode(', ', $allowedImageConversionFormats)
             );
-
             return;
         }
 
@@ -77,14 +76,13 @@ class FilesScanCommand extends Command
 
         $filesRepository = $this->em->getRepository(File::class);
 
-        define('PROJECT_ROOT', dirname(__DIR__) . '/../..');
-
         // Get the settings
         try {
-            $settings = Yaml::parseFile(PROJECT_ROOT . '/settings.yml');
+            $settings = Yaml::parseFile(
+                dirname(__DIR__) . '/../../settings.yml'
+            );
         } catch (\Exception $e) {
             $io->error($e->getMessage());
-
             return;
         }
 
@@ -97,8 +95,12 @@ class FilesScanCommand extends Command
 
         foreach ($folders as $folder) {
             $files = $finder->files()
+                ->ignoreUnreadableDirs()
+                ->followLinks()
                 ->in($folder)
                 ->sortByChangedTime();
+
+            $io->newLine();
             $io->section(
                 sprintf(
                     'Starting to process folder: %s',
@@ -138,15 +140,6 @@ class FilesScanCommand extends Command
                     continue;
                 }
 
-                $fileData = [];
-                try {
-                    $image = $this->fileManager->getImage($filePath);
-                    $fileData['image'] = [
-                        'width' => $image->width(),
-                        'height' => $image->height(),
-                    ];
-                } catch (\Exception $e) {}
-
                 $file = new File();
                 $file
                     ->setHash($fileHash)
@@ -154,19 +147,10 @@ class FilesScanCommand extends Command
                     ->setPath($filePath)
                     ->setMime($fileMime)
                     ->setExtension($fileExtension)
-                    ->setData($fileData)
-                ;
-
-                // Get the meta AFTER we've set the data, because it depends
-                //   on some data there.
-                $fileMeta = $file->getProcessedMeta();
-
-                $takenAt = new \DateTime($fileMeta['date'] ?? '1970-01-01');
-
-                $file
+                    ->setMeta($file->getProcessedMeta())
                     ->setCreatedAt(new \DateTime())
                     ->setModifiedAt(new \DateTime())
-                    ->setTakenAt($takenAt)
+                    ->setTakenAt(new \DateTime($file->getMeta()['date'] ?? '1970-01-01'))
                 ;
 
                 $this->em->persist($file);

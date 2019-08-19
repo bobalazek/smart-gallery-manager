@@ -193,10 +193,10 @@ class ImageGrid extends React.Component {
     } else if (containerWidth <= 1280) {
       return 4;
     } else if (containerWidth <= 1920) {
-      return 4;
+      return 6;
     }
 
-    return 6;
+    return 8;
   }
 }
 

@@ -42,8 +42,6 @@ class FileController extends AbstractController
      */
     public function view($hash, $type, $format, Request $request)
     {
-        ini_set('memory_limit', '512M');
-
         $allowedFormats = $this->params->get('allowed_image_conversion_formats');
         $allowedTypes = array_keys($this->params->get('allowed_image_conversion_types'));
         $maxAge = $this->params->get('max_age');
@@ -61,8 +59,6 @@ class FileController extends AbstractController
             throw $this->createNotFoundException('The file does not exist');
         }
 
-        $fileMeta = $file->getProcessedMeta();
-
         $imageData = $this->fileManager->getImageData(
             $file,
             $type,
@@ -75,7 +71,7 @@ class FileController extends AbstractController
             str_replace(
                 '.' . $file->getExtension(),
                 '.' . $imageData['format'],
-                $fileMeta['name']
+                basename($file->getPath())
             ),
             'ASCII'
         );

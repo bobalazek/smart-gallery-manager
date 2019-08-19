@@ -56,6 +56,11 @@ class File
     private $data = [];
 
     /**
+     * @ORM\Column(type="array")
+     */
+    private $meta = [];
+
+    /**
      * @ORM\Column(type="datetime")
      */
     private $createdAt;
@@ -143,6 +148,18 @@ class File
     public function setData(array $data): self
     {
         $this->data = $data;
+
+        return $this;
+    }
+
+    public function getMeta(): ?array
+    {
+        return $this->meta;
+    }
+
+    public function setMeta(array $meta): self
+    {
+        $this->meta = $meta;
 
         return $this;
     }
@@ -338,10 +355,10 @@ class File
             'mime' => $this->getMime(),
             'extension' => $this->getExtension(),
             'data' => $this->getData(),
+            'meta' => $this->getMeta(),
             'created_at' => $this->getCreatedAt()->format(DATE_ATOM),
             'modified_at' => $this->getModifiedAt()->format(DATE_ATOM),
             'taken_at' => $this->getTakenAt()->format(DATE_ATOM),
-            'processed_meta' => $this->getProcessedMeta(),
         ];
     }
 

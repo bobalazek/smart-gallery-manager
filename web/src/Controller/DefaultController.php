@@ -34,6 +34,15 @@ class DefaultController extends AbstractController
     }
 
     /**
+     * @Route("/phpinfo", name="phpinfo")
+     */
+    public function phpinfo()
+    {
+        // TODO: remove in production!
+        phpinfo();
+    }
+
+    /**
      * @Route("/files", name="files")
      */
     public function files(Request $request)

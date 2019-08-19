@@ -47,6 +47,8 @@ final class FileAdmin extends AbstractAdmin
         $listMapper->add('path');
         $listMapper->add('mime');
         $listMapper->add('extension');
+        $listMapper->add('data', 'string', ['template' => 'admin/fields/data.html.twig']);
+        $listMapper->add('meta', 'string', ['template' => 'admin/fields/meta.html.twig']);
         $listMapper->add('createdAt');
         $listMapper->add('modifiedAt');
         $listMapper->add('takenAt');

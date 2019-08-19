@@ -241,7 +241,7 @@ class ApiController extends AbstractController
      */
     private function _getFileImages(File $file, $format = 'jpg')
     {
-        $fileData = $file->getData();
+        $fileMeta = $file->getMeta();
         $response = [];
 
         $imageTypes = $this->params->get('allowed_image_conversion_types');
@@ -255,28 +255,37 @@ class ApiController extends AbstractController
                 ],
                 UrlGeneratorInterface::ABSOLUTE_URL
             );
-            $width = 0;
-            $height = 0;
 
-            if (isset($fileData['image'])) {
-                $width = $fileData['image']['width'];
-                $height = $fileData['image']['height'];
+            // If it's not the default orientation, we need to reflect that here!
+            //   The meta is saved for the original image, not the oriented one,
+            //   that is later streamed in the /file/{hash} endpoint.
+            $isFinalImageOriented = $fileMeta['orientation'] !== 1;
+            $width = $isFinalImageOriented
+                ? $fileMeta['height']
+                : $fileMeta['width'];
+            $height = $isFinalImageOriented
+                ? $fileMeta['width']
+                : $fileMeta['height'];
+
+            if ($width && $height) {
                 $aspectRatio = $width / $height;
 
-                // TODO: take upsizing constraints into account
-
-                if (isset($imageTypeData['width'])) {
+                if (
+                    isset($imageTypeData['width']) &&
+                    $width > $imageTypeData['width']
+                ) {
                     $width = $imageTypeData['width'];
                     $height = $width / $aspectRatio;
                 }
 
-                if (isset($imageTypeData['height'])) {
+                if (
+                    isset($imageTypeData['height']) &&
+                    $height > $imageTypeData['height']
+                ) {
                     $height = $imageTypeData['height'];
                     $width = $height * $aspectRatio;
                 }
-            }
-
-            if ($width === 0 || $height === 0) {
+            } else {
                 // It seems to be an invalid image. Simply return a "404 not found" image
                 $width = 800;
                 $height = 600;

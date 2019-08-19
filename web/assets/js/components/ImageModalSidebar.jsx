@@ -59,103 +59,103 @@ class ImageModalSidebar extends React.Component {
         ? moment(fileInformation.taken_at).format('HH:mm:ss')
         : '',
       filePrimary: fileInformation &&
-        fileInformation.processed_meta
-        ? fileInformation.processed_meta.name
+        fileInformation.meta
+        ? fileInformation.meta.name
         : '',
       fileSecondary: fileInformation &&
-        fileInformation.processed_meta
+        fileInformation.meta
         ? (
           <React.Fragment>
             <span dangerouslySetInnerHTML={{ __html: fileInformation.path
               ? 'Path: ' + fileInformation.path + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.size
-              ? 'File size: ' + (fileInformation.processed_meta.size / 1024 / 1024).toFixed(1) + 'MB <br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.size
+              ? 'File size: ' + (fileInformation.meta.size / 1024 / 1024).toFixed(1) + 'MB <br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.megapixels
-              ? 'Megapixels: ' + (fileInformation.processed_meta.megapixels / 1000000).toFixed(1) + 'MP <br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.megapixels
+              ? 'Megapixels: ' + (fileInformation.meta.megapixels / 1000000).toFixed(1) + 'MP <br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.width
-              && fileInformation.processed_meta.height
-              ? 'Size: ' + (fileInformation.processed_meta.width + 'x' + fileInformation.processed_meta.height)
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.width
+              && fileInformation.meta.height
+              ? 'Size: ' + (fileInformation.meta.width + 'x' + fileInformation.meta.height)
               : '' }} />
           </React.Fragment>
         )
         : '',
       hasDeviceData: fileInformation &&
-        fileInformation.processed_meta &&
-        fileInformation.processed_meta.device &&
+        fileInformation.meta &&
+        fileInformation.meta.device &&
         (
-          fileInformation.processed_meta.device.make ||
-          fileInformation.processed_meta.device.model ||
-          fileInformation.processed_meta.device.shutter_speed ||
-          fileInformation.processed_meta.device.aperature ||
-          fileInformation.processed_meta.device.iso ||
-          fileInformation.processed_meta.device.focal_length ||
-          fileInformation.processed_meta.device.lens_make ||
-          fileInformation.processed_meta.device.lens_model
+          fileInformation.meta.device.make ||
+          fileInformation.meta.device.model ||
+          fileInformation.meta.device.shutter_speed ||
+          fileInformation.meta.device.aperature ||
+          fileInformation.meta.device.iso ||
+          fileInformation.meta.device.focal_length ||
+          fileInformation.meta.device.lens_make ||
+          fileInformation.meta.device.lens_model
         ),
       devicePrimary: fileInformation &&
-        fileInformation.processed_meta &&
-        fileInformation.processed_meta.device &&
+        fileInformation.meta &&
+        fileInformation.meta.device &&
         (
-          fileInformation.processed_meta.device.make ||
-          fileInformation.processed_meta.device.model
+          fileInformation.meta.device.make ||
+          fileInformation.meta.device.model
         )
-        ? fileInformation.processed_meta.device.make + ' ' + fileInformation.processed_meta.device.model
+        ? fileInformation.meta.device.make + ' ' + fileInformation.meta.device.model
         : '',
       deviceSecondary: fileInformation &&
-        fileInformation.processed_meta &&
-        fileInformation.processed_meta.device
+        fileInformation.meta &&
+        fileInformation.meta.device
         ? (
           <React.Fragment>
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.device.aperature
-              ? 'Aperature: f/' + fileInformation.processed_meta.device.aperature + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.aperature
+              ? 'Aperature: f/' + fileInformation.meta.device.aperature + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.device.shutter_speed
-              ? 'Shutter speed: ' + fileInformation.processed_meta.device.shutter_speed + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.shutter_speed
+              ? 'Shutter speed: ' + fileInformation.meta.device.shutter_speed + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.device.focal_length
-              ? 'Focal length: ' + fileInformation.processed_meta.device.focal_length + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.focal_length
+              ? 'Focal length: ' + fileInformation.meta.device.focal_length + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.device.iso
-              ? 'ISO: ' + fileInformation.processed_meta.device.iso + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.iso
+              ? 'ISO: ' + fileInformation.meta.device.iso + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.device.lens_make
-              ? 'Lens make: ' + fileInformation.processed_meta.device.lens_make + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.lens_make
+              ? 'Lens make: ' + fileInformation.meta.device.lens_make + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.device.lens_model
-              ? 'Lens model: ' + fileInformation.processed_meta.device.lens_model
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.lens_model
+              ? 'Lens model: ' + fileInformation.meta.device.lens_model
               : '' }} />
           </React.Fragment>
         )
         : '',
       hasLocationData: fileInformation &&
-        fileInformation.processed_meta &&
-        fileInformation.processed_meta.location &&
+        fileInformation.meta &&
+        fileInformation.meta.location &&
         (
-          fileInformation.processed_meta.location.name ||
-          fileInformation.processed_meta.location.altitude ||
-          fileInformation.processed_meta.location.latitude ||
-          fileInformation.processed_meta.location.longitude
+          fileInformation.meta.location.name ||
+          fileInformation.meta.location.altitude ||
+          fileInformation.meta.location.latitude ||
+          fileInformation.meta.location.longitude
         ),
       locationPrimary: 'Location',
       locationSecondary: fileInformation &&
-        fileInformation.processed_meta &&
-        fileInformation.processed_meta.location
+        fileInformation.meta &&
+        fileInformation.meta.location
         ? (
           <React.Fragment>
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.location.name
-              ? 'Name: ' + fileInformation.processed_meta.location.name + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.name
+              ? 'Name: ' + fileInformation.meta.location.name + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.location.altitude
-              ? 'Altitude: ' + fileInformation.processed_meta.location.altitude + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.altitude
+              ? 'Altitude: ' + fileInformation.meta.location.altitude + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.location.latitude
-              ? 'Latitude: ' + fileInformation.processed_meta.location.latitude + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.latitude
+              ? 'Latitude: ' + fileInformation.meta.location.latitude + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.processed_meta.location.longitude
-              ? 'Longitude: ' + fileInformation.processed_meta.location.longitude + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.longitude
+              ? 'Longitude: ' + fileInformation.meta.location.longitude + '<br />'
               : '' }} />
           </React.Fragment>
         )
