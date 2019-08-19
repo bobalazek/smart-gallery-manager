@@ -20,7 +20,7 @@ services:
     networks:
       - app-network
   php-fpm:
-    container_name: sgm_phpfpm
+    container_name: sgm_php_fpm
     build: ./docker/php-fpm
     privileged: true
     volumes:
@@ -56,6 +56,7 @@ services:
       - app-network
 networks:
   app-network:
+    name: sgm_app_network
     driver: bridge
 volumes:
   # Add your own volumes, where your data is located down below

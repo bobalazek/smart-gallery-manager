@@ -11,6 +11,7 @@ RUN pip install pyyaml
 RUN pip install python-magic
 RUN pip install exif
 RUN pip install exifread
+RUN pip install rawpy
 RUN pip install Pillow
 RUN pip install simplejson
 

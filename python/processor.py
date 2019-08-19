@@ -3,7 +3,6 @@ import magic
 import exifread
 from PIL import Image
 from PIL.ExifTags import TAGS
-from urllib.parse import urlparse, parse_qs
 
 def get_file_info(filename):
     result = {}
