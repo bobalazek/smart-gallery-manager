@@ -72,8 +72,8 @@ class ImageModalSidebar extends React.Component {
             <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.size
               ? 'File size: ' + (fileInformation.meta.size / 1024 / 1024).toFixed(1) + 'MB <br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.megapixels
-              ? 'Megapixels: ' + (fileInformation.meta.megapixels / 1000000).toFixed(1) + 'MP <br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.pixels
+              ? 'Megapixels: ' + (fileInformation.meta.pixels / 1000000).toFixed(1) + 'MP <br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.width
               && fileInformation.meta.height

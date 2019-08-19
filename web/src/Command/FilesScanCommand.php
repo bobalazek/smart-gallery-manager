@@ -147,7 +147,7 @@ class FilesScanCommand extends Command
                     ->setPath($filePath)
                     ->setMime($fileMime)
                     ->setExtension($fileExtension)
-                    ->setMeta($file->getProcessedMeta())
+                    ->setMeta($this->fileManager->getFileMeta($file))
                     ->setCreatedAt(new \DateTime())
                     ->setModifiedAt(new \DateTime())
                     ->setTakenAt(new \DateTime($file->getMeta()['date'] ?? '1970-01-01'))
