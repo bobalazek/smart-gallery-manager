@@ -1,32 +1,9 @@
 import os, io, glob
 import magic
+import exifread
 from PIL import Image
 from PIL.ExifTags import TAGS
 from urllib.parse import urlparse, parse_qs
-
-def do_action(path):
-    response = {
-        "status": 200,
-        "type": "application/json",
-        "content": {
-            "data": {},
-            "meta": {},
-        },
-    }
-
-    parsed_path = urlparse(path)
-    parsed_query = parse_qs(parsed_path.query, keep_blank_values=True)
-
-    response["content"]["meta"] = {
-        "query": parsed_query,
-        "path": parsed_path.path,
-    }
-
-    if response["content"]["meta"]["path"] == "/info" and "file" in parsed_query:
-        file = next(iter(parsed_query["file"]))
-        response["content"]["data"] = get_file_info(file)
-
-    return response
 
 def get_file_info(filename):
     result = {}
@@ -35,22 +12,30 @@ def get_file_info(filename):
         result["error"] = "File does not exist"
         return result
 
+    result["mime"] = magic.from_file(filename, mime=True)
+    result["exif"] = get_exif(filename)
+
+    return result
+
+def get_exif(filename):
+    data = {}
+
+    '''
     image = Image.open(filename)
     image.verify()
     image_exif = image._getexif()
 
-    result["mime"] = magic.from_file(filename, mime=True)
-    result["exif"] = get_exif(image_exif)
-
-    return result
-
-def get_exif(exif):
-    data = {}
-
-    if exif:
-        for (key, val) in exif.items():
+    if image_exif:
+        for (key, val) in image_exif.items():
             tag_key = TAGS.get(key)
             if tag_key:
                 data[tag_key] = val
+    '''
+
+    f = open(filename, 'rb')
+    tags = exifread.process_file(f)
+    for tag in tags.keys():
+        if tag not in ('JPEGThumbnail', 'TIFFThumbnail', 'Filename', 'EXIF MakerNote'):
+            data[tag] = str(tags[tag])
 
     return data

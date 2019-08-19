@@ -2,12 +2,15 @@ FROM python:3
 
 WORKDIR /usr/src/app
 
-RUN apt-get install libmagickwand-dev
+RUN apt-get update
+RUN apt-get install libmagickwand-dev ufraw -y
 
+RUN pip install bottle
 RUN pip install Wand
 RUN pip install pyyaml
 RUN pip install python-magic
 RUN pip install exif
+RUN pip install exifread
 RUN pip install Pillow
 RUN pip install simplejson
 

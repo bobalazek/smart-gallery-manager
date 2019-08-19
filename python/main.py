@@ -1,15 +1,22 @@
-import time
-from http.server import HTTPServer
-from server import Server
+from bottle import Bottle, request, response, run
+import simplejson as json
+from processor import get_file_info
 
-PORT_NUMBER = 8000
+PORT = 8000
 
-if __name__ == '__main__':
-    httpd = HTTPServer(('', PORT_NUMBER), Server)
-    print(time.asctime(), 'Server UP - Port:%s' % (PORT_NUMBER))
-    try:
-        httpd.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    httpd.server_close()
-    print(time.asctime(), 'Server DOWN - Port:%s' % (PORT_NUMBER))
+app = Bottle()
+
+@app.route("/")
+def index():
+    response.content_type = "application/json"
+    return json.dumps("Hello World!")
+
+@app.route("/file-info")
+def index():
+    response.content_type = "application/json"
+    return json.dumps({
+        "data": get_file_info(request.query.file),
+    })
+
+if __name__ == "__main__":
+    run(app, host="0.0.0.0", port=PORT, reloader=True, debug=True)
