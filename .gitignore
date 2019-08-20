@@ -1,3 +1,4 @@
+/.env
 /settings.yml
 /var/**
 !/var/.gitkeep

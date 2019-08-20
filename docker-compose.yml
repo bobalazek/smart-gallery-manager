@@ -11,8 +11,8 @@ services:
       - ./docker/nginx/sites/:/etc/nginx/sites-available
       - ./docker/nginx/conf.d/:/etc/nginx/conf.d
     ports:
-      - "${NGINX_PORT_80}:80"
-      - "${NGINX_PORT_443}:443"
+      - "${NGINX_PORT_80:-81}:80"
+      - "${NGINX_PORT_443:-444}:443"
     links:
       - php-fpm
     depends_on:
@@ -51,7 +51,7 @@ services:
       # Read the comment above in php-fpm.volumes. They MUST be the same paths!!!
       - server-nfs:/var/data/server
     ports:
-      - "${PYTHON_PORT_8000}:8000"
+      - "${PYTHON_PORT_8000:-8001}:8000"
     networks:
       - app-network
 networks:
