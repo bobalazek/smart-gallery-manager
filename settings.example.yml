@@ -1,5 +1,6 @@
+# Specify your own folders here.
+# That's the location of the files relative to the container they are in.
+# More information on that inside the `docer-compose.yml` file.
 folders:
-  - '[your]'
-  - '[folder]'
-  - '[paths]'
-  - '[here]'
+  - '/var/data/server/Images'
+  - '/var/data/server/Photography/Converted'

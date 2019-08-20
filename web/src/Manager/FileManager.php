@@ -226,7 +226,7 @@ class FileManager {
                                 : null
                             )
                         );
-                    $size = $imageMagick->getImageSize();
+                    $size = $imageMagick->getImageLength();
                     $width = $imageMagick->getImageWidth();
                     $height = $imageMagick->getImageHeight();
                     $orientation = $imageMagick->getImageOrientation();

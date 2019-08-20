@@ -51,6 +51,7 @@ services:
       # Read the comment above in php-fpm.volumes. They MUST be the same paths!!!
       - server-nfs:/var/data/server
     ports:
+      # TODO: Do not expose any python ports. It's only for development right now!
       - "${PYTHON_PORT_8000:-8001}:8000"
     networks:
       - app-network
