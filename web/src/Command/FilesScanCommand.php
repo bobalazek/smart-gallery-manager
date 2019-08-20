@@ -107,6 +107,10 @@ class FilesScanCommand extends Command
                 )
             );
 
+            // TODO: optimize. Maybe fetch all the files in this folder here,
+            //   create a map ([path] => file) and compare it then,
+            //   if we've set to skip existing entries
+
             $progressBar = new ProgressBar($output);
             $progressBar->setFormat('custom');
 
@@ -151,7 +155,6 @@ class FilesScanCommand extends Command
                 }
 
                 $file
-
                     ->setType($fileType)
                     ->setPath($filePath)
                     ->setMime($fileMime)

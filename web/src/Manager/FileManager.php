@@ -149,10 +149,10 @@ class FileManager {
                     $content = json_decode($response->getContent(), true);
                     $exif = $content['data']['exif'];
 
-                    $date = isset($exif['Image DateTimeOriginal'])
-                        ? $this->_eval($exif['Image DateTimeOriginal'], 'datetime')
-                        : (isset($exif['Image DateTimeDigitized'])
-                            ? $this->_eval($exif['Image DateTimeDigitized'], 'datetime')
+                    $date = isset($exif['EXIF DateTimeOriginal'])
+                        ? $this->_eval($exif['EXIF DateTimeOriginal'], 'datetime')
+                        : (isset($exif['EXIF DateTimeDigitized'])
+                            ? $this->_eval($exif['EXIF DateTimeDigitized'], 'datetime')
                             : (isset($exif['Image DateTime'])
                                 ? $this->_eval($exif['Image DateTime'], 'datetime')
                                 : null
