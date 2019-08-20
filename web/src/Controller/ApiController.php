@@ -361,12 +361,12 @@ class ApiController extends AbstractController
         if ($search) {
             $search = rawurldecode($search);
             $queryBuilder
-                ->andWhere('
+                ->andWhere('(
                     f.path LIKE :search OR
                     f.type LIKE :search OR
                     f.mime LIKE :search OR
                     f.extension LIKE :search
-                ')
+                )')
                 ->setParameter('search', '%' . $search . '%');
             ;
         }
