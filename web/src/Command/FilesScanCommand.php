@@ -60,7 +60,10 @@ class FilesScanCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        ProgressBar::setFormatDefinition('custom', ' %current%/%max% -- %message% (%filename%)');
+        ProgressBar::setFormatDefinition(
+            'custom',
+            ' %current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s% -- %message% (%filename%)'
+        );
         $io = new SymfonyStyle($input, $output);
         $finder = new Finder();
         $mimeTypes = new MimeTypes();

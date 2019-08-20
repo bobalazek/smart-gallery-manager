@@ -426,6 +426,8 @@ class FileManager {
      * @param File $file
      * @param string $type
      * @param string $format
+     *
+     * @return Image
      */
     private function _processImage(File $file, $type = 'thumbnail', $format = 'jpg'): Image
     {
@@ -455,6 +457,8 @@ class FileManager {
     /**
      * @param mixed $data
      * @param string $type
+     *
+     * @return string
      */
     private function _eval($data, $type = ''): ?string
     {

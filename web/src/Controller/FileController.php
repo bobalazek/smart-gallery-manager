@@ -23,31 +23,20 @@ class FileController extends AbstractController
     }
 
     /**
-     * @Route("/file/{hash}.json", name="file.info")
-     */
-    public function info($hash)
-    {
-        $file = $this->em->getRepository(File::class)->findOneByHash($hash);
-        if (!$file) {
-            throw $this->createNotFoundException('The file does not exist');
-        }
-
-        return $this->json(
-            $file->toArray()
-        );
-    }
-
-    /**
      * @Route("/file/{hash}.{type}.{format}", name="file.view")
      */
     public function view($hash, $type, $format, Request $request)
     {
         $allowedTypes = array_keys($this->params->get('allowed_image_conversion_types'));
-        $imageMaxAge = $this->params->get('image_max_age');
-
         if (!in_array($type, $allowedTypes)) {
             throw new \Exception('Invalid type. Allowed: ' . implode(', ', $allowedTypes));
         }
+
+        if (!in_array($format, ['jpg'])) {
+            throw new \Exception('Invalid format. Allowed: jpg');
+        }
+
+        $imageMaxAge = $this->params->get('image_max_age');
 
         $file = $this->em->getRepository(File::class)->findOneByHash($hash);
         if (!$file) {
