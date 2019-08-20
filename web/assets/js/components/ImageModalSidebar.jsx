@@ -101,7 +101,7 @@ class ImageModalSidebar extends React.Component {
           fileInformation.meta.device.make ||
           fileInformation.meta.device.model ||
           fileInformation.meta.device.shutter_speed ||
-          fileInformation.meta.device.aperature ||
+          fileInformation.meta.device.aperture ||
           fileInformation.meta.device.iso ||
           fileInformation.meta.device.focal_length ||
           fileInformation.meta.device.lens_make ||
@@ -121,8 +121,8 @@ class ImageModalSidebar extends React.Component {
         fileInformation.meta.device
         ? (
           <React.Fragment>
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.aperature
-              ? 'Aperature: f/' + fileInformation.meta.device.aperature + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.aperture
+              ? 'Aperture: f/' + fileInformation.meta.device.aperture + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.shutter_speed
               ? 'Shutter speed: ' + fileInformation.meta.device.shutter_speed + '<br />'
@@ -137,7 +137,10 @@ class ImageModalSidebar extends React.Component {
               ? 'Lens make: ' + fileInformation.meta.device.lens_make + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.lens_model
-              ? 'Lens model: ' + fileInformation.meta.device.lens_model
+              ? 'Lens model: ' + fileInformation.meta.device.lens_model + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.orientation
+              ? 'Orientation: ' + fileInformation.meta.device.orientation + '<br />'
               : '' }} />
           </React.Fragment>
         )

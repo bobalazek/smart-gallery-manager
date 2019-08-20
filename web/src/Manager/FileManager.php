@@ -54,7 +54,7 @@ class FileManager {
             'make' => null,
             'model' => null,
             'shutter_speed' => null,
-            'aperature' => null,
+            'aperture' => null,
             'iso' => null,
             'focal_length' => null,
             'lens_make' => null,
@@ -82,18 +82,18 @@ class FileManager {
                     )
                 );
             $size = isset($exif['FILE']['FileSize'])
-                ? $exif['FILE']['FileSize']
+                ? (int)$exif['FILE']['FileSize']
                 : filesize($file->getPath());
             $width = isset($exif['EXIF']['ExifImageWidth'])
-                ? $exif['EXIF']['ExifImageWidth']
+                ? (int)$exif['EXIF']['ExifImageWidth']
                 : (isset($exif['COMPUTED']['Width'])
-                    ? $exif['COMPUTED']['Width']
+                    ? (int)$exif['COMPUTED']['Width']
                     : null
                 );
             $height = isset($exif['EXIF']['ExifImageLength'])
-                ? $exif['EXIF']['ExifImageLength']
+                ? (int)$exif['EXIF']['ExifImageLength']
                 : (isset($exif['COMPUTED']['Height'])
-                    ? $exif['COMPUTED']['Height']
+                    ? (int)$exif['COMPUTED']['Height']
                     : null
                 );
             $orientation = isset($exif['IFD0']['Orientation'])
@@ -108,10 +108,16 @@ class FileManager {
             $device['model'] = $exif['IFD0']['Model'] ?? null;
             $device['shutter_speed'] = isset($exif['EXIF']['ExposureTime'])
                 ? $this->_eval($exif['EXIF']['ExposureTime'], 'shutter_speed')
-                : null;
-            $device['aperature'] = isset($exif['EXIF']['FNumber'])
-                ? $this->_eval($exif['EXIF']['FNumber'], 'aperature')
-                : null;
+                : (isset($exif['EXIF']['ShutterSpeedValue'])
+                    ? $this->_eval($exif['EXIF']['ShutterSpeedValue'], 'shutter_speed')
+                    : null
+                );
+            $device['aperture'] = isset($exif['EXIF']['FNumber'])
+                ? $this->_eval($exif['EXIF']['FNumber'], 'aperture')
+                : (isset($exif['EXIF']['ApertureValue'])
+                    ? $this->_eval($exif['EXIF']['ApertureValue'], 'aperture')
+                    : null
+                );
             $device['iso'] = isset($exif['EXIF']['ISOSpeedRatings'])
                 ? $this->_eval($exif['EXIF']['ISOSpeedRatings'], 'iso')
                 : null;
@@ -164,6 +170,7 @@ class FileManager {
                             )
                         );
                     $size = filesize($file->getPath());
+                    // TODO: width & height are wrong. Not sure why.
                     $width = isset($exif['Image ImageWidth'])
                         ? (int)$exif['Image ImageWidth']
                         : null;
@@ -184,12 +191,18 @@ class FileManager {
                     $device['model'] = isset($exif['Image Model'])
                         ? $exif['Image Model']
                         : null;
-                    $device['shutter_speed'] = isset($exif['EXIF ShutterSpeedValue'])
-                        ? $this->_eval($exif['EXIF ShutterSpeedValue'], 'shutter_speed')
-                        : null;
-                    $device['aperature'] = isset($exif['EXIF ApertureValue'])
-                        ? $this->_eval($exif['EXIF ApertureValue'], 'aperature')
-                        : null;
+                    $device['shutter_speed'] = isset($exif['EXIF ExposureTime'])
+                        ? $this->_eval($exif['EXIF ExposureTime'], 'shutter_speed')
+                        : (isset($exif['EXIF ShutterSpeedValue'])
+                            ? $this->_eval($exif['EXIF ShutterSpeedValue'], 'shutter_speed')
+                            : null
+                        );
+                    $device['aperture'] = isset($exif['EXIF FNumber'])
+                        ? $this->_eval($exif['EXIF FNumber'], 'aperture')
+                        : (isset($exif['EXIF ApertureValue'])
+                            ? $this->_eval($exif['EXIF ApertureValue'], 'aperture')
+                            : null
+                        );
                     $device['iso'] = isset($exif['EXIF ISOSpeedRatings'])
                         ? $exif['EXIF ISOSpeedRatings']
                         : null;
@@ -234,12 +247,18 @@ class FileManager {
                     // Device
                     $device['make'] = $imageMagickProperties['exif:Make'] ?? null;
                     $device['model'] = $imageMagickProperties['exif:Model'] ?? null;
-                    $device['shutter_speed'] = isset($imageMagickProperties['ShutterSpeedValue'])
-                        ? $this->_eval($imageMagickProperties['ShutterSpeedValue'], 'shutter_speed')
-                        : null;
-                    $device['aperature'] = isset($imageMagickProperties['exif:ApertureValue'])
-                        ? $this->_eval($imageMagickProperties['exif:ApertureValue'], 'aperature')
-                        : null;
+                    $device['shutter_speed'] = isset($imageMagickProperties['exif:ExposureTime'])
+                        ? $this->_eval($imageMagickProperties['exif:ExposureTime'], 'shutter_speed')
+                        : (isset($imageMagickProperties['exif:ShutterSpeedValue'])
+                            ? $this->_eval($imageMagickProperties['exif:ShutterSpeedValue'], 'shutter_speed')
+                            : null
+                        );
+                    $device['aperture'] = isset($imageMagickProperties['exif:FNumber'])
+                        ? $this->_eval($imageMagickProperties['exif:FNumber'], 'aperture')
+                        : (isset($imageMagickProperties['exif:ApertureValue'])
+                            ? $this->_eval($imageMagickProperties['exif:ApertureValue'], 'aperture')
+                            : null
+                        );
                     $device['iso'] = isset($imageMagickProperties['exif:ISOSpeedRatings'])
                         ? $imageMagickProperties['exif:ISOSpeedRatings']
                         : null;

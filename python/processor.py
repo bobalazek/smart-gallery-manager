@@ -31,10 +31,12 @@ def get_exif(filename):
                 data[tag_key] = val
     '''
 
-    f = open(filename, 'rb')
-    tags = exifread.process_file(f)
+    file = open(filename, 'rb')
+    tags = exifread.process_file(file)
     for tag in tags.keys():
         if tag not in ('JPEGThumbnail', 'TIFFThumbnail', 'Filename', 'EXIF MakerNote'):
             data[tag] = str(tags[tag])
+
+    file.close()
 
     return data
