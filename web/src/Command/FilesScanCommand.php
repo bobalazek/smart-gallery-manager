@@ -11,7 +11,6 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Finder\Finder;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Mime\MimeTypes;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Doctrine\ORM\EntityManagerInterface;
@@ -64,14 +63,9 @@ class FilesScanCommand extends Command
         ProgressBar::setFormatDefinition('custom', ' %current%/%max% -- %message% (%filename%)');
         $io = new SymfonyStyle($input, $output);
         $finder = new Finder();
-        $filesystem = new Filesystem();
         $mimeTypes = new MimeTypes();
         $skipGenerateCache = $input->getOption('skip-generate-cache') !== false;
         $updateExistingEntries = $input->getOption('update-existing-entries') !== false;
-
-        $allowedImageConversionTypes = $this->params->get('allowed_image_conversion_types');
-        // Do not cache originals. They are on-demand
-        unset($allowedImageConversionTypes['original']);
 
         $filesRepository = $this->em->getRepository(File::class);
 
@@ -168,15 +162,10 @@ class FilesScanCommand extends Command
                 $this->em->flush();
                 $this->em->clear();
 
+                /********** Cache **********/
                 if (!$skipGenerateCache) {
-                    /********** Cache **********/
                     try {
-                        foreach ($allowedImageConversionTypes as $imageType => $imageTypeData) {
-                            $this->fileManager->generateImageCache(
-                                $file,
-                                $imageType
-                            );
-                        }
+                        $this->fileManager->generateImageCache($file);
                     } catch (\Exception $e) {
                         $io->error($e->getMessage());
                     }

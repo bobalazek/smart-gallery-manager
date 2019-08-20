@@ -1,4 +1,7 @@
 {
+    "aws/aws-sdk-php": {
+        "version": "3.109.7"
+    },
     "beberlei/doctrineextensions": {
         "version": "v1.2.3"
     },
@@ -102,6 +105,12 @@
     "fig/link-util": {
         "version": "1.0.0"
     },
+    "guzzlehttp/guzzle": {
+        "version": "6.3.3"
+    },
+    "guzzlehttp/promises": {
+        "version": "v1.3.1"
+    },
     "guzzlehttp/psr7": {
         "version": "1.6.1"
     },
@@ -119,6 +128,9 @@
     },
     "monolog/monolog": {
         "version": "1.24.0"
+    },
+    "mtdowling/jmespath.php": {
+        "version": "2.4.0"
     },
     "nikic/php-parser": {
         "version": "v4.2.2"

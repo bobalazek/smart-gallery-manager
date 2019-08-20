@@ -43,7 +43,7 @@ class FileController extends AbstractController
     public function view($hash, $type, $format, Request $request)
     {
         $allowedTypes = array_keys($this->params->get('allowed_image_conversion_types'));
-        $maxAge = $this->params->get('max_age');
+        $imageMaxAge = $this->params->get('image_max_age');
 
         if (!in_array($type, $allowedTypes)) {
             throw new \Exception('Invalid type. Allowed: ' . implode(', ', $allowedTypes));
@@ -80,12 +80,12 @@ class FileController extends AbstractController
         $response->headers->set('Content-Length', strlen($imageData['content']));
 
         $response->setContent($imageData['content']);
-        $response->setSharedMaxAge($maxAge);
+        $response->setSharedMaxAge($imageMaxAge);
         $response->setCache([
             'etag' => sha1($imageData['key']),
             'last_modified' => $file->getModifiedAt(),
-            'max_age' => $maxAge,
-            's_maxage' => $maxAge,
+            'max_age' => $imageMaxAge,
+            's_maxage' => $imageMaxAge,
             'private' => true,
         ]);
 

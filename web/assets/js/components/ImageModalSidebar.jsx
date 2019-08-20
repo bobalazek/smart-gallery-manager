@@ -69,6 +69,9 @@ class ImageModalSidebar extends React.Component {
             <span dangerouslySetInnerHTML={{ __html: fileInformation.path
               ? 'Path: ' + fileInformation.path + '<br />'
               : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.path
+              ? 'Mime: ' + fileInformation.mime + '<br />'
+              : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.size
               ? 'File size: ' + (fileInformation.meta.size / 1024 / 1024).toFixed(1) + 'MB <br />'
               : '' }} />
@@ -77,7 +80,16 @@ class ImageModalSidebar extends React.Component {
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.width
               && fileInformation.meta.height
-              ? 'Size: ' + (fileInformation.meta.width + 'x' + fileInformation.meta.height)
+              ? 'Size: ' + (fileInformation.meta.width + 'x' + fileInformation.meta.height) + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.taken_at
+              ? 'Taken at: ' + moment(fileInformation.taken_at).format('LL HH:mm:ss') + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.created_at
+              ? 'Created at: ' + moment(fileInformation.created_at).format('LL HH:mm:ss') + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.modified_at
+              ? 'Modified at: ' + moment(fileInformation.modified_at).format('LL HH:mm:ss') + '<br />'
               : '' }} />
           </React.Fragment>
         )

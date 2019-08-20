@@ -93,7 +93,6 @@ class ImageGrid extends React.Component {
         id: image.id,
         hash: image.hash,
         src: image.images.preview.src,
-        srcPreview: image.images.preview.src,
         srcOriginal: image.images.original.src,
         aspectRatio: imageAspectRatio,
       });
@@ -167,14 +166,6 @@ class ImageGrid extends React.Component {
               >
                 <img
                   src={isVisible ? image.src : ''}
-                  onLoad={() => {
-                    if (
-                      isVisible &&
-                      image.srcPreview
-                    ) {
-                      image.src = image.srcPreview;
-                    }
-                  }}
                   style={image.style}
                 />
               </div>

@@ -7,6 +7,7 @@ use Symfony\Component\Mime\MimeTypes;
 use Symfony\Component\HttpClient\CurlHttpClient;
 use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\Cache\ItemInterface;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Image;
@@ -34,6 +35,7 @@ class FileManager {
             'driver' => 'imagick',
         ]);
         $this->httpClient = new CurlHttpClient();
+        $this->filesystem = new Filesystem();
     }
 
     /**
@@ -96,7 +98,10 @@ class FileManager {
                 );
             $orientation = isset($exif['IFD0']['Orientation'])
                 ? $exif['IFD0']['Orientation']
-                : null;
+                : (isset($exif['COMPUTED']['Orientation'])
+                    ? $exif['COMPUTED']['Orientation']
+                    : null
+                );
 
             // Device
             $device['make'] = $exif['IFD0']['Make'] ?? null;
@@ -309,15 +314,23 @@ class FileManager {
      * Generates the cache for the the specified file
      *
      * @param File $file
-     * @param string $type
+     * @param array $types
      * @param string $format
      */
-    public function generateImageCache(File $file, $type = 'thumbnail', $format = 'jpg')
+    public function generateImageCache(File $file, $types = ['thumbnail', 'preview'], $format = 'jpg')
     {
-        $cacheKey = $file->getHash() . '.' . $type . '.' . $format;
+        $allowedImageConversionTypes = $this->params->get('allowed_image_conversion_types');
 
-        $this->cache->delete($cacheKey);
-        $this->getImageData($file, $type, $format);
+        foreach ($types as $type) {
+            if (!isset($allowedImageConversionTypes)) {
+                throw new \Exception('The type "' . $type . '" does not exist.')
+            }
+
+            $cacheKey = $file->getHash() . '.' . $type . '.' . $format;
+
+            $this->cache->delete($cacheKey);
+            $this->getImageData($file, $type, $format);
+        }
 
         return true;
     }
@@ -326,20 +339,35 @@ class FileManager {
      * Gets the image instance for data or further manipulation.
      *
      * @param File $file
+     *
+     * @return Image
      */
     public function getImage($file): Image
+    {
+        $image = $this->imageManager->make(
+            $this->getImagePath($file)
+        );
+        $image->orientate();
+
+        return $image;
+    }
+
+    /**
+     * Gets the image path
+     *
+     * @param File $file
+     *
+     * @return string
+     */
+    public function getImagePath($file): string
     {
         $path = $file->getPath();
 
         if ($file->getExtension() === 'dng') {
-            $cacheDir = $this->params->get('cache_dir');
-            $dngDir = $cacheDir . '/dng';
-            if (!is_dir($dngDir)) {
-                mkdir($dngDir);
-            }
+            $fileDataDir = $this->getFileDataDir($file);
 
-            $path = $dngDir . '/' . $file->getHash() . '.jpg';
-            if (!file_exists($path)) {
+            $path = $fileDataDir . '/converted_from_dng.jpg';
+            if (!$this->filesystem->exists($path)) {
                 $url = 'http://python:8000/file-view';
                 $response = $this->httpClient->request('GET', $url, [
                     'query' => [
@@ -351,10 +379,26 @@ class FileManager {
             }
         }
 
-        $image = $this->imageManager->make($path);
-        $image->orientate();
+        return $path;
+    }
 
-        return $image;
+
+    /**
+     * Gets the image instance for data or further manipulation.
+     *
+     * @param File $file
+     *
+     * @return string
+     */
+    public function getFileDataDir($file): string
+    {
+        $fileDataDir = $this->params->get('var_dir') .
+            '/data/files/' . $file->getHash();
+        if (!$this->filesystem->exists($fileDataDir)) {
+            $this->filesystem->mkdir($fileDataDir);
+        }
+
+        return $fileDataDir;
     }
 
     /**

@@ -256,16 +256,17 @@ class ApiController extends AbstractController
                 UrlGeneratorInterface::ABSOLUTE_URL
             );
 
+            $width = $fileMeta['width'];
+            $height = $fileMeta['height'];
+
             // If it's not the default orientation, we need to reflect that here!
-            //   The meta is saved for the original image, not the oriented one,
-            //   that is later streamed in the /file/{hash} endpoint.
-            $isFinalImageOriented = !in_array($fileMeta['orientation'], [1, 3]);
-            $width = $isFinalImageOriented
-                ? $fileMeta['height']
-                : $fileMeta['width'];
-            $height = $isFinalImageOriented
-                ? $fileMeta['width']
-                : $fileMeta['height'];
+            //   The meta is saved for the ORIGINAL (unprocessed & unoriented) image!
+            //   The streamed one in the /file/{hash} endpoint, has already applied orientation.
+            $isFinalImageOriented = !in_array($fileMeta['orientation'], [null, 1, 3]);
+            if ($isFinalImageOriented) {
+                $width = $fileMeta['height'];
+                $height = $fileMeta['width'];
+            }
 
             if ($width && $height) {
                 $aspectRatio = $width / $height;
