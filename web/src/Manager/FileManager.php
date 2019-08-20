@@ -69,11 +69,16 @@ class FileManager {
             $exif = exif_read_data($file->getPath(), 0, true);
             $date = isset($exif['IFD0']['DateTime'])
                 ? $this->_eval($exif['IFD0']['DateTime'], 'datetime')
-                : (isset($exif['EXIF']['DateTime'])
-                    ? $exif['EXIF']['DateTime']
-                    : (isset($exif['EXIF']['DateTimeOriginal'])
-                        ? $exif['EXIF']['DateTimeOriginal']
-                        : null));
+                : (isset($exif['EXIF']['DateTimeOriginal'])
+                    ? $exif['EXIF']['DateTimeOriginal']
+                    : (isset($exif['EXIF']['DateTimeDigitized'])
+                        ? $exif['EXIF']['DateTimeDigitized']
+                        : (isset($exif['EXIF']['DateTime'])
+                            ? $exif['EXIF']['DateTime']
+                            : null
+                        )
+                    )
+                );
             $size = isset($exif['FILE']['FileSize'])
                 ? $exif['FILE']['FileSize']
                 : filesize($file->getPath());
@@ -81,12 +86,14 @@ class FileManager {
                 ? $exif['EXIF']['ExifImageWidth']
                 : (isset($exif['COMPUTED']['Width'])
                     ? $exif['COMPUTED']['Width']
-                    : null);
+                    : null
+                );
             $height = isset($exif['EXIF']['ExifImageLength'])
                 ? $exif['EXIF']['ExifImageLength']
                 : (isset($exif['COMPUTED']['Height'])
                     ? $exif['COMPUTED']['Height']
-                    : null);
+                    : null
+                );
             $orientation = isset($exif['IFD0']['Orientation'])
                 ? $exif['IFD0']['Orientation']
                 : null;
@@ -110,12 +117,14 @@ class FileManager {
                 ? $exif['EXIF']['LensInfo']
                 : (isset($exif['EXIF']['UndefinedTag:0xA434'])
                     ? $exif['EXIF']['UndefinedTag:0xA434']
-                    : null);
+                    : null
+                );
             $device['lens_model'] = isset($exif['EXIF']['LensModel'])
                 ? $exif['EXIF']['LensModel']
                 : (isset($exif['EXIF']['UndefinedTag:0xA500'])
                     ? $exif['EXIF']['UndefinedTag:0xA500']
-                    : null);
+                    : null
+                );
 
             // Location
             $location['altitude'] = isset($exif['GPS']['GPSAltitude'])
@@ -140,11 +149,15 @@ class FileManager {
                     $content = json_decode($response->getContent(), true);
                     $exif = $content['data']['exif'];
 
-                    $date = isset($exif['Image DateTime'])
-                        ? $this->_eval($exif['Image DateTime'], 'datetime')
-                        : (isset($exif['Image DateTimeOriginal'])
-                            ? $this->_eval($exif['Image DateTimeOriginal'], 'datetime')
-                            : null);
+                    $date = isset($exif['Image DateTimeOriginal'])
+                        ? $this->_eval($exif['Image DateTimeOriginal'], 'datetime')
+                        : (isset($exif['Image DateTimeDigitized'])
+                            ? $this->_eval($exif['Image DateTimeDigitized'], 'datetime')
+                            : (isset($exif['Image DateTime'])
+                                ? $this->_eval($exif['Image DateTime'], 'datetime')
+                                : null
+                            )
+                        );
                     $size = filesize($file->getPath());
                     $width = isset($exif['Image ImageWidth'])
                         ? (int)$exif['Image ImageWidth']
@@ -155,7 +168,8 @@ class FileManager {
                     $orientation = isset($exif['Image Orientation']) // TODO
                         ? ($exif['Image Orientation'] === 'Horizontal (normal)'
                             ? 1 // OR 3?
-                            : 6) // OR 8?
+                            : 6 // OR 8?
+                        )
                         : null;
 
                     // Device
@@ -198,9 +212,15 @@ class FileManager {
                     $imageMagick = new \imagick($file->getPath());
                     $imageMagickProperties = $imageMagick->getImageProperties();
 
-                    $date = isset($imageMagickProperties['exif:DateTime'])
-                        ? $this->_eval($imageMagickProperties['exif:DateTime'], 'datetime')
-                        : null;
+                    $date = isset($imageMagickProperties['exif:DateTimeOriginal'])
+                        ? $this->_eval($imageMagickProperties['exif:DateTimeOriginal'], 'datetime')
+                        : (isset($imageMagickProperties['exif:DateTimeDigitized'])
+                            ? $this->_eval($imageMagickProperties['exif:DateTimeDigitized'], 'datetime')
+                            : (isset($imageMagickProperties['exif:DateTime'])
+                                ? $this->_eval($imageMagickProperties['exif:DateTime'], 'datetime')
+                                : null
+                            )
+                        );
                     $size = $imageMagick->getImageSize();
                     $width = $imageMagick->getImageWidth();
                     $height = $imageMagick->getImageHeight();

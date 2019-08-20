@@ -42,16 +42,11 @@ class FileController extends AbstractController
      */
     public function view($hash, $type, $format, Request $request)
     {
-        $allowedFormats = $this->params->get('allowed_image_conversion_formats');
         $allowedTypes = array_keys($this->params->get('allowed_image_conversion_types'));
         $maxAge = $this->params->get('max_age');
 
         if (!in_array($type, $allowedTypes)) {
             throw new \Exception('Invalid type. Allowed: ' . implode(', ', $allowedTypes));
-        }
-
-        if (!in_array($format, $allowedFormats)) {
-            throw new \Exception('Invalid format. Allowed: ' . implode(', ', $allowedFormats));
         }
 
         $file = $this->em->getRepository(File::class)->findOneByHash($hash);

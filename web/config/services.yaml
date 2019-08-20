@@ -1,6 +1,4 @@
 parameters:
-    allowed_image_conversion_formats: # into which formats do we allow the files to be converted to?
-        - jpg
     allowed_image_conversion_types:
         thumbnail:
             height: 64

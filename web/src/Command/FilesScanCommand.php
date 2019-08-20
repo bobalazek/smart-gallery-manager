@@ -43,32 +43,31 @@ class FilesScanCommand extends Command
                 null
             )
             ->addOption(
-                'conversion-format',
+                'skip-generate-cache',
                 'c',
                 InputOption::VALUE_OPTIONAL,
-                'Into which format should it convert the found files?',
-                'jpg'
+                'Should we skip the caching of the images?',
+                false
+            )
+            ->addOption(
+                'update-existing-entries',
+                'u',
+                InputOption::VALUE_OPTIONAL,
+                'Should we update the existing entries in the database (when meta changes for example)?',
+                false
             )
         ;
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
+        ProgressBar::setFormatDefinition('custom', ' %current%/%max% -- %message% (%filename%)');
         $io = new SymfonyStyle($input, $output);
         $finder = new Finder();
         $filesystem = new Filesystem();
         $mimeTypes = new MimeTypes();
-        ProgressBar::setFormatDefinition('custom', ' %current%/%max% -- %message% (%filename%)');
-
-        $allowedImageConversionFormats = $this->params->get('allowed_image_conversion_formats');
-        $conversionFormat = $input->getOption('conversion-format');
-        if (!in_array($conversionFormat, $allowedImageConversionFormats)) {
-            $io->error(
-                'Invalid conversion format. Allowed: ' .
-                implode(', ', $allowedImageConversionFormats)
-            );
-            return;
-        }
+        $skipGenerateCache = $input->getOption('skip-generate-cache') !== false;
+        $updateExistingEntries = $input->getOption('update-existing-entries') !== false;
 
         $allowedImageConversionTypes = $this->params->get('allowed_image_conversion_types');
         // Do not cache originals. They are on-demand
@@ -134,21 +133,30 @@ class FilesScanCommand extends Command
                     );
 
                 $file = $filesRepository->findOneByHash($fileHash);
+                $fileExists = $file !== null;
 
-                // TODO: instead of just skipping, maybe check if it's dirty?
-                if ($file) {
+                if (
+                    $fileExists &&
+                    !$updateExistingEntries
+                ) {
                     continue;
                 }
 
-                $file = new File();
+                if (!$fileExists) {
+                    $file = new File();
+                    $file
+                        ->setHash($fileHash)
+                        ->setCreatedAt(new \DateTime())
+                    ;
+                }
+
                 $file
-                    ->setHash($fileHash)
+
                     ->setType($fileType)
                     ->setPath($filePath)
                     ->setMime($fileMime)
                     ->setExtension($fileExtension)
                     ->setMeta($this->fileManager->getFileMeta($file))
-                    ->setCreatedAt(new \DateTime())
                     ->setModifiedAt(new \DateTime())
                     ->setTakenAt(new \DateTime($file->getMeta()['date'] ?? '1970-01-01'))
                 ;
@@ -157,17 +165,18 @@ class FilesScanCommand extends Command
                 $this->em->flush();
                 $this->em->clear();
 
-                /********** Cache **********/
-                try {
-                    foreach ($allowedImageConversionTypes as $imageType => $imageTypeData) {
-                        $this->fileManager->generateImageCache(
-                            $file,
-                            $imageType,
-                            $conversionFormat
-                        );
+                if (!$skipGenerateCache) {
+                    /********** Cache **********/
+                    try {
+                        foreach ($allowedImageConversionTypes as $imageType => $imageTypeData) {
+                            $this->fileManager->generateImageCache(
+                                $file,
+                                $imageType
+                            );
+                        }
+                    } catch (\Exception $e) {
+                        $io->error($e->getMessage());
                     }
-                } catch (\Exception $e) {
-                    $io->error($e->getMessage());
                 }
             }
         }
