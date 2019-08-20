@@ -323,7 +323,7 @@ class FileManager {
 
         foreach ($types as $type) {
             if (!isset($allowedImageConversionTypes)) {
-                throw new \Exception('The type "' . $type . '" does not exist.')
+                throw new \Exception('The type "' . $type . '" does not exist.');
             }
 
             $cacheKey = $file->getHash() . '.' . $type . '.' . $format;
