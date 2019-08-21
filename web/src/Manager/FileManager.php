@@ -22,12 +22,12 @@ class FileManager {
             new FilesystemAdapter(
                 'files',
                 0,
-                $this->params->get('cache_dir')
+                $this->params->get('var_dir') . '/cache'
             ),
             new FilesystemAdapter(
                 'file_tags',
                 0,
-                $this->params->get('cache_dir')
+                $this->params->get('var_dir') . '/cache'
             )
         );
         $this->mimeTypes = new MimeTypes();
@@ -158,6 +158,10 @@ class FileManager {
                     ]);
 
                     $content = json_decode($response->getContent(), true);
+                    if (isset($content['data']['error'])) {
+                        throw new \Exception($content['data']['error']);
+                    }
+
                     $exif = $content['data']['exif'];
 
                     $date = isset($exif['EXIF DateTimeOriginal'])

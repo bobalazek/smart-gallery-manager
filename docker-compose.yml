@@ -49,6 +49,7 @@ services:
     volumes:
       - .:/usr/src/app
       # Read the comment above in php-fpm.volumes. They MUST be the same paths!!!
+      - .:/var/www # we need that one for the phpunit tests, so it can access the test resources.
       - server-nfs:/var/data/server
     ports:
       # TODO: Do not expose any python ports. It's only for development right now!
