@@ -170,9 +170,16 @@ class FilesScanCommand extends Command
                     try {
                         $this->fileManager->generateImageCache($file);
                     } catch (\Exception $e) {
+                        $io->newLine();
                         $io->error($e->getMessage());
                     }
                 }
+
+                /********** Labels **********/
+                // TODO
+
+                /********** Reverse geocoding **********/
+                // TODO
             }
         }
 

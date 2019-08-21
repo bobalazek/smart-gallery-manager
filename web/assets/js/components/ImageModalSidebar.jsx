@@ -147,30 +147,26 @@ class ImageModalSidebar extends React.Component {
         : '',
       hasLocationData: fileInformation &&
         fileInformation.meta &&
-        fileInformation.meta.location &&
+        fileInformation.meta.geolocation &&
         (
-          fileInformation.meta.location.name ||
-          fileInformation.meta.location.altitude ||
-          fileInformation.meta.location.latitude ||
-          fileInformation.meta.location.longitude
+          fileInformation.meta.geolocation.altitude ||
+          fileInformation.meta.geolocation.latitude ||
+          fileInformation.meta.geolocation.longitude
         ),
       locationPrimary: 'Location',
       locationSecondary: fileInformation &&
         fileInformation.meta &&
-        fileInformation.meta.location
+        fileInformation.meta.geolocation
         ? (
           <React.Fragment>
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.name
-              ? 'Name: ' + fileInformation.meta.location.name + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.geolocation.altitude
+              ? 'Altitude: ' + fileInformation.meta.geolocation.altitude + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.altitude
-              ? 'Altitude: ' + fileInformation.meta.location.altitude + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.geolocation.latitude
+              ? 'Latitude: ' + fileInformation.meta.geolocation.latitude + '<br />'
               : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.latitude
-              ? 'Latitude: ' + fileInformation.meta.location.latitude + '<br />'
-              : '' }} />
-            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.location.longitude
-              ? 'Longitude: ' + fileInformation.meta.location.longitude + '<br />'
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.geolocation.longitude
+              ? 'Longitude: ' + fileInformation.meta.geolocation.longitude + '<br />'
               : '' }} />
           </React.Fragment>
         )

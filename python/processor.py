@@ -35,7 +35,10 @@ def get_exif(filename):
     tags = exifread.process_file(file)
     for tag in tags.keys():
         if tag not in ('JPEGThumbnail', 'TIFFThumbnail', 'Filename', 'EXIF MakerNote'):
-            data[tag] = str(tags[tag])
+            if tag == 'Image Orientation':
+                data[tag] = str(tags[tag].field_type)
+            else:
+                data[tag] = str(tags[tag])
 
     file.close()
 

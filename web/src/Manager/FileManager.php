@@ -38,6 +38,8 @@ class FileManager {
         $this->filesystem = new Filesystem();
     }
 
+    private $_fileMeta = [];
+
     /**
      * Gets the file meta data
      *
@@ -45,12 +47,12 @@ class FileManager {
      */
     public function getFileMeta(File $file): ?array
     {
-        $date = null;
-        $size = null;
-        $width = null;
-        $height = null;
-        $orientation = null;
-        $device = [
+        $this->_fileMeta['date'] = null;
+        $this->_fileMeta['size'] = null;
+        $this->_fileMeta['width'] = null;
+        $this->_fileMeta['height'] = null;
+        $this->_fileMeta['orientation'] = null;
+        $this->_fileMeta['device'] = [
             'make' => null,
             'model' => null,
             'shutter_speed' => null,
@@ -60,244 +62,37 @@ class FileManager {
             'lens_make' => null,
             'lens_model' => null,
         ];
-        $location = [
-            'name' => null,
+        $this->_fileMeta['geolocation'] = [
             'altitude' => null,
             'latitude' => null,
             'longitude' => null,
         ];
 
         try {
-            $exif = exif_read_data($file->getPath(), 0, true);
-            $date = isset($exif['IFD0']['DateTime'])
-                ? $this->_eval($exif['IFD0']['DateTime'], 'datetime')
-                : (isset($exif['EXIF']['DateTimeOriginal'])
-                    ? $exif['EXIF']['DateTimeOriginal']
-                    : (isset($exif['EXIF']['DateTimeDigitized'])
-                        ? $exif['EXIF']['DateTimeDigitized']
-                        : (isset($exif['EXIF']['DateTime'])
-                            ? $exif['EXIF']['DateTime']
-                            : null
-                        )
-                    )
-                );
-            $size = isset($exif['FILE']['FileSize'])
-                ? (int)$exif['FILE']['FileSize']
-                : filesize($file->getPath());
-            $width = isset($exif['EXIF']['ExifImageWidth'])
-                ? (int)$exif['EXIF']['ExifImageWidth']
-                : (isset($exif['COMPUTED']['Width'])
-                    ? (int)$exif['COMPUTED']['Width']
-                    : null
-                );
-            $height = isset($exif['EXIF']['ExifImageLength'])
-                ? (int)$exif['EXIF']['ExifImageLength']
-                : (isset($exif['COMPUTED']['Height'])
-                    ? (int)$exif['COMPUTED']['Height']
-                    : null
-                );
-            $orientation = isset($exif['IFD0']['Orientation'])
-                ? $exif['IFD0']['Orientation']
-                : (isset($exif['COMPUTED']['Orientation'])
-                    ? $exif['COMPUTED']['Orientation']
-                    : null
-                );
-
-            // Device
-            $device['make'] = $exif['IFD0']['Make'] ?? null;
-            $device['model'] = $exif['IFD0']['Model'] ?? null;
-            $device['shutter_speed'] = isset($exif['EXIF']['ExposureTime'])
-                ? $this->_eval($exif['EXIF']['ExposureTime'], 'shutter_speed')
-                : (isset($exif['EXIF']['ShutterSpeedValue'])
-                    ? $this->_eval($exif['EXIF']['ShutterSpeedValue'], 'shutter_speed')
-                    : null
-                );
-            $device['aperture'] = isset($exif['EXIF']['FNumber'])
-                ? $this->_eval($exif['EXIF']['FNumber'], 'aperture')
-                : (isset($exif['EXIF']['ApertureValue'])
-                    ? $this->_eval($exif['EXIF']['ApertureValue'], 'aperture')
-                    : null
-                );
-            $device['iso'] = isset($exif['EXIF']['ISOSpeedRatings'])
-                ? $this->_eval($exif['EXIF']['ISOSpeedRatings'], 'iso')
-                : null;
-            $device['focal_length'] = isset($exif['EXIF']['FocalLength'])
-                ? $this->_eval($exif['EXIF']['FocalLength'], 'focal_length')
-                : null;
-            $device['lens_make'] = isset($exif['EXIF']['LensInfo'])
-                ? $exif['EXIF']['LensInfo']
-                : (isset($exif['EXIF']['UndefinedTag:0xA434'])
-                    ? $exif['EXIF']['UndefinedTag:0xA434']
-                    : null
-                );
-            $device['lens_model'] = isset($exif['EXIF']['LensModel'])
-                ? $exif['EXIF']['LensModel']
-                : (isset($exif['EXIF']['UndefinedTag:0xA500'])
-                    ? $exif['EXIF']['UndefinedTag:0xA500']
-                    : null
-                );
-
-            // Location
-            $location['altitude'] = isset($exif['GPS']['GPSAltitude'])
-                ? $this->_eval($exif['GPS']['GPSAltitude'], 'altitude')
-                : null;
-            $location['latitude'] = isset($exif['GPS']['GPSLatitude'])
-                ? $this->_eval($exif['GPS']['GPSLatitude'], 'latitude')
-                : null;
-            $location['longitude'] = isset($exif['GPS']['GPSLongitude'])
-                ? $this->_eval($exif['GPS']['GPSLongitude'], 'longitude')
-                : null;
+            $this->_processFileMetaViaGd($file);
         } catch (\Exception $e) {
             try {
                 if ($file->getExtension() === 'dng') {
-                    $url = 'http://python:8000/file-info';
-                    $response = $this->httpClient->request('GET', $url, [
-                        'query' => [
-                            'file' => $file->getPath(),
-                        ],
-                    ]);
-
-                    $content = json_decode($response->getContent(), true);
-                    if (isset($content['data']['error'])) {
-                        throw new \Exception($content['data']['error']);
-                    }
-
-                    $exif = $content['data']['exif'];
-
-                    $date = isset($exif['EXIF DateTimeOriginal'])
-                        ? $this->_eval($exif['EXIF DateTimeOriginal'], 'datetime')
-                        : (isset($exif['EXIF DateTimeDigitized'])
-                            ? $this->_eval($exif['EXIF DateTimeDigitized'], 'datetime')
-                            : (isset($exif['Image DateTime'])
-                                ? $this->_eval($exif['Image DateTime'], 'datetime')
-                                : null
-                            )
-                        );
-                    $size = filesize($file->getPath());
-                    // TODO: width & height are wrong. Not sure why.
-                    $width = isset($exif['Image ImageWidth'])
-                        ? (int)$exif['Image ImageWidth']
-                        : null;
-                    $height = isset($exif['Image ImageLength'])
-                        ? (int)$exif['Image ImageLength']
-                        : null;
-                    $orientation = isset($exif['Image Orientation']) // TODO
-                        ? ($exif['Image Orientation'] === 'Horizontal (normal)'
-                            ? 1 // OR 3?
-                            : 6 // OR 8?
-                        )
-                        : null;
-
-                    // Device
-                    $device['make'] = isset($exif['Image Make'])
-                        ? $exif['Image Make']
-                        : null;
-                    $device['model'] = isset($exif['Image Model'])
-                        ? $exif['Image Model']
-                        : null;
-                    $device['shutter_speed'] = isset($exif['EXIF ExposureTime'])
-                        ? $this->_eval($exif['EXIF ExposureTime'], 'shutter_speed')
-                        : (isset($exif['EXIF ShutterSpeedValue'])
-                            ? $this->_eval($exif['EXIF ShutterSpeedValue'], 'shutter_speed')
-                            : null
-                        );
-                    $device['aperture'] = isset($exif['EXIF FNumber'])
-                        ? $this->_eval($exif['EXIF FNumber'], 'aperture')
-                        : (isset($exif['EXIF ApertureValue'])
-                            ? $this->_eval($exif['EXIF ApertureValue'], 'aperture')
-                            : null
-                        );
-                    $device['iso'] = isset($exif['EXIF ISOSpeedRatings'])
-                        ? $exif['EXIF ISOSpeedRatings']
-                        : null;
-                    $device['focal_length'] = isset($exif['EXIF FocalLength'])
-                        ? $exif['EXIF FocalLength']
-                        : null;
-                    $device['lens_make'] = isset($exif['EXIF LensMake'])
-                        ? $exif['EXIF LensMake']
-                        : null;
-                    $device['lens_model'] = isset($exif['EXIF LensModel'])
-                        ? $exif['EXIF LensModel']
-                        : null;
-
-                    // Location
-                    $location['altitude'] = isset($exif['EXIF GPSAltitude'])
-                        ? $this->_eval($exif['EXIF GPSAltitude'], 'altitude')
-                        : null;
-                    $location['latitude'] = isset($exif['EXIF GPSLatitude'])
-                        ? $this->_eval($exif['EXIF GPSLatitude'], 'latitude')
-                        : null;
-                    $location['longitude'] = isset($exif['EXIF GPSLongitude'])
-                        ? $this->_eval($exif['EXIF GPSLongitude'], 'longitude')
-                        : null;
+                    $this->_processFileMetaViaPython($file);
                 } else {
-                    $imageMagick = new \imagick($file->getPath());
-                    $imageMagickProperties = $imageMagick->getImageProperties();
-
-                    $date = isset($imageMagickProperties['exif:DateTimeOriginal'])
-                        ? $this->_eval($imageMagickProperties['exif:DateTimeOriginal'], 'datetime')
-                        : (isset($imageMagickProperties['exif:DateTimeDigitized'])
-                            ? $this->_eval($imageMagickProperties['exif:DateTimeDigitized'], 'datetime')
-                            : (isset($imageMagickProperties['exif:DateTime'])
-                                ? $this->_eval($imageMagickProperties['exif:DateTime'], 'datetime')
-                                : null
-                            )
-                        );
-                    $size = $imageMagick->getImageLength();
-                    $width = $imageMagick->getImageWidth();
-                    $height = $imageMagick->getImageHeight();
-                    $orientation = $imageMagick->getImageOrientation();
-
-                    // Device
-                    $device['make'] = $imageMagickProperties['exif:Make'] ?? null;
-                    $device['model'] = $imageMagickProperties['exif:Model'] ?? null;
-                    $device['shutter_speed'] = isset($imageMagickProperties['exif:ExposureTime'])
-                        ? $this->_eval($imageMagickProperties['exif:ExposureTime'], 'shutter_speed')
-                        : (isset($imageMagickProperties['exif:ShutterSpeedValue'])
-                            ? $this->_eval($imageMagickProperties['exif:ShutterSpeedValue'], 'shutter_speed')
-                            : null
-                        );
-                    $device['aperture'] = isset($imageMagickProperties['exif:FNumber'])
-                        ? $this->_eval($imageMagickProperties['exif:FNumber'], 'aperture')
-                        : (isset($imageMagickProperties['exif:ApertureValue'])
-                            ? $this->_eval($imageMagickProperties['exif:ApertureValue'], 'aperture')
-                            : null
-                        );
-                    $device['iso'] = isset($imageMagickProperties['exif:ISOSpeedRatings'])
-                        ? $imageMagickProperties['exif:ISOSpeedRatings']
-                        : null;
-                    $device['focal_length'] = isset($imageMagickProperties['exif:FocalLength'])
-                        ? $this->_eval($imageMagickProperties['exif:FocalLength'], 'focal_length')
-                        : null;
-                    $device['lens_make'] = $imageMagickProperties['exif:LensMake'] ?? null;
-                    $device['lens_model'] = $imageMagickProperties['exif:LensModel'] ?? null;
-
-                    // Location
-                    $location['altitude'] = isset($imageMagickProperties['exif:GPSAltitude'])
-                        ? $this->_eval($imageMagickProperties['exif:GPSAltitude'], 'altitude')
-                        : null;
-                    $location['latitude'] = isset($imageMagickProperties['exif:GPSLatitude'])
-                        ? $this->_eval($imageMagickProperties['exif:GPSLatitude'], 'latitude')
-                        : null;
-                    $location['longitude'] = isset($imageMagickProperties['exif:GPSLongitude'])
-                        ? $this->_eval($imageMagickProperties['exif:GPSLongitude'], 'longitude')
-                        : null;
+                    $this->_processFileMetaViaImagick($file);
                 }
             } catch (\Exception $ee) {}
         }
 
         return [
             'name' => basename($file->getPath()),
-            'date' => $date,
-            'size' => $size,
-            'width' => $width,
-            'height' => $height,
-            'pixels' => is_numeric($width) && is_numeric($height)
-                ? $width * $height
+            'date' => $this->_fileMeta['date'],
+            'size' => $this->_fileMeta['size'],
+            'width' => $this->_fileMeta['width'],
+            'height' => $this->_fileMeta['height'],
+            'pixels' => is_numeric($this->_fileMeta['width'])
+                && is_numeric($this->_fileMeta['height'])
+                ? $this->_fileMeta['width'] * $this->_fileMeta['height']
                 : null,
-            'orientation' => $orientation,
-            'device' => $device,
-            'location' => $location,
+            'orientation' => $this->_fileMeta['orientation'],
+            'device' => $this->_fileMeta['device'],
+            'geolocation' => $this->_fileMeta['geolocation'],
         ];
     }
 
@@ -387,9 +182,7 @@ class FileManager {
         $path = $file->getPath();
 
         if ($file->getExtension() === 'dng') {
-            $fileDataDir = $this->getFileDataDir($file);
-
-            $path = $fileDataDir . '/converted_from_dng.jpg';
+            $path = $this->getFileDataDir($file) . '/converted_from_dng.jpg';
             if (!$this->filesystem->exists($path)) {
                 $url = 'http://python:8000/file-view';
                 $response = $this->httpClient->request('GET', $url, [
@@ -397,7 +190,6 @@ class FileManager {
                         'file' => $file->getPath(),
                     ],
                 ]);
-
                 file_put_contents($path, $response->getContent());
             }
         }
@@ -517,5 +309,239 @@ class FileManager {
         }
 
         return $return;
+    }
+
+    /**
+     * Processed file meta via GD
+     *
+     * @param File $file
+     */
+    private function _processFileMetaViaGd($file)
+    {
+        $exif = exif_read_data($file->getPath(), 0, true);
+        $this->_fileMeta['date'] = isset($exif['IFD0']['DateTime'])
+            ? $this->_eval($exif['IFD0']['DateTime'], 'datetime')
+            : (isset($exif['EXIF']['DateTimeOriginal'])
+                ? $exif['EXIF']['DateTimeOriginal']
+                : (isset($exif['EXIF']['DateTimeDigitized'])
+                    ? $exif['EXIF']['DateTimeDigitized']
+                    : (isset($exif['EXIF']['DateTime'])
+                        ? $exif['EXIF']['DateTime']
+                        : null
+                    )
+                )
+            );
+        $this->_fileMeta['size'] = isset($exif['FILE']['FileSize'])
+            ? (int)$exif['FILE']['FileSize']
+            : filesize($file->getPath());
+        $this->_fileMeta['width'] = isset($exif['EXIF']['ExifImageWidth'])
+            ? (int)$exif['EXIF']['ExifImageWidth']
+            : (isset($exif['COMPUTED']['Width'])
+                ? (int)$exif['COMPUTED']['Width']
+                : null
+            );
+        $this->_fileMeta['height'] = isset($exif['EXIF']['ExifImageLength'])
+            ? (int)$exif['EXIF']['ExifImageLength']
+            : (isset($exif['COMPUTED']['Height'])
+                ? (int)$exif['COMPUTED']['Height']
+                : null
+            );
+        $this->_fileMeta['orientation'] = isset($exif['IFD0']['Orientation'])
+            ? $exif['IFD0']['Orientation']
+            : (isset($exif['COMPUTED']['Orientation'])
+                ? (int)$exif['COMPUTED']['Orientation']
+                : null
+            );
+
+        // Device
+        $this->_fileMeta['device']['make'] = $exif['IFD0']['Make'] ?? null;
+        $this->_fileMeta['device']['model'] = $exif['IFD0']['Model'] ?? null;
+        $this->_fileMeta['device']['shutter_speed'] = isset($exif['EXIF']['ExposureTime'])
+            ? $this->_eval($exif['EXIF']['ExposureTime'], 'shutter_speed')
+            : (isset($exif['EXIF']['ShutterSpeedValue'])
+                ? $this->_eval($exif['EXIF']['ShutterSpeedValue'], 'shutter_speed')
+                : null
+            );
+        $this->_fileMeta['device']['aperture'] = isset($exif['EXIF']['FNumber'])
+            ? $this->_eval($exif['EXIF']['FNumber'], 'aperture')
+            : (isset($exif['EXIF']['ApertureValue'])
+                ? $this->_eval($exif['EXIF']['ApertureValue'], 'aperture')
+                : null
+            );
+        $this->_fileMeta['device']['iso'] = isset($exif['EXIF']['ISOSpeedRatings'])
+            ? $this->_eval($exif['EXIF']['ISOSpeedRatings'], 'iso')
+            : null;
+        $this->_fileMeta['device']['focal_length'] = isset($exif['EXIF']['FocalLength'])
+            ? $this->_eval($exif['EXIF']['FocalLength'], 'focal_length')
+            : null;
+        $this->_fileMeta['device']['lens_make'] = isset($exif['EXIF']['LensInfo'])
+            ? $exif['EXIF']['LensInfo']
+            : (isset($exif['EXIF']['UndefinedTag:0xA434'])
+                ? $exif['EXIF']['UndefinedTag:0xA434']
+                : null
+            );
+        $this->_fileMeta['device']['lens_model'] = isset($exif['EXIF']['LensModel'])
+            ? $exif['EXIF']['LensModel']
+            : (isset($exif['EXIF']['UndefinedTag:0xA500'])
+                ? $exif['EXIF']['UndefinedTag:0xA500']
+                : null
+            );
+
+        // Geolocation
+        $this->_fileMeta['geolocation']['altitude'] = isset($exif['GPS']['GPSAltitude'])
+            ? $this->_eval($exif['GPS']['GPSAltitude'], 'altitude')
+            : null;
+        $this->_fileMeta['geolocation']['latitude'] = isset($exif['GPS']['GPSLatitude'])
+            ? $this->_eval($exif['GPS']['GPSLatitude'], 'latitude')
+            : null;
+        $this->_fileMeta['geolocation']['longitude'] = isset($exif['GPS']['GPSLongitude'])
+            ? $this->_eval($exif['GPS']['GPSLongitude'], 'longitude')
+            : null;
+    }
+
+    /**
+     * Processed file meta via Imagick
+     *
+     * @param File $file
+     */
+    private function _processFileMetaViaImagick($file)
+    {
+        $imageMagick = new \imagick($file->getPath());
+        $imageMagickProperties = $imageMagick->getImageProperties();
+
+        $this->_fileMeta['date'] = isset($imageMagickProperties['exif:DateTimeOriginal'])
+            ? $this->_eval($imageMagickProperties['exif:DateTimeOriginal'], 'datetime')
+            : (isset($imageMagickProperties['exif:DateTimeDigitized'])
+                ? $this->_eval($imageMagickProperties['exif:DateTimeDigitized'], 'datetime')
+                : (isset($imageMagickProperties['exif:DateTime'])
+                    ? $this->_eval($imageMagickProperties['exif:DateTime'], 'datetime')
+                    : null
+                )
+            );
+        $this->_fileMeta['size'] = $imageMagick->getImageLength();
+        $this->_fileMeta['width'] = $imageMagick->getImageWidth();
+        $this->_fileMeta['height'] = $imageMagick->getImageHeight();
+        $this->_fileMeta['orientation'] = $imageMagick->getImageOrientation();
+
+        // Device
+        $this->_fileMeta['device']['make'] = $imageMagickProperties['exif:Make'] ?? null;
+        $this->_fileMeta['device']['model'] = $imageMagickProperties['exif:Model'] ?? null;
+        $this->_fileMeta['device']['shutter_speed'] = isset($imageMagickProperties['exif:ExposureTime'])
+            ? $this->_eval($imageMagickProperties['exif:ExposureTime'], 'shutter_speed')
+            : (isset($imageMagickProperties['exif:ShutterSpeedValue'])
+                ? $this->_eval($imageMagickProperties['exif:ShutterSpeedValue'], 'shutter_speed')
+                : null
+            );
+        $this->_fileMeta['device']['aperture'] = isset($imageMagickProperties['exif:FNumber'])
+            ? $this->_eval($imageMagickProperties['exif:FNumber'], 'aperture')
+            : (isset($imageMagickProperties['exif:ApertureValue'])
+                ? $this->_eval($imageMagickProperties['exif:ApertureValue'], 'aperture')
+                : null
+            );
+        $this->_fileMeta['device']['iso'] = isset($imageMagickProperties['exif:ISOSpeedRatings'])
+            ? $imageMagickProperties['exif:ISOSpeedRatings']
+            : null;
+        $this->_fileMeta['device']['focal_length'] = isset($imageMagickProperties['exif:FocalLength'])
+            ? $this->_eval($imageMagickProperties['exif:FocalLength'], 'focal_length')
+            : null;
+        $this->_fileMeta['device']['lens_make'] = $imageMagickProperties['exif:LensMake'] ?? null;
+        $this->_fileMeta['device']['lens_model'] = $imageMagickProperties['exif:LensModel'] ?? null;
+
+        // Geolocation
+        $this->_fileMeta['geolocation']['altitude'] = isset($imageMagickProperties['exif:GPSAltitude'])
+            ? $this->_eval($imageMagickProperties['exif:GPSAltitude'], 'altitude')
+            : null;
+        $this->_fileMeta['geolocation']['latitude'] = isset($imageMagickProperties['exif:GPSLatitude'])
+            ? $this->_eval($imageMagickProperties['exif:GPSLatitude'], 'latitude')
+            : null;
+        $this->_fileMeta['geolocation']['longitude'] = isset($imageMagickProperties['exif:GPSLongitude'])
+            ? $this->_eval($imageMagickProperties['exif:GPSLongitude'], 'longitude')
+            : null;
+    }
+
+    /**
+     * Processed file meta via Python
+     *
+     * @param File $file
+     */
+    private function _processFileMetaViaPython($file)
+    {
+        $url = 'http://python:8000/file-info';
+        $response = $this->httpClient->request('GET', $url, [
+            'query' => [
+                'file' => $file->getPath(),
+            ],
+        ]);
+
+        $content = json_decode($response->getContent(), true);
+        if (isset($content['data']['error'])) {
+            throw new \Exception($content['data']['error']);
+        }
+
+        $exif = $content['data']['exif'];
+
+        $this->_fileMeta['date'] = isset($exif['EXIF DateTimeOriginal'])
+            ? $this->_eval($exif['EXIF DateTimeOriginal'], 'datetime')
+            : (isset($exif['EXIF DateTimeDigitized'])
+                ? $this->_eval($exif['EXIF DateTimeDigitized'], 'datetime')
+                : (isset($exif['Image DateTime'])
+                    ? $this->_eval($exif['Image DateTime'], 'datetime')
+                    : null
+                )
+            );
+        $this->_fileMeta['size'] = filesize($file->getPath());
+        // TODO: width & height are wrong. Not sure why.
+        $this->_fileMeta['width'] = isset($exif['Image ImageWidth'])
+            ? (int)$exif['Image ImageWidth']
+            : null;
+        $this->_fileMeta['height'] = isset($exif['Image ImageLength'])
+            ? (int)$exif['Image ImageLength']
+            : null;
+        $this->_fileMeta['orientation'] = isset($exif['Image Orientation'])
+            ? (int)$exif['Image Orientation']
+            : null;
+
+        // Device
+        $this->_fileMeta['device']['make'] = isset($exif['Image Make'])
+            ? $exif['Image Make']
+            : null;
+        $this->_fileMeta['device']['model'] = isset($exif['Image Model'])
+            ? $exif['Image Model']
+            : null;
+        $this->_fileMeta['device']['shutter_speed'] = isset($exif['EXIF ExposureTime'])
+            ? $this->_eval($exif['EXIF ExposureTime'], 'shutter_speed')
+            : (isset($exif['EXIF ShutterSpeedValue'])
+                ? $this->_eval($exif['EXIF ShutterSpeedValue'], 'shutter_speed')
+                : null
+            );
+        $this->_fileMeta['device']['aperture'] = isset($exif['EXIF FNumber'])
+            ? $this->_eval($exif['EXIF FNumber'], 'aperture')
+            : (isset($exif['EXIF ApertureValue'])
+                ? $this->_eval($exif['EXIF ApertureValue'], 'aperture')
+                : null
+            );
+        $this->_fileMeta['device']['iso'] = isset($exif['EXIF ISOSpeedRatings'])
+            ? $exif['EXIF ISOSpeedRatings']
+            : null;
+        $this->_fileMeta['device']['focal_length'] = isset($exif['EXIF FocalLength'])
+            ? $exif['EXIF FocalLength']
+            : null;
+        $this->_fileMeta['device']['lens_make'] = isset($exif['EXIF LensMake'])
+            ? $exif['EXIF LensMake']
+            : null;
+        $this->_fileMeta['device']['lens_model'] = isset($exif['EXIF LensModel'])
+            ? $exif['EXIF LensModel']
+            : null;
+
+        // Geolocation
+        $this->_fileMeta['geolocation']['altitude'] = isset($exif['EXIF GPSAltitude'])
+            ? $this->_eval($exif['EXIF GPSAltitude'], 'altitude')
+            : null;
+        $this->_fileMeta['geolocation']['latitude'] = isset($exif['EXIF GPSLatitude'])
+            ? $this->_eval($exif['EXIF GPSLatitude'], 'latitude')
+            : null;
+        $this->_fileMeta['geolocation']['longitude'] = isset($exif['EXIF GPSLongitude'])
+            ? $this->_eval($exif['EXIF GPSLongitude'], 'longitude')
+            : null;
     }
 }
