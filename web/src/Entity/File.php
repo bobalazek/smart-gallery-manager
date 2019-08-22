@@ -61,6 +61,16 @@ class File
     private $meta = [];
 
     /**
+     * @ORM\Column(type="array")
+     */
+    private $location = [];
+
+    /**
+     * @ORM\Column(type="array")
+     */
+    private $tags = [];
+
+    /**
      * @ORM\Column(type="datetime")
      */
     private $createdAt;
@@ -164,6 +174,30 @@ class File
         return $this;
     }
 
+    public function getLocation(): ?array
+    {
+        return $this->location;
+    }
+
+    public function setLocation(array $location): self
+    {
+        $this->location = $location;
+
+        return $this;
+    }
+
+    public function getTags(): ?array
+    {
+        return $this->tags;
+    }
+
+    public function setTags(array $tags): self
+    {
+        $this->tags = $tags;
+
+        return $this;
+    }
+
     public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
@@ -211,6 +245,8 @@ class File
             'extension' => $this->getExtension(),
             'data' => $this->getData(),
             'meta' => $this->getMeta(),
+            'location' => $this->getLocation(),
+            'tags' => $this->getTags(),
             'created_at' => $this->getCreatedAt()->format(DATE_ATOM),
             'modified_at' => $this->getModifiedAt()->format(DATE_ATOM),
             'taken_at' => $this->getTakenAt()->format(DATE_ATOM),

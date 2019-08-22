@@ -7,6 +7,9 @@ parameters:
         original: ~
     image_max_age: 3600 # how long will the image exist, until it expires/needs refreshing?
     var_dir: '%kernel.project_dir%/../var'
+    here_api:
+      app_id: '%env(HERE_APP_ID)%'
+      app_code: '%env(HERE_APP_CODE)%'
 
 services:
     _defaults:

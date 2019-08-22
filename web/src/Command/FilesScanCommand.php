@@ -42,18 +42,18 @@ class FilesScanCommand extends Command
                 null
             )
             ->addOption(
-                'skip-generate-cache',
-                'c',
-                InputOption::VALUE_OPTIONAL,
-                'Should we skip the caching of the images?',
-                false
-            )
-            ->addOption(
                 'update-existing-entries',
                 'u',
                 InputOption::VALUE_OPTIONAL,
                 'Should we update the existing entries in the database (when meta changes for example)?',
                 false
+            )
+            ->addOption(
+                'actions',
+                'a',
+                InputOption::VALUE_OPTIONAL,
+                'What actions should be executed - must be a comma-separated value: Default: "meta,cache,label,geocode"',
+                'meta,cache,label,geocode'
             )
         ;
     }
@@ -62,12 +62,12 @@ class FilesScanCommand extends Command
     {
         ProgressBar::setFormatDefinition(
             'custom',
-            ' %current%/%max% [%bar%] %percent:3s%% %elapsed:6s%/%estimated:-6s% %memory:6s% -- %message% (%filename%)'
+            ' %current%/%max% %elapsed:6s%/%estimated:-6s% %memory:6s% -- %message% (%filename%)'
         );
         $io = new SymfonyStyle($input, $output);
         $finder = new Finder();
         $mimeTypes = new MimeTypes();
-        $skipGenerateCache = $input->getOption('skip-generate-cache') !== false;
+        $actions = explode(',', $input->getOption('actions'));
         $updateExistingEntries = $input->getOption('update-existing-entries') !== false;
 
         $filesRepository = $this->em->getRepository(File::class);
@@ -156,31 +156,64 @@ class FilesScanCommand extends Command
                     ->setPath($filePath)
                     ->setMime($fileMime)
                     ->setExtension($fileExtension)
-                    ->setMeta($this->fileManager->getFileMeta($file))
                     ->setModifiedAt(new \DateTime())
-                    ->setTakenAt(new \DateTime($file->getMeta()['date'] ?? '1970-01-01'))
                 ;
 
-                $this->em->persist($file);
-                $this->em->flush();
-                $this->em->clear();
+                if (in_array('meta', $actions)) {
+                    $file
+                        ->setMeta($this->fileManager->getFileMeta($file))
+                        ->setTakenAt(new \DateTime($file->getMeta()['date'] ?? '1970-01-01'))
+                    ;
+                } elseif (
+                    !$fileExists &&
+                    !in_array('meta', $actions)
+                ) {
+                    $file->setTakenAt(new \DateTime('1970-01-01'));
+                }
 
                 /********** Cache **********/
-                if (!$skipGenerateCache) {
+                if (in_array('cache', $actions)) {
                     try {
-                        $this->fileManager->generateImageCache($file);
+                        $this->fileManager->cache($file);
                     } catch (\Exception $e) {
                         $io->newLine();
                         $io->error($e->getMessage());
                     }
                 }
 
-                /********** Labels **********/
-                // TODO
+                /********** Geocode  **********/
+                if (in_array('geocode', $actions)) {
+                    try {
+                        $this->fileManager->geodecode($file);
+                    } catch (\Exception $e) {
+                        $io->newLine();
+                        $io->error($e->getMessage());
+                    }
+                }
 
-                /********** Reverse geocoding **********/
-                // TODO
+                /********** Label **********/
+                if (in_array('label', $actions)) {
+                    try {
+                        $this->fileManager->label($file);
+                    } catch (\Exception $e) {
+                        $io->newLine();
+                        $io->error($e->getMessage());
+                    }
+                }
+
+                // Finally, save the file into the DB
+                $this->em->persist($file);
+                $this->em->flush();
+                $this->em->clear();
             }
+
+            $io->newLine();
+            $io->section(
+                sprintf(
+                    'Successfully processed folder: %s',
+                    $folder
+                )
+            );
         }
 
         $io->success('Success!');

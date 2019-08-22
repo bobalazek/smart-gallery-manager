@@ -5,7 +5,8 @@
 * (optional) Create your own `.env` file - just copy the contents from `.env.example`
 * Run: `docker-compose build`, and then `docker-compose up`
 * Create a `settings.yml` file - just copy the contents from `settings.example.yml`
-* Add your data sources inside `docker-compose.yml``
+* Add your data sources inside `docker-compose.yml`
+* Copy˛/duplicate `web/.env` into `web/.env.local` and set your custom variables there, like the `HERE_APP_ID` and `HERE_APP_CODE` constants
 * Exec into the `php-fpm` container
   * Prepare the database by running `php bin/console doctrine:schema:update -f`
   * Scan and add files to the database by running `php bin/console app:files:scan`

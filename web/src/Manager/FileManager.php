@@ -5,7 +5,6 @@ namespace App\Manager;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Mime\MimeTypes;
 use Symfony\Component\HttpClient\CurlHttpClient;
-use Symfony\Component\Cache\Adapter\TagAwareAdapter;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\Cache\ItemInterface;
@@ -17,18 +16,10 @@ class FileManager {
     public function __construct(ParameterBagInterface $params)
     {
         $this->params = $params;
-
-        $this->cache = new TagAwareAdapter(
-            new FilesystemAdapter(
-                'files',
-                0,
-                $this->params->get('var_dir') . '/cache'
-            ),
-            new FilesystemAdapter(
-                'file_tags',
-                0,
-                $this->params->get('var_dir') . '/cache'
-            )
+        $this->cache = new FilesystemAdapter(
+            'files',
+            0,
+            $this->params->get('var_dir') . '/cache'
         );
         $this->mimeTypes = new MimeTypes();
         $this->imageManager = new ImageManager([
@@ -36,6 +27,8 @@ class FileManager {
         ]);
         $this->httpClient = new CurlHttpClient();
         $this->filesystem = new Filesystem();
+        $this->allowedImageConversionTypes = $this->params->get('allowed_image_conversion_types');
+        $this->hereApi = $this->params->get('here_api');
     }
 
     private $_fileMeta = [];
@@ -110,8 +103,6 @@ class FileManager {
         return $this->cache->get(
             $cacheKey,
             function (ItemInterface $item) use ($cacheKey, $file, $type, $format) {
-                $item->tag('image');
-
                 $image = $this->_processImage($file, $type, $format);
 
                 $formatMimeTypes = $this->mimeTypes->getMimeTypes($format);
@@ -126,31 +117,6 @@ class FileManager {
                 ];
             }
         );
-    }
-
-    /**
-     * Generates the cache for the the specified file
-     *
-     * @param File $file
-     * @param array $types
-     * @param string $format
-     */
-    public function generateImageCache(File $file, $types = ['thumbnail', 'preview'], $format = 'jpg')
-    {
-        $allowedImageConversionTypes = $this->params->get('allowed_image_conversion_types');
-
-        foreach ($types as $type) {
-            if (!isset($allowedImageConversionTypes)) {
-                throw new \Exception('The type "' . $type . '" does not exist.');
-            }
-
-            $cacheKey = $file->getHash() . '.' . $type . '.' . $format;
-
-            $this->cache->delete($cacheKey);
-            $this->getImageData($file, $type, $format);
-        }
-
-        return true;
     }
 
     /**
@@ -214,6 +180,86 @@ class FileManager {
         }
 
         return $fileDataDir;
+    }
+
+    /**
+     * Generates the cache for the the specified file
+     *
+     * @param File $file
+     * @param array $types
+     * @param string $format
+     *
+     * @throws \Exception if conversion type not found
+     */
+    public function cache(File $file, $types = ['thumbnail', 'preview'], $format = 'jpg')
+    {
+        foreach ($types as $type) {
+            if (!isset($this->allowedImageConversionTypes[$type])) {
+                throw new \Exception('The type "' . $type . '" does not exist.');
+
+                return false;
+            }
+
+            $cacheKey = $file->getHash() . '.' . $type . '.' . $format;
+
+            $this->cache->delete($cacheKey);
+            $this->getImageData($file, $type, $format);
+        }
+
+        return true;
+    }
+
+    private $_geodecodeLocation = [];
+    private $_geodecodeCache = [];
+
+    /**
+     * Geodecodes the location
+     *
+     * @param File $file
+     * @param bool $skipFetchIfAlreadyExists
+     */
+    public function geodecode(File $file, $skipFetchIfAlreadyExists = false)
+    {
+        $fileMeta = $file->getMeta();
+
+        if (
+            $fileMeta['geolocation']['latitude'] === null ||
+            $fileMeta['geolocation']['longitude'] === null
+        ) {
+            throw new \Exception('This file has no geolocation data.');
+
+            return false;
+        }
+
+        $this->_geodecodeLocation['service'] = null;
+        $this->_geodecodeLocation['address'] = [
+            'label' => null,
+            'street' => null,
+            'house_number' => null,
+            'postal_code' => null,
+            'city' => null,
+            'district' => null,
+            'state' => null,
+            'country' => null,
+        ];
+
+        $this->_geocodeHere($file, $skipFetchIfAlreadyExists);
+
+        $file->setLocation($this->_geodecodeLocation);
+
+        return true;
+    }
+
+    /**
+     * Labels the image
+     *
+     * @param File $file
+     */
+    public function label(File $file)
+    {
+        // TODO
+
+        return true;
     }
 
     /**
@@ -543,5 +589,137 @@ class FileManager {
         $this->_fileMeta['geolocation']['longitude'] = isset($exif['EXIF GPSLongitude'])
             ? $this->_eval($exif['EXIF GPSLongitude'], 'longitude')
             : null;
+    }
+
+    /**
+     * Geodecodes the location via OSM
+     * Note: At the moment, I can't really get it working. After the first request,
+     *   I always get "Failed sending data to peer ..."
+     *
+     * @param File $file
+     * @param bool $skipFetchIfAlreadyExists
+     */
+    private function _geocodeOsm(File $file, $skipFetchIfAlreadyExists)
+    {
+        $fileMeta = $file->getMeta();
+
+        $latitude_and_longitude = [
+            'lat' => $fileMeta['geolocation']['latitude'],
+            'lon' => $fileMeta['geolocation']['longitude'],
+        ];
+
+        $cacheHash = 'osm.' . sha1(json_encode($latitude_and_longitude));
+
+        $path = $this->getFileDataDir($file) . '/osm_geocode.json';
+
+        $alreadyExists = $skipFetchIfAlreadyExists
+            && file_exists($path);
+
+        if ($alreadyExists) {
+            $this->_geodecodeCache[$cacheHash] = json_decode(file_get_contents($path), true);
+        }
+
+        if (!isset($this->_geodecodeCache[$cacheHash])) {
+            $url = 'https://nominatim.openstreetmap.org/reverse';
+            $response = $this->httpClient->request('GET', $url, [
+                'query' => array_merge([
+                    'format' => 'geocodejson',
+                ], $latitude_and_longitude),
+            ]);
+            $content = json_decode($response->getContent(), true);
+            if (isset($content['error'])) {
+                throw new \Exception($content['error']['message']);
+
+                return false;
+            }
+
+            $this->_geodecodeCache[$cacheHash] = $content;
+        }
+
+        $geocodeData = $this->_geodecodeCache[$cacheHash];
+
+        if (!$alreadyExists) {
+            file_put_contents($path, json_encode($geocodeData));
+        }
+
+        $locationData = $geocodeData['features'][0]['properties']['geocoding'];
+
+        $this->_geodecodeLocation['service'] = 'osm';
+        $this->_geodecodeLocation['address']['label'] = $locationData['label'] ?? null;
+        $this->_geodecodeLocation['address']['street'] = $locationData['street'] ?? null;
+        $this->_geodecodeLocation['address']['house_number'] = $locationData['housenumber'] ?? null;
+        $this->_geodecodeLocation['address']['postal_code'] = $locationData['postcode'] ?? null;
+        $this->_geodecodeLocation['address']['city'] = $locationData['city'] ?? null;
+        $this->_geodecodeLocation['address']['state'] = $locationData['state'] ?? null;
+        $this->_geodecodeLocation['address']['country'] = $locationData['country'] ?? null;
+    }
+
+    /**
+     * Geodecodes the location via HERE
+     *
+     * @param File $file
+     * @param bool $skipFetchIfAlreadyExists
+     */
+    private function _geocodeHere(File $file, $skipFetchIfAlreadyExists)
+    {
+        $fileMeta = $file->getMeta();
+
+        $latitude_and_longitude = [
+            'lat' => $fileMeta['geolocation']['latitude'],
+            'lon' => $fileMeta['geolocation']['longitude'],
+        ];
+
+        $cacheHash = 'here.' . sha1(json_encode($latitude_and_longitude));
+
+        $path = $this->getFileDataDir($file) . '/here_geocode.json';
+
+        $alreadyExists = $skipFetchIfAlreadyExists
+            && file_exists($path);
+
+        if ($alreadyExists) {
+            $this->_geodecodeCache[$cacheHash] = json_decode(file_get_contents($path), true);
+        }
+
+        if (!isset($this->_geodecodeCache[$cacheHash])) {
+            $url = 'https://reverse.geocoder.api.here.com/6.2/reversegeocode.json';
+            $response = $this->httpClient->request('GET', $url, [
+                'query' => [
+                    'app_id' => $this->hereApi['app_id'],
+                    'app_code' => $this->hereApi['app_code'],
+                    'mode' => 'retrieveAddresses',
+                    'maxresults' => '1',
+                    'gen' => '9',
+                    'prox' => $fileMeta['geolocation']['latitude'] . ',' .
+                        $fileMeta['geolocation']['longitude'] . ',' .
+                        '100',
+                ],
+            ]);
+            $content = json_decode($response->getContent(), true);
+            if (isset($content['error'])) {
+                throw new \Exception($content['error']['message']);
+
+                return false;
+            }
+
+            $this->_geodecodeCache[$cacheHash] = $content;
+        }
+
+        $geocodeData = $this->_geodecodeCache[$cacheHash];
+
+        if (!$alreadyExists) {
+            file_put_contents($path, json_encode($geocodeData));
+        }
+
+        $locationData = $geocodeData['Response']['View'][0]['Result'][0]['Location']['Address'];
+
+        $this->_geodecodeLocation['service'] = 'here';
+        $this->_geodecodeLocation['address']['label'] = $locationData['Label'] ?? null;
+        $this->_geodecodeLocation['address']['street'] = $locationData['Street'] ?? null;
+        $this->_geodecodeLocation['address']['house_number'] = $locationData['HouseNumber'] ?? null;
+        $this->_geodecodeLocation['address']['postal_code'] = $locationData['PostalCode'] ?? null;
+        $this->_geodecodeLocation['address']['city'] = $locationData['City'] ?? null;
+        $this->_geodecodeLocation['address']['district'] = $locationData['District'] ?? null;
+        $this->_geodecodeLocation['address']['state'] = $locationData['State'] ?? null;
+        $this->_geodecodeLocation['address']['country'] = $locationData['Country'] ?? null;
     }
 }

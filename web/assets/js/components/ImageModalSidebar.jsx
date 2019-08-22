@@ -159,6 +159,30 @@ class ImageModalSidebar extends React.Component {
         fileInformation.meta.geolocation
         ? (
           <React.Fragment>
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.location.address.label
+              ? 'Label: ' + fileInformation.location.address.label + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.location.address.street
+              ? 'Street: ' + fileInformation.location.address.street + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.location.address.house_number
+              ? 'House number: ' + fileInformation.location.address.house_number + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.location.address.postal_code
+              ? 'Postal code: ' + fileInformation.location.address.postal_code + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.location.address.city
+              ? 'City: ' + fileInformation.location.address.city + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.location.address.district
+              ? 'District: ' + fileInformation.location.address.district + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.location.address.state
+              ? 'State: ' + fileInformation.location.address.state + '<br />'
+              : '' }} />
+            <span dangerouslySetInnerHTML={{ __html: fileInformation.location.address.country
+              ? 'Country: ' + fileInformation.location.address.country + '<br />'
+              : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.geolocation.altitude
               ? 'Altitude: ' + fileInformation.meta.geolocation.altitude + '<br />'
               : '' }} />

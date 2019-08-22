@@ -1,0 +1,5 @@
+{% extends '@SonataAdmin/CRUD/base_list_field.html.twig' %}
+
+{% block field %}
+    <pre>{{ object.getLocation() | json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+{% endblock %}
