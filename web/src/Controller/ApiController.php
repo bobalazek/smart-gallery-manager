@@ -374,11 +374,16 @@ class ApiController extends AbstractController
                     $queryBuilder->expr()->like('LOWER(JSON_UNQUOTE(JSON_EXTRACT(
                         f.location,
                         :json_location_address_district
-                    )))', ':search')
+                    )))', ':search'),
+                    $queryBuilder->expr()->eq('JSON_CONTAINS(
+                        f.tags,
+                        JSON_ARRAY(:search_json)
+                    )', 1)
                 ))
                 ->setParameter('json_location_address_label', '$.address.label')
                 ->setParameter('json_location_address_district', '$.address.district')
                 ->setParameter('search', '%' . $search . '%')
+                ->setParameter('search_json', ucwords($search))
             ;
         }
 

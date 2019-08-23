@@ -11,6 +11,8 @@ parameters:
 
     # Geocoding
     geocoding_enabled: true
+    here_reverse_geocoder_radius: 500
+    here_reverse_geocoder_max_results: 32
     here_api_credentials:
         app_id: '%env(HERE_APP_ID)%'
         app_code: '%env(HERE_APP_CODE)%'

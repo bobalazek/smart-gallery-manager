@@ -28,6 +28,9 @@ class FileManager {
             'driver' => 'imagick',
         ]);
         $this->httpClient = new CurlHttpClient();
+
+        $this->allowedImageConversionTypes = $this->params->get('allowed_image_conversion_types');
+
         $this->awsRekognitionClient = new RekognitionClient([
             'credentials' => $this->params->get('aws_credentials'),
             'region' => $this->params->get('aws_rekognition_region'),
@@ -36,8 +39,9 @@ class FileManager {
         $this->awsRekognitionMinConfidence = $this->params->get('aws_rekognition_min_confidence');
         $this->labelingConfidence = $this->params->get('labeling_confidence');
 
-        $this->allowedImageConversionTypes = $this->params->get('allowed_image_conversion_types');
         $this->hereApiCredentials = $this->params->get('here_api_credentials');
+        $this->hereReverseGeocoderRadius = $this->params->get('here_reverse_geocoder_radius');
+        $this->hereReverseGeocoderMaxResults = $this->params->get('here_reverse_geocoder_max_results');
     }
 
     private $_fileMeta = [];
@@ -741,12 +745,12 @@ class FileManager {
                 'query' => [
                     'app_id' => $this->hereApiCredentials['app_id'],
                     'app_code' => $this->hereApiCredentials['app_code'],
-                    'mode' => 'retrieveAddresses',
-                    'maxresults' => '1',
+                    'mode' => 'retrieveAll',
+                    'maxresults' => $this->hereReverseGeocoderMaxResults,
                     'gen' => '9',
                     'prox' => $fileMeta['geolocation']['latitude'] . ',' .
                         $fileMeta['geolocation']['longitude'] . ',' .
-                        '100',
+                        $this->hereReverseGeocoderRadius,
                 ],
             ]);
             $content = json_decode($response->getContent(), true);
@@ -765,7 +769,22 @@ class FileManager {
             file_put_contents($path, json_encode($geocodeData));
         }
 
-        $locationData = $geocodeData['Response']['View'][0]['Result'][0]['Location']['Address'];
+        $view = $geocodeData['Response']['View'];
+
+        if (count($view) === 0) {
+            throw new \Exception('Could not find any geolocation data for those coordinates.');
+        }
+
+        $results = $view[0]['Result'];
+        $locationData = $results[0]['Location']['Address'];
+
+        foreach ($results as $result) {
+            // The first one is usually "district", but we may want to set a more detailed location.
+            if ($result['MatchLevel'] === 'houseNumber') {
+                $locationData = $result['Location']['Address'];
+                break;
+            }
+        }
 
         $this->_geodecodeLocation['service'] = 'here';
         $this->_geodecodeLocation['address']['label'] = $locationData['Label'] ?? null;

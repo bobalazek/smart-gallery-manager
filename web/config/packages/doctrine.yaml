@@ -13,10 +13,12 @@ doctrine:
         auto_generate_proxy_classes: true
         naming_strategy: doctrine.orm.naming_strategy.underscore
         auto_mapping: true
-        dql: # https://github.com/beberlei/DoctrineExtensions/tree/master/config
+        dql:
             string_functions:
                 json_unquote: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonUnquote
                 json_extract: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonExtract
+                json_contains: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonContains
+                json_array: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonArray
             datetime_functions:
                 date: DoctrineExtensions\Query\Mysql\Date
                 month: DoctrineExtensions\Query\Mysql\Month

@@ -52,8 +52,10 @@ class FilesScanCommand extends Command
                 'actions',
                 'a',
                 InputOption::VALUE_OPTIONAL,
-                'What actions should be executed - must be a comma-separated value: Default: "meta,cache,label,geocode"',
-                'meta,cache,label,geocode'
+                'What actions should be executed - must be a comma-separated value: Default: "meta,cache,geocode,label". ' .
+                'You can also use "geocode:force" (instead of "geocode") and "label:force" to force the API to get new data, ' .
+                'instead of the cached one locally.',
+                'meta,cache,geocode,label'
             )
         ;
     }
@@ -84,6 +86,15 @@ class FilesScanCommand extends Command
             return;
         }
 
+        // Progress bar
+        $progressBar = new ProgressBar($output, 10);
+        $progressBar->setFormat('custom');
+
+        $progressBar->setMessage('Starting to process files...');
+        $progressBar->setMessage('...', 'filename');
+
+        $progressBar->start();
+
         // Browse the folders
         $folders = $settings['folders'];
 
@@ -110,13 +121,12 @@ class FilesScanCommand extends Command
             //   create a map ([path] => file) and compare it then,
             //   if we've set to skip existing entries
 
-            $progressBar = new ProgressBar($output);
-            $progressBar->setFormat('custom');
+            $progressBar->setProgress(0);
+            $progressBar->setMaxSteps(iterator_count($files));
 
-            $progressBar->setMessage('Processing files...');
-            $progressBar->setMessage('...', 'filename');
+            foreach ($files as $fileObject) {
+                $progressBar->advance();
 
-            foreach ($progressBar->iterate($files) as $fileObject) {
                 $filePath = $fileObject->getRealPath();
 
                 $progressBar->setMessage('Processing files...');
@@ -186,10 +196,16 @@ class FilesScanCommand extends Command
                 /********** Geocode  **********/
                 if (
                     $isGeocodingEnabled &&
-                    in_array('geocode', $actions)
+                    (
+                        in_array('geocode', $actions) ||
+                        in_array('geocode:force', $actions)
+                    )
                 ) {
                     try {
-                        $this->fileManager->geodecode($file);
+                        $this->fileManager->geodecode(
+                            $file,
+                            !in_array('geocode:force', $actions)
+                        );
                     } catch (\Exception $e) {
                         $io->newLine();
                         $io->error($e->getMessage());
@@ -199,10 +215,16 @@ class FilesScanCommand extends Command
                 /********** Label **********/
                 if (
                     $isLabelingEnabled &&
-                    in_array('label', $actions)
+                    (
+                        in_array('label', $actions) ||
+                        in_array('label:force', $actions)
+                    )
                 ) {
                     try {
-                        $this->fileManager->label($file);
+                        $this->fileManager->label(
+                            $file,
+                            !in_array('label:force', $actions)
+                        );
                     } catch (\Exception $e) {
                         $io->newLine();
                         $io->error($e->getMessage());
@@ -214,6 +236,8 @@ class FilesScanCommand extends Command
                 $this->em->flush();
                 $this->em->clear();
             }
+
+            $progressBar->finish();
 
             $io->newLine();
             $io->section(
