@@ -150,7 +150,7 @@ class AppContent extends React.Component {
         const filesSummary = res.data.data;
         let rowsIndexes = [];
 
-        filesSummary.count.date.forEach((data) => {
+        filesSummary.date.day.forEach((data) => {
           if (data.count <= this.maxFilesPerRow) {
             rowsIndexes.push(data.date);
           } else {
@@ -318,7 +318,7 @@ class AppContent extends React.Component {
     };
 
     let dateMap = {};
-    filesSummary.count.date.forEach((data) => {
+    filesSummary.date.day.forEach((data) => {
       dateMap[data.date] = Object.keys(dateMap).length;
     });
 
@@ -354,8 +354,8 @@ class AppContent extends React.Component {
       row.files.push(file);
 
       if (date !== lastDate) {
-        const countOnDate = typeof filesSummary.count.date[dateMap[date]] !== 'undefined'
-          ? filesSummary.count.date[dateMap[date]].count
+        const countOnDate = typeof filesSummary.date.day[dateMap[date]] !== 'undefined'
+          ? filesSummary.date.day[dateMap[date]].count
           : '?'; // That just means, that new images were added since the we last fetched the summary
         // Partially we prevent this with created_before, but it's still possible,
         //   that 2 or more images were added the same second, and that would cause the issue.

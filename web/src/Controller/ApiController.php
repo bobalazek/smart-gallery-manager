@@ -57,7 +57,7 @@ class ApiController extends AbstractController
             : 'createdAt';
 
         /***** Count *****/
-        $countPerDate = [];
+        $countPerDay = [];
         $countPerMonth = [];
         $countPerMonthMap = [];
         $countPerYear = [];
@@ -79,7 +79,7 @@ class ApiController extends AbstractController
             $month = $datetime->format('Y-m');
             $year = $datetime->format('Y');
 
-            $countPerDate[] = [
+            $countPerDay[] = [
                 'date' => $date,
                 'count' => $count,
             ];
@@ -120,14 +120,45 @@ class ApiController extends AbstractController
             ];
         }
 
+        /***** Tags *****/
+        $tags = [];
+        $tagsMap = [];
+
+        // TODO: optimize
+        $filesQueryBuilder = $this->em->createQueryBuilder()
+            ->select('f')
+            ->from(File::class, 'f');
+        $this->_applyQueryFilters($filesQueryBuilder, $dateField);
+
+        $files = $filesQueryBuilder->getQuery()->getResult();
+        foreach ($files as $file) {
+            $fileTags = $file->getTags();
+
+            foreach ($fileTags as $fileTag) {
+                if (!isset($tagsMap[$fileTag])) {
+                    $tagsMap[$fileTag] = 0;
+                }
+
+                $tagsMap[$fileTag]++;
+            }
+        }
+
+        foreach ($tagsMap as $tag => $count) {
+            $tags[] = [
+                'tag' => $tag,
+                'count' => $count,
+            ];
+        }
+
         return $this->json([
             'data' => [
-                'count' => [
-                    'date' => $countPerDate,
+                'date' => [
+                    'day' => $countPerDay,
                     'month' => $countPerMonth,
                     'year' => $countPerYear,
                 ],
                 'types' => $types,
+                'tags' => $tags,
             ],
         ]);
     }

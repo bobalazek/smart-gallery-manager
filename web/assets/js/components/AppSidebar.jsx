@@ -170,14 +170,20 @@ class AppSidebar extends React.Component {
       orderBy,
     } = this.props;
 
-    const yearsCount = filesSummary && filesSummary.count && filesSummary.count.year
-      ? filesSummary.count.year
+    const yearsCount = filesSummary
+      && filesSummary.date
+      && filesSummary.date.year
+      ? filesSummary.date.year
       : null;
-    const monthsCount = filesSummary && filesSummary.count && filesSummary.count.month
-      ? filesSummary.count.month
+    const monthsCount = filesSummary
+      && filesSummary.date
+      && filesSummary.date.month
+      ? filesSummary.date.month
       : null;
-    const datesCount = filesSummary && filesSummary.count && filesSummary.count.date
-      ? filesSummary.count.date
+    const dayCount = filesSummary
+      && filesSummary.date
+      && filesSummary.date.day
+      ? filesSummary.date.day
       : null;
 
     return (
@@ -224,7 +230,7 @@ class AppSidebar extends React.Component {
                         disablePadding
                         style={{ paddingLeft: 8 }}
                       >
-                        {datesCount && datesCount.map((subSubEntry) => {
+                        {dayCount && dayCount.map((subSubEntry) => {
                           if (subSubEntry.date.indexOf(subEntry.date + '-') === -1) {
                             return;
                           }
