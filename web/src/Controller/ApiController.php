@@ -360,15 +360,25 @@ class ApiController extends AbstractController
             ;
         }
         if ($search) {
-            $search = rawurldecode($search);
+            $search = strtolower(rawurldecode($search));
             $queryBuilder
-                ->andWhere('(
-                    f.path LIKE :search OR
-                    f.type LIKE :search OR
-                    f.mime LIKE :search OR
-                    f.extension LIKE :search
-                )')
-                ->setParameter('search', '%' . $search . '%');
+                ->andWhere($queryBuilder->expr()->orX(
+                    $queryBuilder->expr()->like('f.path', ':search'),
+                    $queryBuilder->expr()->like('f.type', ':search'),
+                    $queryBuilder->expr()->like('f.mime', ':search'),
+                    $queryBuilder->expr()->like('f.extension', ':search'),
+                    $queryBuilder->expr()->like('LOWER(JSON_UNQUOTE(JSON_EXTRACT(
+                        f.location,
+                        :json_location_address_label
+                    )))', ':search'),
+                    $queryBuilder->expr()->like('LOWER(JSON_UNQUOTE(JSON_EXTRACT(
+                        f.location,
+                        :json_location_address_district
+                    )))', ':search')
+                ))
+                ->setParameter('json_location_address_label', '$.address.label')
+                ->setParameter('json_location_address_district', '$.address.district')
+                ->setParameter('search', '%' . $search . '%')
             ;
         }
 

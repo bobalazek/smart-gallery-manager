@@ -1,4 +1,6 @@
 parameters:
+    # General
+    var_dir: '%kernel.project_dir%/../var'
     allowed_image_conversion_types:
         thumbnail:
             height: 64
@@ -6,10 +8,15 @@ parameters:
             height: 240
         original: ~
     image_max_age: 3600 # how long will the image exist, until it expires/needs refreshing?
-    var_dir: '%kernel.project_dir%/../var'
+
+    # Geocoding
+    geocoding_enabled: true
     here_api:
-      app_id: '%env(HERE_APP_ID)%'
-      app_code: '%env(HERE_APP_CODE)%'
+        app_id: '%env(HERE_APP_ID)%'
+        app_code: '%env(HERE_APP_CODE)%'
+
+    # Labeling
+    labeling_enabled: true
 
 services:
     _defaults:

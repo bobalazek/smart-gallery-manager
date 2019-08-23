@@ -168,6 +168,9 @@
     "ralouphie/getallheaders": {
         "version": "3.0.3"
     },
+    "scienta/doctrine-json-functions": {
+        "version": "4.0.2"
+    },
     "sensio/framework-extra-bundle": {
         "version": "5.2",
         "recipe": {

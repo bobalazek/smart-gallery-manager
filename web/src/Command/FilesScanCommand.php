@@ -67,6 +67,8 @@ class FilesScanCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $finder = new Finder();
         $mimeTypes = new MimeTypes();
+        $isGeocodingEnabled = $this->params('geocoding_enabled');
+        $isLabelingEnabled = $this->params('labeling_enabled');
         $actions = explode(',', $input->getOption('actions'));
         $updateExistingEntries = $input->getOption('update-existing-entries') !== false;
 
@@ -182,7 +184,10 @@ class FilesScanCommand extends Command
                 }
 
                 /********** Geocode  **********/
-                if (in_array('geocode', $actions)) {
+                if (
+                    $isGeocodingEnabled &&
+                    in_array('geocode', $actions)
+                ) {
                     try {
                         $this->fileManager->geodecode($file);
                     } catch (\Exception $e) {
@@ -192,7 +197,10 @@ class FilesScanCommand extends Command
                 }
 
                 /********** Label **********/
-                if (in_array('label', $actions)) {
+                if (
+                    $isLabelingEnabled &&
+                    in_array('label', $actions)
+                ) {
                     try {
                         $this->fileManager->label($file);
                     } catch (\Exception $e) {

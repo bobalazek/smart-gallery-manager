@@ -51,22 +51,22 @@ class File
     private $extension;
 
     /**
-     * @ORM\Column(type="array")
+     * @ORM\Column(type="json_array")
      */
     private $data = [];
 
     /**
-     * @ORM\Column(type="array")
+     * @ORM\Column(type="json_array")
      */
     private $meta = [];
 
     /**
-     * @ORM\Column(type="array")
+     * @ORM\Column(type="json_array")
      */
     private $location = [];
 
     /**
-     * @ORM\Column(type="array")
+     * @ORM\Column(type="json_array")
      */
     private $tags = [];
 

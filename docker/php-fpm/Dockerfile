@@ -17,6 +17,8 @@ RUN docker-php-ext-install zip
 
 RUN docker-php-ext-install exif
 
+RUN docker-php-ext-install pdo_mysql
+
 COPY config/general.ini $PHP_INI_DIR/conf.d/
 COPY config/opcache.ini $PHP_INI_DIR/conf.d/
 COPY config/www.conf /usr/local/etc/php-fpm.d/
