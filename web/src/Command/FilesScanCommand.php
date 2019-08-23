@@ -67,8 +67,8 @@ class FilesScanCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $finder = new Finder();
         $mimeTypes = new MimeTypes();
-        $isGeocodingEnabled = $this->params('geocoding_enabled');
-        $isLabelingEnabled = $this->params('labeling_enabled');
+        $isGeocodingEnabled = $this->params->get('geocoding_enabled');
+        $isLabelingEnabled = $this->params->get('labeling_enabled');
         $actions = explode(',', $input->getOption('actions'));
         $updateExistingEntries = $input->getOption('update-existing-entries') !== false;
 

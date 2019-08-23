@@ -11,12 +11,28 @@ parameters:
 
     # Geocoding
     geocoding_enabled: true
-    here_api:
+    here_api_credentials:
         app_id: '%env(HERE_APP_ID)%'
         app_code: '%env(HERE_APP_CODE)%'
 
     # Labeling
     labeling_enabled: true
+    # The difference between "labeling_confidence" and "aws_rekognition_min_confidence" is,
+    #   that "aws_rekognition_min_confidence" will fetch all tags above that confidence,
+    #   and save/cache it then in a json file, which will be then processed,
+    #   and the found labels will be saved to "tags" in the database.
+    # This is where the "labeling_confidence" comes in. That is then used to determine
+    #   which labels should be into the tags, so you could re-run the scanning
+    #   without needing to re-fetch from AWS. Means, you can set the "aws_rekognition_min_confidence"
+    #   as low as possible, and then set "labeling_confidence" as high as you need it.
+    # You can still change it then if you want.
+    labeling_confidence: 75 # Percentage, from 0-100
+    aws_rekognition_region: 'eu-central-1'
+    aws_rekognition_version: 'latest'
+    aws_rekognition_min_confidence: 55 # Percentage, from 0-100
+    aws_credentials:
+        key: '%env(AWS_KEY)%'
+        secret: '%env(AWS_SECRET)%'
 
 services:
     _defaults:

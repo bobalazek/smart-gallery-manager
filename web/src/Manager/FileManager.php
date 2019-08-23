@@ -10,6 +10,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\Cache\ItemInterface;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Image;
+use Aws\Rekognition\RekognitionClient;
 use App\Entity\File;
 
 class FileManager {
@@ -21,14 +22,22 @@ class FileManager {
             0,
             $this->params->get('var_dir') . '/cache'
         );
+        $this->filesystem = new Filesystem();
         $this->mimeTypes = new MimeTypes();
         $this->imageManager = new ImageManager([
             'driver' => 'imagick',
         ]);
         $this->httpClient = new CurlHttpClient();
-        $this->filesystem = new Filesystem();
+        $this->awsRekognitionClient = new RekognitionClient([
+            'credentials' => $this->params->get('aws_credentials'),
+            'region' => $this->params->get('aws_rekognition_region'),
+            'version' => $this->params->get('aws_rekognition_version'),
+        ]);
+        $this->awsRekognitionMinConfidence = $this->params->get('aws_rekognition_min_confidence');
+        $this->labelingConfidence = $this->params->get('labeling_confidence');
+
         $this->allowedImageConversionTypes = $this->params->get('allowed_image_conversion_types');
-        $this->hereApi = $this->params->get('here_api');
+        $this->hereApiCredentials = $this->params->get('here_api_credentials');
     }
 
     private $_fileMeta = [];
@@ -218,7 +227,7 @@ class FileManager {
      * @param File $file
      * @param bool $skipFetchIfAlreadyExists
      */
-    public function geodecode(File $file, $skipFetchIfAlreadyExists = false)
+    public function geodecode(File $file, $skipFetchIfAlreadyExists = true)
     {
         $fileMeta = $file->getMeta();
 
@@ -254,10 +263,56 @@ class FileManager {
      * Labels the image
      *
      * @param File $file
+     * @param bool $skipFetchIfAlreadyExists
      */
-    public function label(File $file)
+    public function label(File $file, $skipFetchIfAlreadyExists = true)
     {
-        // TODO
+        // Check if it's a viable file first. If not, it will throw an exception,
+        //   so it won't continue any execution.
+        try {
+            $image = $this->getImage($file);
+        } catch (\Exception $e) {
+            throw new \Exception(
+                'Can not label, because it is not an image. Error: ' .
+                $e->getMessage()
+            );
+        }
+
+
+        $path = $this->getFileDataDir($file) . '/aws_rekognition_labels.json';
+
+        $alreadyExists = $skipFetchIfAlreadyExists
+            && file_exists($path);
+        $result = [];
+
+        if ($alreadyExists) {
+            $result = json_decode(file_get_contents($path), true);
+        } else {
+            $image->widen(1024, function ($constraint) {
+                $constraint->upsize();
+            });
+            $image->heighten(1024, function ($constraint) {
+                $constraint->upsize();
+            });
+
+            $result = $this->awsRekognitionClient->detectLabels([
+                'Image' => [
+                    'Bytes' => $image->encode('jpg'),
+                ],
+                'MinConfidence' => $this->awsRekognitionMinConfidence,
+            ]);
+
+            file_put_contents($path, json_encode($result->toArray()));
+        }
+
+        $tags = [];
+        foreach ($result['Labels'] as $label) {
+            if ($label['Confidence'] >= $this->labelingConfidence) {
+                $tags[] = $label['Name'];
+            }
+        }
+
+        $file->setTags($tags);
 
         return true;
     }
@@ -288,7 +343,7 @@ class FileManager {
         }
 
         if (isset($imageTypes[$type]['height'])) {
-            $image->widen($imageTypes[$type]['height'], function ($constraint) {
+            $image->heighten($imageTypes[$type]['height'], function ($constraint) {
                 $constraint->upsize();
             });
         }
@@ -684,8 +739,8 @@ class FileManager {
             $url = 'https://reverse.geocoder.api.here.com/6.2/reversegeocode.json';
             $response = $this->httpClient->request('GET', $url, [
                 'query' => [
-                    'app_id' => $this->hereApi['app_id'],
-                    'app_code' => $this->hereApi['app_code'],
+                    'app_id' => $this->hereApiCredentials['app_id'],
+                    'app_code' => $this->hereApiCredentials['app_code'],
                     'mode' => 'retrieveAddresses',
                     'maxresults' => '1',
                     'gen' => '9',
