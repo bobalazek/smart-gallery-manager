@@ -2,6 +2,7 @@
 /settings.yml
 /var/**
 !/var/.gitkeep
+/README.local.md
 
 __pycache__/
 *.py[cod]

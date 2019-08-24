@@ -222,6 +222,28 @@ class FileManager {
         return true;
     }
 
+    /**
+     * Prepares the file
+     *
+     * @param File $file
+     * @param bool $skipFetchIfAlreadyExists
+     */
+    public function prepare(File $file, $skipFetchIfAlreadyExists = true)
+    {
+        $path = $this->getFileDataDir($file) . '/general.json';
+
+        $alreadyExists = $skipFetchIfAlreadyExists
+            && file_exists($path);
+
+        if (!$alreadyExists) {
+            file_put_contents($path, json_encode([
+                'path' => $file->getPath(),
+            ]));
+        }
+
+        return true;
+    }
+
     private $_geodecodeLocation = [];
     private $_geodecodeCache = [];
 

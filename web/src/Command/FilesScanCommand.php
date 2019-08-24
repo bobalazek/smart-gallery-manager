@@ -35,13 +35,6 @@ class FilesScanCommand extends Command
         $this
             ->setDescription('Scans and enters/updates all the local files into the database.')
             ->addOption(
-                'folder',
-                'f',
-                InputOption::VALUE_OPTIONAL,
-                'Which folder do you want to scan? Note: that will override the existing folders from settings.yml',
-                null
-            )
-            ->addOption(
                 'update-existing-entries',
                 'u',
                 InputOption::VALUE_OPTIONAL,
@@ -53,9 +46,16 @@ class FilesScanCommand extends Command
                 'a',
                 InputOption::VALUE_OPTIONAL,
                 'What actions should be executed - must be a comma-separated value: Default: "meta,cache,geocode,label". ' .
-                'You can also use "geocode:force" (instead of "geocode") and "label:force" to force the API to get new data, ' .
+                'You can also use "geocode:force" (instead of "geocode") and "label:force" (instead of "label") to force the API to get new data, ' .
                 'instead of the cached one locally.',
                 'meta,cache,geocode,label'
+            )
+            ->addOption(
+                'folder',
+                'f',
+                InputOption::VALUE_OPTIONAL,
+                'Which folder do you want to scan? Note: that will override the existing folders from settings.yml',
+                null
             )
         ;
     }
@@ -182,6 +182,9 @@ class FilesScanCommand extends Command
                 ) {
                     $file->setTakenAt(new \DateTime('1970-01-01'));
                 }
+
+                /********** Prepare **********/
+                $this->fileManager->prepare($file);
 
                 /********** Cache **********/
                 if (in_array('cache', $actions)) {

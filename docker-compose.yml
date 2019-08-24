@@ -1,5 +1,7 @@
 version: '3.7'
 
+# TODO: can we remove privileged? Don't remember why it was even needed.
+
 services:
   mysql:
     container_name: sgm_mysql
@@ -65,12 +67,9 @@ services:
     privileged: true
     volumes:
       - .:/usr/src/app
-      # Read the comment above in php-fpm.volumes. They MUST be the same paths!!!
-      - .:/var/www # we need that one for the phpunit tests, so it can access the test resources.
+      - .:/var/www # Must include that one. It's needed for unit tests, for testing .dng files
+      # Read the comment above in "php-fpm.volumes". They MUST have both the same paths, to work correctly.
       - server-nfs:/var/data/server
-    ports:
-      # TODO: Do not expose any python ports. It's only for development right now!
-      - "${PYTHON_PORT_8000:-8001}:8000"
     networks:
       - app-network
 networks:
