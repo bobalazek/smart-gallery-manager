@@ -4,6 +4,8 @@ import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Collapse from '@material-ui/core/Collapse';
+import Grid from '@material-ui/core/Grid';
+import Button from '@material-ui/core/Button';
 import List from '@material-ui/core/List';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import ListItem from '@material-ui/core/ListItem';
@@ -49,6 +51,11 @@ function mapDispatchToProps(dispatch) {
 class AppSidebar extends React.Component {
   constructor(props) {
     super(props);
+
+    this.tagsShownStep = 16;
+    this.state = {
+      tagsShownCount: 16,
+    };
 
     this.onClickType = this.onClickType.bind(this);
     this.onClickDate = this.onClickDate.bind(this);
@@ -142,7 +149,21 @@ class AppSidebar extends React.Component {
         dense
         subheader={
           <ListSubheader component="div">
-            Type
+            <Grid container justify="space-between">
+              <Grid item>
+                Type
+              </Grid>
+              <Grid item>
+                {selectedType !== null &&
+                  <Button
+                    size="small"
+                    onClick={this.onClickType.bind(this, selectedType)}
+                  >
+                    Clear
+                  </Button>
+                }
+              </Grid>
+            </Grid>
           </ListSubheader>
         }
       >
@@ -204,8 +225,22 @@ class AppSidebar extends React.Component {
         component="nav"
         subheader={
           <ListSubheader component="div">
-            {orderBy === 'taken_at' && 'Date taken'}
-            {orderBy === 'created_at' && 'Date created'}
+            <Grid container justify="space-between">
+              <Grid item>
+                {orderBy === 'taken_at' && 'Date taken'}
+                {orderBy === 'created_at' && 'Date created'}
+              </Grid>
+              <Grid item>
+                {(selectedYear !== null || selectedMonth !== null || selectedDay !== null) &&
+                  <Button
+                    size="small"
+                    onClick={this.onClickDate.bind(this, selectedYear, 'year')}
+                  >
+                    Clear
+                  </Button>
+                }
+              </Grid>
+            </Grid>
           </ListSubheader>
         }
       >
@@ -324,10 +359,20 @@ class AppSidebar extends React.Component {
       filesSummary,
       selectedTag,
     } = this.props;
+    const {
+      tagsShownCount,
+    } = this.state;
 
-    const tags = filesSummary && filesSummary.tags
+    let tags = filesSummary && filesSummary.tags
       ? filesSummary.tags
       : null;
+    let allTagsShown = true;
+
+    if (tags) {
+      allTagsShown = tagsShownCount >= tags.length
+
+      tags = tags.slice(0, tagsShownCount);
+    }
 
     return (
       <List
@@ -335,7 +380,21 @@ class AppSidebar extends React.Component {
         dense
         subheader={
           <ListSubheader component="div">
-            Tag
+            <Grid container justify="space-between">
+              <Grid item>
+                Tag
+              </Grid>
+              <Grid item>
+                {selectedTag !== null &&
+                  <Button
+                    size="small"
+                    onClick={this.onClickTag.bind(this, selectedTag)}
+                  >
+                    Clear
+                  </Button>
+                }
+              </Grid>
+            </Grid>
           </ListSubheader>
         }
       >
@@ -361,6 +420,20 @@ class AppSidebar extends React.Component {
             </ListItem>
           )
         })}
+        {!allTagsShown &&
+          <ListItem
+            button
+            onClick={() => {
+              this.setState({
+                tagsShownCount: tagsShownCount + this.tagsShownStep,
+              });
+            }}
+          >
+            <ListItemText
+              primary={'Show more ...'}
+            />
+          </ListItem>
+        }
       </List>
     );
   }
