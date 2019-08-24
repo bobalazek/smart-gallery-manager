@@ -369,7 +369,7 @@ class AppSidebar extends React.Component {
     let allTagsShown = true;
 
     if (tags) {
-      allTagsShown = tagsShownCount >= tags.length
+      allTagsShown = tagsShownCount >= tags.length;
 
       tags = tags.slice(0, tagsShownCount);
     }

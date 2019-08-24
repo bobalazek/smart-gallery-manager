@@ -126,10 +126,10 @@ class ImageModalSidebar extends React.Component {
               ? 'Aperture: f/' + fileInformation.meta.device.aperture + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.shutter_speed
-              ? 'Shutter speed: ' + fileInformation.meta.device.shutter_speed + '<br />'
+              ? 'Shutter speed: ' + fileInformation.meta.device.shutter_speed + 'sec<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.focal_length
-              ? 'Focal length: ' + fileInformation.meta.device.focal_length + '<br />'
+              ? 'Focal length: ' + fileInformation.meta.device.focal_length + 'mm<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.device.iso
               ? 'ISO: ' + fileInformation.meta.device.iso + '<br />'
