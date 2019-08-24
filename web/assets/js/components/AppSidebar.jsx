@@ -34,7 +34,8 @@ const mapStateToProps = state => {
     selectedType: state.selectedType,
     selectedYear: state.selectedYear,
     selectedMonth: state.selectedMonth,
-    selectedDate: state.selectedDate,
+    selectedDay: state.selectedDay,
+    selectedTag: state.selectedTag,
   };
 };
 
@@ -51,6 +52,7 @@ class AppSidebar extends React.Component {
 
     this.onClickType = this.onClickType.bind(this);
     this.onClickDate = this.onClickDate.bind(this);
+    this.onClickTag = this.onClickTag.bind(this);
   }
 
   onClickType(type) {
@@ -69,7 +71,7 @@ class AppSidebar extends React.Component {
         this.props.setDataBatch({
           selectedYear: null,
           selectedMonth: null,
-          selectedDate: null,
+          selectedDay: null,
         });
       } else {
         this.props.setData(
@@ -82,7 +84,7 @@ class AppSidebar extends React.Component {
       if (isAlreadySet) {
         this.props.setDataBatch({
           selectedMonth: null,
-          selectedDate: null,
+          selectedDay: null,
         });
       } else {
         this.props.setData(
@@ -90,14 +92,23 @@ class AppSidebar extends React.Component {
           date
         );
       }
-    } else if (type === 'date') {
+    } else if (type === 'day') {
       this.props.setData(
-        'selectedDate',
-        this.props.selectedDate === date
+        'selectedDay',
+        this.props.selectedDay === date
           ? null
           : date
       );
     }
+  }
+
+  onClickTag(tag) {
+    this.props.setData(
+      'selectedTag',
+      this.props.selectedTag === tag
+        ? null
+        : tag
+    );
   }
 
   render() {
@@ -109,6 +120,7 @@ class AppSidebar extends React.Component {
       <div className={classes.root}>
         {this.renderTypeList()}
         {this.renderDateList()}
+        {this.renderTagList()}
       </div>
     );
   }
@@ -166,7 +178,7 @@ class AppSidebar extends React.Component {
       filesSummary,
       selectedYear,
       selectedMonth,
-      selectedDate,
+      selectedDay,
       orderBy,
     } = this.props;
 
@@ -239,8 +251,8 @@ class AppSidebar extends React.Component {
                             <div key={subSubEntry.date}>
                               <ListItem
                                 button
-                                onClick={this.onClickDate.bind(this, subSubEntry.date, 'date')}
-                                selected={subSubEntry.date === selectedDate}
+                                onClick={this.onClickDate.bind(this, subSubEntry.date, 'day')}
+                                selected={subSubEntry.date === selectedDay}
                               >
                                 <ListItemText
                                   primary={(
@@ -300,6 +312,53 @@ class AppSidebar extends React.Component {
               </ListItem>
               {subList}
             </div>
+          )
+        })}
+      </List>
+    );
+  }
+
+  renderTagList() {
+    const {
+      classes,
+      filesSummary,
+      selectedTag,
+    } = this.props;
+
+    const tags = filesSummary && filesSummary.tags
+      ? filesSummary.tags
+      : null;
+
+    return (
+      <List
+        component="nav"
+        dense
+        subheader={
+          <ListSubheader component="div">
+            Tag
+          </ListSubheader>
+        }
+      >
+        {!tags &&
+          <CircularProgress />
+        }
+        {tags && tags.map((entry) => {
+          return (
+            <ListItem
+              key={entry.tag}
+              button
+              onClick={this.onClickTag.bind(this, entry.tag)}
+              selected={selectedTag === entry.tag}
+            >
+              <ListItemText
+                primary={(
+                  <React.Fragment>
+                    {entry.tag}
+                    <span className={classes.listItemCount}>{entry.count}</span>
+                  </React.Fragment>
+                )}
+              />
+            </ListItem>
           )
         })}
       </List>

@@ -238,6 +238,9 @@ class FilesScanCommand extends Command
             }
 
             $progressBar->finish();
+            $progressBar->clear();
+
+            unset($files);
 
             $io->newLine();
             $io->section(

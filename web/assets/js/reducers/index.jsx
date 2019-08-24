@@ -18,7 +18,8 @@ const initialState = {
   selectedType: null,
   selectedYear: null,
   selectedMonth: null,
-  selectedDate: null,
+  selectedDay: null,
+  selectedTag: null,
 };
 
 const rootReducer = (state = JSON.parse(JSON.stringify(initialState)), action) => {

@@ -150,6 +150,11 @@ class ApiController extends AbstractController
             ];
         }
 
+        usort($tags, function($a, $b) {
+            return $a['count'] <=> $b['count'];
+        });
+        $tags = array_reverse($tags);
+
         return $this->json([
             'data' => [
                 'date' => [
@@ -351,9 +356,10 @@ class ApiController extends AbstractController
         $type = $request->get('type');
         $year = $request->get('year');
         $month = $request->get('month');
-        $date = $request->get('date');
+        $day = $request->get('day');
         $createdBefore = $request->get('created_before');
         $search = $request->get('search');
+        $tag = $request->get('tag');
 
         if ($type) {
             $queryBuilder
@@ -378,10 +384,10 @@ class ApiController extends AbstractController
                 ->setParameter('month', $month);
             ;
         }
-        if ($date) {
+        if ($day) {
             $queryBuilder
-                ->andWhere('DATE(f.' . $dateField . ') = :date')
-                ->setParameter('date', $date);
+                ->andWhere('DATE(f.' . $dateField . ') = :day')
+                ->setParameter('day', $day);
             ;
         }
         if ($createdBefore) {
@@ -415,6 +421,18 @@ class ApiController extends AbstractController
                 ->setParameter('json_location_address_district', '$.address.district')
                 ->setParameter('search', '%' . $search . '%')
                 ->setParameter('search_json', ucwords($search))
+            ;
+        }
+        if ($tag) {
+            $search = strtolower(rawurldecode($search));
+            $queryBuilder
+                ->andWhere(
+                    $queryBuilder->expr()->eq('JSON_CONTAINS(
+                        f.tags,
+                        JSON_ARRAY(:tag)
+                    )', 1)
+                )
+                ->setParameter('tag', ucwords($tag))
             ;
         }
 

@@ -74,7 +74,8 @@ const mapStateToProps = state => {
     selectedType: state.selectedType,
     selectedYear: state.selectedYear,
     selectedMonth: state.selectedMonth,
-    selectedDate: state.selectedDate,
+    selectedDay: state.selectedDay,
+    selectedTag: state.selectedTag,
   };
 };
 
@@ -118,7 +119,8 @@ class AppContent extends React.Component {
       prevProps.selectedType !== this.props.selectedType ||
       prevProps.selectedYear !== this.props.selectedYear ||
       prevProps.selectedMonth !== this.props.selectedMonth ||
-      prevProps.selectedDate !== this.props.selectedDate
+      prevProps.selectedDay !== this.props.selectedDay ||
+      prevProps.selectedTag !== this.props.selectedTag
     ) {
       this.fetchFilesSummary();
     }
@@ -183,7 +185,8 @@ class AppContent extends React.Component {
       selectedType,
       selectedYear,
       selectedMonth,
-      selectedDate,
+      selectedDay,
+      selectedTag,
       orderBy,
       search,
     } = this.props;
@@ -198,8 +201,11 @@ class AppContent extends React.Component {
     if (selectedMonth) {
       query += '&month=' + selectedMonth;
     }
-    if (selectedDate) {
-      query += '&date=' + selectedDate;
+    if (selectedDay) {
+      query += '&day=' + selectedDay;
+    }
+    if (selectedTag) {
+      query += '&tag=' + selectedTag;
     }
     if (search) {
       query += '&search=' + encodeURIComponent(search);

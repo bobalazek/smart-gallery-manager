@@ -13,6 +13,7 @@ import InsertPhotoIcon from '@material-ui/icons/InsertPhoto';
 import CameraIcon from '@material-ui/icons/Camera';
 import LocationOnIcon from '@material-ui/icons/LocationOn';
 import CalendarTodayIcon from '@material-ui/icons/CalendarToday';
+import LabelIcon from '@material-ui/icons/Label';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
 const styles = {
@@ -211,6 +212,11 @@ class ImageModalSidebar extends React.Component {
           </React.Fragment>
         )
         : '',
+      hasTagsData: fileInformation.tags && fileInformation.tags.length > 0,
+      tagsPrimary: 'Tags',
+      tagsSecondary: fileInformation.tags
+        ? fileInformation.tags.join(', ')
+        : '',
     };
     return (
       <div>
@@ -279,6 +285,19 @@ class ImageModalSidebar extends React.Component {
                 <ListItemText
                   primary={infoData.locationPrimary}
                   secondary={infoData.locationSecondary}
+                />
+              </ListItem>
+            }
+            {infoData.hasTagsData &&
+              <ListItem>
+                <ListItemAvatar>
+                  <Avatar>
+                    <LabelIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={infoData.tagsPrimary}
+                  secondary={infoData.tagsSecondary}
                 />
               </ListItem>
             }
