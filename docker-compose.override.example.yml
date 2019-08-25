@@ -1,7 +1,8 @@
 version: '3.7'
 
 services:
-  # The new, external volumes must be added to both services - php-fpm & python
+  # Both services (php-fpm & python) MUST have the same volumes added,
+  #   especially if you have .dng files or videos (needs to be implemented) in the volume
   php-fpm:
     volumes:
       - server-nfs:/var/data/server

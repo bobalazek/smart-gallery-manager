@@ -1,6 +1,6 @@
 # Smart Gallery Manager
 
-A locally hosted smart gallery manager.
+Your personal locally hosted smart gallery manager.
 
 > Please note that this is a personal project, that is still in the pre-alpha stage, so it should only be used for development purposes.
 
@@ -54,3 +54,8 @@ A locally hosted smart gallery manager.
 * [Frontend] Search autocomplete
 * [Python] There is a bug, where the `.dng` formats return the wrong sizes
 * [Design] Make a nicer 404 image
+
+
+## License
+
+Smart Gallery Manager is licensed under the MIT license.

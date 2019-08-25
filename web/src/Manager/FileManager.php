@@ -31,8 +31,9 @@ class FileManager {
 
         $this->allowedImageConversionTypes = $this->params->get('allowed_image_conversion_types');
 
+        $this->awsCredentials = $this->params->get('aws_credentials');
         $this->awsRekognitionClient = new RekognitionClient([
-            'credentials' => $this->params->get('aws_credentials'),
+            'credentials' => $this->awsCredentials,
             'region' => $this->params->get('aws_rekognition_region'),
             'version' => $this->params->get('aws_rekognition_version'),
         ]);
@@ -232,8 +233,7 @@ class FileManager {
     {
         $path = $this->getFileDataDir($file) . '/general.json';
 
-        $alreadyExists = $skipFetchIfAlreadyExists
-            && file_exists($path);
+        $alreadyExists = $skipFetchIfAlreadyExists && file_exists($path);
 
         if (!$alreadyExists) {
             file_put_contents($path, json_encode([
@@ -255,6 +255,13 @@ class FileManager {
      */
     public function geodecode(File $file, $skipFetchIfAlreadyExists = true)
     {
+        if (
+            $this->hereApiCredentials['app_id'] === '' ||
+            $this->hereApiCredentials['app_code'] === ''
+        ) {
+            throw new \Exception('HERE credentials are not set. Could not geocode the file.');
+        }
+
         $fileMeta = $file->getMeta();
 
         if (
@@ -293,6 +300,13 @@ class FileManager {
      */
     public function label(File $file, $skipFetchIfAlreadyExists = true)
     {
+        if (
+            $this->awsCredentials['key'] === '' ||
+            $this->awsCredentials['secret'] === ''
+        ) {
+            throw new \Exception('AWS credentials are not set. Could not label the file.');
+        }
+
         // Check if it's a viable file first. If not, it will throw an exception,
         //   so it won't continue any execution.
         try {
@@ -304,11 +318,9 @@ class FileManager {
             );
         }
 
-
         $path = $this->getFileDataDir($file) . '/aws_rekognition_labels.json';
 
-        $alreadyExists = $skipFetchIfAlreadyExists
-            && file_exists($path);
+        $alreadyExists = $skipFetchIfAlreadyExists && file_exists($path);
         $result = [];
 
         if ($alreadyExists) {
@@ -693,11 +705,13 @@ class FileManager {
 
         $path = $this->getFileDataDir($file) . '/osm_geocode.json';
 
-        $alreadyExists = $skipFetchIfAlreadyExists
-            && file_exists($path);
+        $alreadyExists = $skipFetchIfAlreadyExists && file_exists($path);
 
         if ($alreadyExists) {
-            $this->_geodecodeCache[$cacheHash] = json_decode(file_get_contents($path), true);
+            $this->_geodecodeCache[$cacheHash] = json_decode(
+                file_get_contents($path),
+                true
+            );
         }
 
         if (!isset($this->_geodecodeCache[$cacheHash])) {
@@ -754,11 +768,13 @@ class FileManager {
 
         $path = $this->getFileDataDir($file) . '/here_geocode.json';
 
-        $alreadyExists = $skipFetchIfAlreadyExists
-            && file_exists($path);
+        $alreadyExists = $skipFetchIfAlreadyExists && file_exists($path);
 
         if ($alreadyExists) {
-            $this->_geodecodeCache[$cacheHash] = json_decode(file_get_contents($path), true);
+            $this->_geodecodeCache[$cacheHash] = json_decode(
+                file_get_contents($path),
+                true
+            );
         }
 
         if (!isset($this->_geodecodeCache[$cacheHash])) {
