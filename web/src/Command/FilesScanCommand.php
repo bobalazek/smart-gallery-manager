@@ -127,17 +127,6 @@ class FilesScanCommand extends Command
                 );
 
                 $fileHash = sha1($filePath);
-                $fileMime = $mimeTypes->guessMimeType($filePath);
-                $fileExtension = $fileObject->getExtension();
-                $fileType = strpos($fileMime, 'image/') !== false
-                    ? File::TYPE_IMAGE
-                    : (strpos($fileMime, 'video/') !== false
-                        ? File::TYPE_VIDEO
-                        : (strpos($fileMime, 'audio/') !== false
-                            ? File::TYPE_AUDIO
-                            : File::TYPE_OTHER
-                        )
-                    );
 
                 $file = $filesRepository->findOneByHash($fileHash);
                 $fileExists = $file !== null;
@@ -156,6 +145,18 @@ class FilesScanCommand extends Command
                         ->setCreatedAt(new \DateTime())
                     ;
                 }
+
+                $fileMime = $mimeTypes->guessMimeType($filePath);
+                $fileExtension = $fileObject->getExtension();
+                $fileType = strpos($fileMime, 'image/') !== false
+                    ? File::TYPE_IMAGE
+                    : (strpos($fileMime, 'video/') !== false
+                        ? File::TYPE_VIDEO
+                        : (strpos($fileMime, 'audio/') !== false
+                            ? File::TYPE_AUDIO
+                            : File::TYPE_OTHER
+                        )
+                    );
 
                 $file
                     ->setType($fileType)
