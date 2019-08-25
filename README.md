@@ -8,8 +8,8 @@ A locally hosted smart gallery manager.
 ## Features
 
 * Gallery of images [Note: Currently it will scan and add ALL files inside the folders you specify, so add folders that only contain images]
-* Filter the images by type, date taken or created & tags (if labelling via AWS enabled)
-* Search images by path, location, tags, extension and more
+* Filter the images by type, date taken or created & tags (if labelling via [Amazon Rekognition](https://aws.amazon.com/rekognition) is enabled)
+* Search images by path, location (if reverse geolocation via [HERE Geocoding](https://www.here.com/products/location-based-services/geocoding-tools) is enabled), tags, extension and more
 * Detailed modal view with information about the image
 
 ## Screenshots
