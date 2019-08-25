@@ -30,7 +30,7 @@ class DefaultController extends AbstractController
      */
     public function index()
     {
-        return $this->redirect('files');
+        return $this->redirect('gallery');
     }
 
     /**
@@ -43,9 +43,9 @@ class DefaultController extends AbstractController
     }
 
     /**
-     * @Route("/files", name="files")
+     * @Route("/gallery", name="gallery")
      */
-    public function files(Request $request)
+    public function gallery(Request $request)
     {
         $offset = (int) $request->get('offset', 0);
         $limit = 16;
@@ -59,7 +59,7 @@ class DefaultController extends AbstractController
             ->getQuery()
             ->getResult();
 
-        return $this->render('default/files.html.twig', [
+        return $this->render('default/gallery.html.twig', [
             'files' => $files,
             'offset' => $offset,
             'limit' => $limit,

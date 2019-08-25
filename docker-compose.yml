@@ -58,7 +58,7 @@ services:
     build: ./docker/python
     volumes:
       - .:/usr/src/app
-      - .:/var/www # Must include that one. It's needed for unit tests, for testing .dng files
+      - .:/var/www # Must include that one. It's needed for some unit tests
     networks:
       - app-network
 networks:

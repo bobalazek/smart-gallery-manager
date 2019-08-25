@@ -2,14 +2,28 @@
 
 A locally hosted smart gallery manager.
 
+> Please note that this is a personal project, that is still in the pre-alpha stage, so it should only be used for development purposes.
+
+
+## Features
+
+* Gallery of images [Note: Currently it will scan and add ALL files inside the folders you specify, so add folders that only contain images]
+* Filter the images by type, date taken or created & tags (if labelling via AWS enabled)
+* Search images by path, location, tags, extension and more
+* Detailed modal view with information about the image
+
+## Screenshots
+
+![Preview 1](/docs/images/preview-1.jpg)
+![Preview 2](/docs/images/preview-2.jpg)
+![Preview 3](/docs/images/preview-3.jpg)
 
 ## Summary
 * It runs on Nginx with PHP-FPM
-* The main app (API & admin) is written in Symfony
-* It runs MySQL as the database
-* The frontend is written in React
+* The main app (API & admin) is written in Symfony with MySQL as the database
+* Frontend is written in React
 * It uses webpack as the bundler, via [Symfony Webpack Encore](https://symfony.com/doc/current/frontend/encore/installation.html)
-* There is also a python micro service, that is, for now, only used for `.dng` files. It reads the EXIF data and converts it to `.jpg`
+* There is also a python micro service that is, for now, only used for `.dng` files. It reads the EXIF data and converts it to `.jpg`
 
 
 ## Setup & development
@@ -28,9 +42,14 @@ A locally hosted smart gallery manager.
 
 ## TODO
 
+* [Backend] Support for videos, audio & maybe also PDFs
 * [Backend] Write more tests
 * [Backend] Add a dashboard
 * [Backend] Add a job queue to trigger actions from there, instead of a CLI
+* [Backend] Ignore files that are not images, videos or audio clips
 * [Frontend] Start tackling performance issues - mostly happens when there are tens of thousands of files added & you are scrolling down too fast
 * [Frontend] More intuitive sidebar
+* [Frontend] Add a "Map view", where we could use the geolocation data from existing images and show it on the map
+* [Frontend] Search autocomplete
 * [Python] There is a bug, where the `.dng` formats return the wrong sizes
+* [Design] Make a nicer 404 image

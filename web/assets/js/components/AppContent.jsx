@@ -384,8 +384,8 @@ class AppContent extends React.Component {
       lastDate = date;
     });
 
-    // It's very likely that there will be remaining rows after the loop,
-    //   so add them to the rows.
+    // It's very likely that there will be remaining files
+    // in the last row after the loop, so add it to the rows.
     if (row.files.length > 0) {
       rows.push(row);
     }
