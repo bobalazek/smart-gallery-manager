@@ -50,6 +50,7 @@ A locally hosted smart gallery manager.
 * [Frontend] Start tackling performance issues - mostly happens when there are tens of thousands of files added & you are scrolling down too fast
 * [Frontend] More intuitive sidebar
 * [Frontend] Add a "Map view", where we could use the geolocation data from existing images and show it on the map
+* [Frontend] Add a separate view, where you can see "What happened on day XY"
 * [Frontend] Search autocomplete
 * [Python] There is a bug, where the `.dng` formats return the wrong sizes
 * [Design] Make a nicer 404 image
