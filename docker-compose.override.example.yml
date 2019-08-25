@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+  # The new, external volumes must be added to both services - php-fpm & python
+  php-fpm:
+    volumes:
+      - server-nfs:/var/data/server
+  python:
+    volumes:
+      - server-nfs:/var/data/server
+volumes:
+  # Add your own volumes, where your data is located down below
+  server-nfs:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=10.21.91.110,rw,soft,nolock
+      device: :/srv

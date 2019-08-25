@@ -2,7 +2,9 @@
 /settings.yml
 /var/**
 !/var/.gitkeep
+
 /README.local.md
+/docker-compose.override.yml
 
 __pycache__/
 *.py[cod]

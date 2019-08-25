@@ -37,7 +37,7 @@ class FileManager {
             'version' => $this->params->get('aws_rekognition_version'),
         ]);
         $this->awsRekognitionMinConfidence = $this->params->get('aws_rekognition_min_confidence');
-        $this->labelingConfidence = $this->params->get('labeling_confidence');
+        $this->labellingConfidence = $this->params->get('labelling_confidence');
 
         $this->hereApiCredentials = $this->params->get('here_api_credentials');
         $this->hereReverseGeocoderRadius = $this->params->get('here_reverse_geocoder_radius');
@@ -333,7 +333,7 @@ class FileManager {
 
         $tags = [];
         foreach ($result['Labels'] as $label) {
-            if ($label['Confidence'] >= $this->labelingConfidence) {
+            if ($label['Confidence'] >= $this->labellingConfidence) {
                 $tags[] = $label['Name'];
             }
         }

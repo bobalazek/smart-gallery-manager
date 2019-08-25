@@ -19,18 +19,6 @@ def get_file_info(filename):
 def get_exif(filename):
     data = {}
 
-    '''
-    image = Image.open(filename)
-    image.verify()
-    image_exif = image._getexif()
-
-    if image_exif:
-        for (key, val) in image_exif.items():
-            tag_key = TAGS.get(key)
-            if tag_key:
-                data[tag_key] = val
-    '''
-
     file = open(filename, 'rb')
     tags = exifread.process_file(file)
     for tag in tags.keys():
