@@ -20,9 +20,9 @@ parameters:
     # Labeling
     labelling_enabled: '%env(bool:LABELLING_ENABLED)%'
     labelling_confidence: '%env(bool:LABELLING_CONFIDENCE)%'
-    aws_rekognition_region: '%env(AWS_REKOGNITION_REGION)%'
-    aws_rekognition_version: '%env(AWS_REKOGNITION_VERSION)%'
-    aws_rekognition_min_confidence: '%env(int:AWS_REKOGNITION_MIN_CONFIDENCE)%'
+    amazon_rekognition_region: '%env(AMAZON_REKOGNITION_REGION)%'
+    amazon_rekognition_version: '%env(AMAZON_REKOGNITION_VERSION)%'
+    amazon_rekognition_min_confidence: '%env(int:AMAZON_REKOGNITION_MIN_CONFIDENCE)%'
     aws_credentials:
         key: '%env(AWS_KEY)%'
         secret: '%env(AWS_SECRET)%'

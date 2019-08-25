@@ -34,10 +34,10 @@ class FileManager {
         $this->awsCredentials = $this->params->get('aws_credentials');
         $this->awsRekognitionClient = new RekognitionClient([
             'credentials' => $this->awsCredentials,
-            'region' => $this->params->get('aws_rekognition_region'),
-            'version' => $this->params->get('aws_rekognition_version'),
+            'region' => $this->params->get('amazon_rekognition_region'),
+            'version' => $this->params->get('amazon_rekognition_version'),
         ]);
-        $this->awsRekognitionMinConfidence = $this->params->get('aws_rekognition_min_confidence');
+        $this->awsRekognitionMinConfidence = $this->params->get('amazon_rekognition_min_confidence');
         $this->labellingConfidence = $this->params->get('labelling_confidence');
 
         $this->hereApiCredentials = $this->params->get('here_api_credentials');
@@ -307,7 +307,7 @@ class FileManager {
             );
         }
 
-        $path = $this->getFileDataDir($file) . '/aws_rekognition_labels.json';
+        $path = $this->getFileDataDir($file) . '/amazon_rekognition_labels.json';
 
         $alreadyExists = $skipFetchIfAlreadyExists && file_exists($path);
         $result = [];
