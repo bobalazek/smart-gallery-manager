@@ -262,17 +262,6 @@ class FileManager {
             throw new \Exception('HERE credentials are not set. Could not geocode the file.');
         }
 
-        $fileMeta = $file->getMeta();
-
-        if (
-            $fileMeta['geolocation']['latitude'] === null ||
-            $fileMeta['geolocation']['longitude'] === null
-        ) {
-            throw new \Exception('This file has no geolocation data.');
-
-            return false;
-        }
-
         $this->_geodecodeLocation['service'] = null;
         $this->_geodecodeLocation['address'] = [
             'label' => null,
@@ -687,7 +676,7 @@ class FileManager {
     /**
      * Geodecodes the location via OSM
      * Note: At the moment, I can't really get it working. After the first request,
-     *   I always get "Failed sending data to peer ..."
+     *   I always get "Failed sending data to peer ...". Figure out what the issue is.
      *
      * @param File $file
      * @param bool $skipFetchIfAlreadyExists
@@ -737,7 +726,12 @@ class FileManager {
             file_put_contents($path, json_encode($geocodeData));
         }
 
-        $locationData = $geocodeData['features'][0]['properties']['geocoding'];
+        $features = $geocodeData['features'];
+        if (count($features) === 0) {
+            throw new \Exception('Could not find any geolocation data for those coordinates.');
+        }
+
+        $locationData = $features[0]['properties']['geocoding'];
 
         $this->_geodecodeLocation['service'] = 'osm';
         $this->_geodecodeLocation['address']['label'] = $locationData['label'] ?? null;
@@ -758,6 +752,13 @@ class FileManager {
     private function _geocodeHere(File $file, $skipFetchIfAlreadyExists)
     {
         $fileMeta = $file->getMeta();
+
+        if (
+            empty($fileMeta['geolocation']['latitude']) ||
+            empty($fileMeta['geolocation']['longitude'])
+        ) {
+            throw new \Exception('This file has no geolocation (latitude & longitude) data.');
+        }
 
         $latitude_and_longitude = [
             'lat' => $fileMeta['geolocation']['latitude'],
