@@ -70,7 +70,7 @@ class FilesScanCommand extends Command
         $finder = new Finder();
         $mimeTypes = new MimeTypes();
         $isGeocodingEnabled = $this->params->get('geocoding_enabled');
-        $isLabelingEnabled = $this->params->get('labeling_enabled');
+        $isLabellingEnabled = $this->params->get('labelling_enabled');
         $actions = explode(',', $input->getOption('actions'));
         $updateExistingEntries = $input->getOption('update-existing-entries') !== false;
 
@@ -217,7 +217,7 @@ class FilesScanCommand extends Command
 
                 /********** Label **********/
                 if (
-                    $isLabelingEnabled &&
+                    $isLabellingEnabled &&
                     (
                         in_array('label', $actions) ||
                         in_array('label:force', $actions)
