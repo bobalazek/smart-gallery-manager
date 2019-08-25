@@ -8,7 +8,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Mime\MimeTypes;
@@ -62,10 +61,6 @@ class FilesScanCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        ProgressBar::setFormatDefinition(
-            'custom',
-            ' %current%/%max% %elapsed:6s%/%estimated:-6s% %memory:6s% -- %message% (%filename%)'
-        );
         $io = new SymfonyStyle($input, $output);
         $finder = new Finder();
         $mimeTypes = new MimeTypes();
@@ -86,15 +81,6 @@ class FilesScanCommand extends Command
             return;
         }
 
-        // Progress bar
-        $progressBar = new ProgressBar($output, 10);
-        $progressBar->setFormat('custom');
-
-        $progressBar->setMessage('Starting to process files...');
-        $progressBar->setMessage('...', 'filename');
-
-        $progressBar->start();
-
         // Browse the folders
         $folders = $settings['folders'];
 
@@ -109,11 +95,14 @@ class FilesScanCommand extends Command
                 ->in($folder)
                 ->sortByChangedTime();
 
+            $filesCount = iterator_count($files);
+
             $io->newLine();
             $io->section(
                 sprintf(
-                    'Starting to process folder: %s',
-                    $folder
+                    'Starting to process folder: %s (%s files found)',
+                    $folder,
+                    $filesCount
                 )
             );
 
@@ -121,16 +110,21 @@ class FilesScanCommand extends Command
             //   create a map ([path] => file) and compare it then,
             //   if we've set to skip existing entries
 
-            $progressBar->setProgress(0);
-            $progressBar->setMaxSteps(iterator_count($files));
-
+            $i = 0;
             foreach ($files as $fileObject) {
-                $progressBar->advance();
+                $i++;
 
                 $filePath = $fileObject->getRealPath();
 
-                $progressBar->setMessage('Processing files...');
-                $progressBar->setMessage($filePath, 'filename');
+                $io->text(
+                    sprintf(
+                        '%s/%s [%sMB] -- Starting to process file: %s',
+                        $i + 1,
+                        $filesCount,
+                        (int)(memory_get_peak_usage() / 1024 / 1024),
+                        $filePath
+                    )
+                );
 
                 $fileHash = sha1($filePath);
                 $fileMime = $mimeTypes->guessMimeType($filePath);
@@ -239,9 +233,6 @@ class FilesScanCommand extends Command
                 $this->em->flush();
                 $this->em->clear();
             }
-
-            $progressBar->finish();
-            $progressBar->clear();
 
             unset($files);
 
