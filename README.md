@@ -31,7 +31,7 @@ A locally hosted smart gallery manager.
 * (optional) Create your own `.env` file, if you want to override the docker ports - just copy the contents from `.env.example`
 * Create a `settings.yml` file and add your image folders in - just copy the contents from `settings.example.yml`
 * Create a `docker-compose.override.yml` file and set your custom volumes there - just copy the contents from `docker-compose.override.example.yml`
-* Duplicate the `web/.env` into `web/.env.local` and set your the values for your custom variables there - particularly those, inside the `### Project` block
+* Duplicate the `web/.env` into `web/.env.local` and set your the values for your custom variables there - particularly those, inside the `Project` block
 * Run `docker-compose up`
 * Exec into the `php-fpm` container
   * Prepare the database by running `php bin/console doctrine:schema:update -f`
