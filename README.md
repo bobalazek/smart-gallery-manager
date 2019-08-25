@@ -36,7 +36,7 @@ Your personal locally hosted smart gallery manager.
 * Exec into the `php-fpm` container
   * Prepare the database by running `php bin/console doctrine:schema:update -f`
   * Scan and add files to the database by running `php bin/console app:files:scan [-u|--update-existing-entries][-a|--actions "meta,cache,geocode,label"][-f|--folder "/path/to/the/folder"]`
-* Visit: http://localhost:81 (or whichever port you set in `.env`)
+* Visit: http://localhost:81 (or whichever port you have set in `.env`)
 * You are ready. Start developing!
 
 
@@ -47,6 +47,7 @@ Your personal locally hosted smart gallery manager.
 * [Backend] Add a dashboard
 * [Backend] Add a job queue to trigger actions from there, instead of a CLI
 * [Backend] Ignore files that are not images, videos or audio clips
+* [Backend] Ability to choose the geocoding service - OSM is implemented, but does not work correctly yet
 * [Frontend] Start tackling performance issues - mostly happens when there are tens of thousands of files added & you are scrolling down too fast
 * [Frontend] More intuitive sidebar
 * [Frontend] Add a "Map view", where we could use the geolocation data from existing images and show it on the map
