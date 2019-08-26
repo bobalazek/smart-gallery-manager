@@ -88,161 +88,151 @@ class FilesScanCommand extends Command
             $folders = [$input->getOption('folder')];
         }
 
+        $files = $finder->files()
+            ->ignoreUnreadableDirs()
+            ->followLinks()
+            ->in($folders);
+
+        $filesCount = iterator_count($files);
+
+        $io->newLine();
+        $io->text(sprintf(
+            '%s files found in folders:',
+            $filesCount
+        ));
+        $io->newLine();
         foreach ($folders as $folder) {
-            $files = $finder->files()
-                ->ignoreUnreadableDirs()
-                ->followLinks()
-                ->in($folder);
+            $io->text('* ' . $folder);
+        }
+        $io->newLine();
 
-            $filesCount = iterator_count($files);
+        // TODO: optimize. Maybe fetch all the files here from the DB,
+        //   create a map ([path] => file) and compare it then,
+        //   if we've set to skip existing entries
 
-            $io->newLine();
-            $io->section(
+        $i = 0;
+        foreach ($files as $fileObject) {
+            $i++;
+
+            $filePath = $fileObject->getRealPath();
+
+            $io->text(
                 sprintf(
-                    'Starting to process folder: %s (%s files found)',
-                    $folder,
-                    $filesCount
+                    '%s/%s [%sMB] -- Starting to process file: %s',
+                    $i,
+                    $filesCount,
+                    (int)(memory_get_peak_usage() / 1024 / 1024),
+                    $filePath
                 )
             );
 
-            // TODO: optimize. Maybe fetch all the files in this folder here,
-            //   create a map ([path] => file) and compare it then,
-            //   if we've set to skip existing entries
+            $fileHash = sha1($filePath);
 
-            $i = 0;
-            foreach ($files as $fileObject) {
-                $i++;
+            $file = $filesRepository->findOneByHash($fileHash);
+            $fileExists = $file !== null;
 
-                $filePath = $fileObject->getRealPath();
+            if (
+                $fileExists &&
+                !$updateExistingEntries
+            ) {
+                continue;
+            }
 
-                $io->text(
-                    sprintf(
-                        '%s/%s [%sMB] -- Starting to process file: %s',
-                        $i + 1,
-                        $filesCount,
-                        (int)(memory_get_peak_usage() / 1024 / 1024),
-                        $filePath
+            if (!$fileExists) {
+                $file = new File();
+                $file
+                    ->setHash($fileHash)
+                    ->setCreatedAt(new \DateTime())
+                ;
+            }
+
+            $fileMime = $mimeTypes->guessMimeType($filePath);
+            $fileExtension = $fileObject->getExtension();
+            $fileType = strpos($fileMime, 'image/') !== false
+                ? File::TYPE_IMAGE
+                : (strpos($fileMime, 'video/') !== false
+                    ? File::TYPE_VIDEO
+                    : (strpos($fileMime, 'audio/') !== false
+                        ? File::TYPE_AUDIO
+                        : File::TYPE_OTHER
                     )
                 );
 
-                $fileHash = sha1($filePath);
+            $file
+                ->setType($fileType)
+                ->setPath($filePath)
+                ->setMime($fileMime)
+                ->setExtension($fileExtension)
+                ->setModifiedAt(new \DateTime())
+            ;
 
-                $file = $filesRepository->findOneByHash($fileHash);
-                $fileExists = $file !== null;
-
-                if (
-                    $fileExists &&
-                    !$updateExistingEntries
-                ) {
-                    continue;
-                }
-
-                if (!$fileExists) {
-                    $file = new File();
-                    $file
-                        ->setHash($fileHash)
-                        ->setCreatedAt(new \DateTime())
-                    ;
-                }
-
-                $fileMime = $mimeTypes->guessMimeType($filePath);
-                $fileExtension = $fileObject->getExtension();
-                $fileType = strpos($fileMime, 'image/') !== false
-                    ? File::TYPE_IMAGE
-                    : (strpos($fileMime, 'video/') !== false
-                        ? File::TYPE_VIDEO
-                        : (strpos($fileMime, 'audio/') !== false
-                            ? File::TYPE_AUDIO
-                            : File::TYPE_OTHER
-                        )
-                    );
-
+            if (in_array('meta', $actions)) {
                 $file
-                    ->setType($fileType)
-                    ->setPath($filePath)
-                    ->setMime($fileMime)
-                    ->setExtension($fileExtension)
-                    ->setModifiedAt(new \DateTime())
+                    ->setMeta($this->fileManager->getFileMeta($file))
+                    ->setTakenAt(new \DateTime($file->getMeta()['date'] ?? '1970-01-01'))
                 ;
-
-                if (in_array('meta', $actions)) {
-                    $file
-                        ->setMeta($this->fileManager->getFileMeta($file))
-                        ->setTakenAt(new \DateTime($file->getMeta()['date'] ?? '1970-01-01'))
-                    ;
-                } elseif (
-                    !$fileExists &&
-                    !in_array('meta', $actions)
-                ) {
-                    $file->setTakenAt(new \DateTime('1970-01-01'));
-                }
-
-                /********** Prepare **********/
-                $this->fileManager->prepare($file);
-
-                /********** Cache **********/
-                if (in_array('cache', $actions)) {
-                    try {
-                        $this->fileManager->cache($file);
-                    } catch (\Exception $e) {
-                        $io->newLine();
-                        $io->error($e->getMessage());
-                    }
-                }
-
-                /********** Geocode  **********/
-                if (
-                    $isGeocodingEnabled &&
-                    (
-                        in_array('geocode', $actions) ||
-                        in_array('geocode:force', $actions)
-                    )
-                ) {
-                    try {
-                        $this->fileManager->geodecode(
-                            $file,
-                            !in_array('geocode:force', $actions)
-                        );
-                    } catch (\Exception $e) {
-                        $io->newLine();
-                        $io->error($e->getMessage());
-                    }
-                }
-
-                /********** Label **********/
-                if (
-                    $isLabellingEnabled &&
-                    (
-                        in_array('label', $actions) ||
-                        in_array('label:force', $actions)
-                    )
-                ) {
-                    try {
-                        $this->fileManager->label(
-                            $file,
-                            !in_array('label:force', $actions)
-                        );
-                    } catch (\Exception $e) {
-                        $io->newLine();
-                        $io->error($e->getMessage());
-                    }
-                }
-
-                // Finally, save the file into the DB
-                $this->em->persist($file);
-                $this->em->flush();
-                $this->em->clear();
+            } elseif (
+                !$fileExists &&
+                !in_array('meta', $actions)
+            ) {
+                $file->setTakenAt(new \DateTime('1970-01-01'));
             }
 
-            unset($files);
+            /********** Prepare **********/
+            $this->fileManager->prepare($file);
 
-            $io->newLine();
-            $io->section(
-                sprintf(
-                    'Successfully processed folder: %s',
-                    $folder
+            /********** Cache **********/
+            if (in_array('cache', $actions)) {
+                try {
+                    $this->fileManager->cache($file);
+                } catch (\Exception $e) {
+                    $io->newLine();
+                    $io->error($e->getMessage());
+                }
+            }
+
+            /********** Geocode  **********/
+            if (
+                $isGeocodingEnabled &&
+                (
+                    in_array('geocode', $actions) ||
+                    in_array('geocode:force', $actions)
                 )
-            );
+            ) {
+                try {
+                    $this->fileManager->geodecode(
+                        $file,
+                        !in_array('geocode:force', $actions)
+                    );
+                } catch (\Exception $e) {
+                    $io->newLine();
+                    $io->error($e->getMessage());
+                }
+            }
+
+            /********** Label **********/
+            if (
+                $isLabellingEnabled &&
+                (
+                    in_array('label', $actions) ||
+                    in_array('label:force', $actions)
+                )
+            ) {
+                try {
+                    $this->fileManager->label(
+                        $file,
+                        !in_array('label:force', $actions)
+                    );
+                } catch (\Exception $e) {
+                    $io->newLine();
+                    $io->error($e->getMessage());
+                }
+            }
+
+            // Finally, save the file into the DB
+            $this->em->persist($file);
+            $this->em->flush();
+            $this->em->clear();
         }
 
         $io->success('Success!');
