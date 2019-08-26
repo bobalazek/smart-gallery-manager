@@ -92,8 +92,7 @@ class FilesScanCommand extends Command
             $files = $finder->files()
                 ->ignoreUnreadableDirs()
                 ->followLinks()
-                ->in($folder)
-                ->sortByChangedTime();
+                ->in($folder);
 
             $filesCount = iterator_count($files);
 
