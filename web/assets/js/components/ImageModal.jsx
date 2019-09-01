@@ -112,7 +112,9 @@ class ImageModal extends React.Component {
     this.state = {
       data: {},
       fileIndex: -1, // what's the index of the currently open image in the modal?
+      isImageLoading: false,
       isImageLoaded: false,
+      imageSrc: {},
       imageWrapperStyle: {},
       imageStyle: {},
       isSidebarOpen: false,
@@ -150,10 +152,27 @@ class ImageModal extends React.Component {
 
   onImageLoad() {
     this.setState({
+      isImageLoading: false,
       isImageLoaded: true,
     });
 
     this.prepareImageStyles();
+
+    if (this.state.imageSrc === this.state.data.images.preview.src) {
+      this.setState({
+        isImageLoading: true,
+      });
+
+      let originalImage = new Image();
+      originalImage.src = this.state.data.images.original.src;
+      originalImage.onload = () => {
+        // TODO: check if we haven't yet switched to the next image
+        this.setState({
+          isImageLoading: false,
+          imageSrc: originalImage.src,
+        });
+      };
+    }
   }
 
   onInfoButtonClick() {
@@ -177,49 +196,45 @@ class ImageModal extends React.Component {
   }
 
   prepareImageStyles() {
-    // Make sure the image is really ready.
-    // Seems that the onLoad event of the image triggers too soon.
-    setTimeout(() => {
-      if (
-        !this.imageRef.current ||
-        !this.imageContentRef.current
-      ) {
-        return;
-      }
+    if (
+      !this.imageRef.current ||
+      !this.imageContentRef.current
+    ) {
+      return;
+    }
 
-      const containerWidth = this.imageContentRef.current.clientWidth;
-      const containerHeight = this.imageContentRef.current.clientHeight;
-      const imageWidth = this.imageRef.current.naturalWidth;
-      const imageHeight = this.imageRef.current.naturalHeight;
-      const imageAspectRatio = imageWidth / imageHeight;
+    const containerWidth = this.imageContentRef.current.clientWidth;
+    const containerHeight = this.imageContentRef.current.clientHeight;
+    const imageWidth = this.imageRef.current.naturalWidth;
+    const imageHeight = this.imageRef.current.naturalHeight;
+    const imageAspectRatio = imageWidth / imageHeight;
 
-      let finalImageWidth = imageWidth;
-      let finalImageHeight = imageHeight;
+    let finalImageWidth = imageWidth;
+    let finalImageHeight = imageHeight;
 
-      if (finalImageWidth > containerWidth) {
-        finalImageWidth = containerWidth;
-        finalImageHeight = finalImageWidth / imageAspectRatio;
-      }
+    if (finalImageWidth > containerWidth) {
+      finalImageWidth = containerWidth;
+      finalImageHeight = finalImageWidth / imageAspectRatio;
+    }
 
-      if (finalImageHeight > containerHeight) {
-        finalImageHeight = containerHeight;
-        finalImageWidth = finalImageHeight * imageAspectRatio;
-      }
+    if (finalImageHeight > containerHeight) {
+      finalImageHeight = containerHeight;
+      finalImageWidth = finalImageHeight * imageAspectRatio;
+    }
 
-      const wrapperLeft = (containerWidth - finalImageWidth) / 2;
-      const wrapperTop = (containerHeight - finalImageHeight) / 2;
+    const wrapperLeft = (containerWidth - finalImageWidth) / 2;
+    const wrapperTop = (containerHeight - finalImageHeight) / 2;
 
-      this.setState({
-        imageStyle: {
-          width: finalImageWidth,
-          height: finalImageHeight,
-        },
-        imageWrapperStyle: {
-          position: 'absolute',
-          left: wrapperLeft,
-          top: wrapperTop,
-        },
-      });
+    this.setState({
+      imageStyle: {
+        width: finalImageWidth,
+        height: finalImageHeight,
+      },
+      imageWrapperStyle: {
+        position: 'absolute',
+        left: wrapperLeft,
+        top: wrapperTop,
+      },
     });
   }
 
@@ -248,10 +263,19 @@ class ImageModal extends React.Component {
       showNextButton = fileIndex < this.props.files.length;
     }
 
+    const imageSrc = data &&
+      data.images &&
+      data.images.preview &&
+      data.images.preview.src
+      ? data.images.preview.src
+      : null;
+
     this.setState({
       data,
       fileIndex,
       isImageLoaded: false,
+      isImageLoading: true,
+      imageSrc,
       imageWrapperStyle: {},
       imageStyle: {},
       showPrevButton,
@@ -262,8 +286,10 @@ class ImageModal extends React.Component {
   render() {
     const {
       data,
+      isImageLoading,
       isImageLoaded,
       imageWrapperStyle,
+      imageSrc,
       imageStyle,
       isSidebarOpen,
       showPrevButton,
@@ -274,13 +300,6 @@ class ImageModal extends React.Component {
       open,
       onClose,
     } = this.props;
-
-    const imageSrc = data &&
-      data.images &&
-      data.images.original &&
-      data.images.original.src
-      ? data.images.original.src
-      : null;
 
     let finalImageStyle = {...imageStyle};
     if (!isImageLoaded) {
@@ -334,7 +353,7 @@ class ImageModal extends React.Component {
                 </IconButton>
               }
             </div>
-            {!isImageLoaded && (
+            {isImageLoading && (
               <div className={classes.circularProgressWrapper}>
                 <CircularProgress size={80} />
               </div>
