@@ -54,22 +54,6 @@ class DefaultController extends AbstractController
      */
     public function gallery(Request $request)
     {
-        $offset = (int) $request->get('offset', 0);
-        $limit = 16;
-
-        $files = $this->em->createQueryBuilder()
-            ->select('f')
-            ->from(File::class, 'f')
-            ->orderBy('f.takenAt', 'DESC')
-            ->setFirstResult($offset)
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
-
-        return $this->render('default/gallery.html.twig', [
-            'files' => $files,
-            'offset' => $offset,
-            'limit' => $limit,
-        ]);
+        return $this->render('default/gallery.html.twig');
     }
 }
