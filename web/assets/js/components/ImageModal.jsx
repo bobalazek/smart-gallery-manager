@@ -82,6 +82,7 @@ const styles = {
   circularProgressWrapper: {
     textAlign: 'center',
     marginTop: 64,
+    zIndex: 9999,
   },
 };
 
@@ -114,13 +115,18 @@ class ImageModal extends React.Component {
       fileIndex: -1, // what's the index of the currently open image in the modal?
       isImageLoading: false,
       isImageLoaded: false,
-      imageSrc: {},
+      imageSrc: '',
       imageWrapperStyle: {},
       imageStyle: {},
       isSidebarOpen: false,
       showPrevButton: false,
       showNextButton: false,
     };
+
+    // We always set the "preview" image in the modal first,
+    //   so that one is used to preload the original image.
+    // Once it's loaded, set the url of that original one, as the main src.
+    this.originalImage = new Image();
 
     this.imageRef = React.createRef();
     this.imageContentRef = React.createRef();
@@ -151,36 +157,42 @@ class ImageModal extends React.Component {
   }
 
   onImageLoad() {
+    const isPreviewImage = this.state.imageSrc === this.state.data.images.preview.src;
     this.setState({
       isImageLoading: false,
       isImageLoaded: true,
     });
 
-    this.prepareImageStyles();
+    if (isPreviewImage) {
+      const originalImageData = this.state.data.images.original;
 
-    if (this.state.imageSrc === this.state.data.images.preview.src) {
       this.setState({
         isImageLoading: true,
       });
 
-      let originalImage = new Image();
-      originalImage.src = this.state.data.images.original.src;
-      originalImage.onload = () => {
-        // TODO: check if we haven't yet switched to the next image
+      this.originalImage.src = originalImageData.src;
+      this.originalImage.onload = () => {
         this.setState({
           isImageLoading: false,
-          imageSrc: originalImage.src,
+          imageSrc: this.originalImage.src,
         });
       };
+
+      this.prepareImageStyles(
+        originalImageData.width,
+        originalImageData.height
+      );
+    } else {
+      this.prepareImageStyles();
     }
   }
 
   onInfoButtonClick() {
     this.setState({
       isSidebarOpen: !this.state.isSidebarOpen,
+    }, () => {
+      this.prepareImageStyles();
     });
-
-    this.prepareImageStyles();
   }
 
   onPrevButtonClick() {
@@ -195,7 +207,7 @@ class ImageModal extends React.Component {
     );
   }
 
-  prepareImageStyles() {
+  prepareImageStyles(width, height) {
     if (
       !this.imageRef.current ||
       !this.imageContentRef.current
@@ -205,8 +217,8 @@ class ImageModal extends React.Component {
 
     const containerWidth = this.imageContentRef.current.clientWidth;
     const containerHeight = this.imageContentRef.current.clientHeight;
-    const imageWidth = this.imageRef.current.naturalWidth;
-    const imageHeight = this.imageRef.current.naturalHeight;
+    const imageWidth = width || this.imageRef.current.naturalWidth;
+    const imageHeight = height || this.imageRef.current.naturalHeight;
     const imageAspectRatio = imageWidth / imageHeight;
 
     let finalImageWidth = imageWidth;
@@ -268,7 +280,10 @@ class ImageModal extends React.Component {
       data.images.preview &&
       data.images.preview.src
       ? data.images.preview.src
-      : null;
+      : '';
+
+    // Cancel original image loading - just in case there is any
+    this.originalImage.src = '';
 
     this.setState({
       data,
@@ -353,11 +368,6 @@ class ImageModal extends React.Component {
                 </IconButton>
               }
             </div>
-            {isImageLoading && (
-              <div className={classes.circularProgressWrapper}>
-                <CircularProgress size={80} />
-              </div>
-            )}
             {imageSrc &&
               <div style={imageWrapperStyle}>
                 <img
@@ -369,6 +379,11 @@ class ImageModal extends React.Component {
                 />
               </div>
             }
+            {isImageLoading && (
+              <div className={classes.circularProgressWrapper}>
+                <CircularProgress size={80} />
+              </div>
+            )}
           </div>
           <div className={sidebarClassName}>
             <ImageModalSidebar
