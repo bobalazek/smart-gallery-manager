@@ -1,4 +1,5 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/styles';
 import Grid from '@material-ui/core/Grid';
 import Modal from '@material-ui/core/Modal';
@@ -6,6 +7,8 @@ import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 import InfoIcon from '@material-ui/icons/Info';
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import ImageModalSidebar from './ImageModalSidebar';
 
@@ -62,23 +65,59 @@ const styles = {
     color: '#fff',
     zIndex: 9999,
   },
+  prevButton: {
+    position: 'absolute',
+    left: 16,
+    top: '50%',
+    color: '#fff',
+    zIndex: 9999,
+  },
+  nextButton: {
+    position: 'absolute',
+    right: 16,
+    top: '50%',
+    color: '#fff',
+    zIndex: 9999,
+  },
   circularProgressWrapper: {
     textAlign: 'center',
     marginTop: 64,
   },
 };
 
-// TODO: implement prev/next image (also with left/right keyboard keys)
+const mapStateToProps = state => {
+  return {
+    isLoading: state.isLoading,
+    isLoaded: state.isLoaded,
+    rows: state.rows,
+    rowsIndexes: state.rowsIndexes,
+    files: state.files,
+    filesMap: state.filesMap,
+    filesSummary: state.filesSummary,
+    filesSummaryDatetime: state.filesSummaryDatetime,
+    orderBy: state.orderBy,
+    search: state.search,
+    selectedType: state.selectedType,
+    selectedYear: state.selectedYear,
+    selectedMonth: state.selectedMonth,
+    selectedDay: state.selectedDay,
+    selectedTag: state.selectedTag,
+  };
+};
 
 class ImageModal extends React.Component {
   constructor(props) {
     super(props);
 
     this.state = {
+      data: {},
+      fileIndex: -1, // what's the index of the currently open image in the modal?
       isImageLoaded: false,
       imageWrapperStyle: {},
       imageStyle: {},
       isSidebarOpen: false,
+      showPrevButton: false,
+      showNextButton: false,
     };
 
     this.imageRef = React.createRef();
@@ -86,7 +125,10 @@ class ImageModal extends React.Component {
 
     this.onImageLoad = this.onImageLoad.bind(this);
     this.onInfoButtonClick = this.onInfoButtonClick.bind(this);
+    this.onPrevButtonClick = this.onPrevButtonClick.bind(this);
+    this.onNextButtonClick = this.onNextButtonClick.bind(this);
     this.prepareImageStyles = this.prepareImageStyles.bind(this);
+    this.prepareData = this.prepareData.bind(this);
   }
 
   componentDidMount() {
@@ -98,12 +140,8 @@ class ImageModal extends React.Component {
   }
 
   componentDidUpdate(previousProps) {
-    if (previousProps.data.id !== this.props.data.id) {
-      this.setState({
-        isImageLoaded: false,
-        imageWrapperStyle: {},
-        imageStyle: {},
-      });
+    if (previousProps.fileId !== this.props.fileId) {
+      this.prepareData(this.props.fileId);
     }
   }
 
@@ -121,6 +159,18 @@ class ImageModal extends React.Component {
     });
 
     this.prepareImageStyles();
+  }
+
+  onPrevButtonClick() {
+    this.prepareData(
+      this.props.files[this.state.fileIndex - 1].id
+    );
+  }
+
+  onNextButtonClick() {
+    this.prepareData(
+      this.props.files[this.state.fileIndex + 1].id
+    );
   }
 
   prepareImageStyles() {
@@ -170,22 +220,55 @@ class ImageModal extends React.Component {
     });
   }
 
+  prepareData(fileId) {
+    let data = {};
+    let fileIndex = -1;
+    let showPrevButton = false;
+    let showNextButton = false;
+    for (let i = 0; i < this.props.files.length; i++) {
+      if (this.props.files[i].id === fileId) {
+        data = this.props.files[i];
+        fileIndex = i;
+        break;
+      }
+    }
+    if (fileIndex !== -1) {
+      showPrevButton = fileIndex !== 0;
+      showNextButton = fileIndex < this.props.files.length;
+    }
+
+    this.setState({
+      data,
+      fileIndex,
+      isImageLoaded: false,
+      imageWrapperStyle: {},
+      imageStyle: {},
+      showPrevButton,
+      showNextButton,
+    });
+  }
+
   render() {
     const {
+      data,
       isImageLoaded,
       imageWrapperStyle,
       imageStyle,
       isSidebarOpen,
+      showPrevButton,
+      showNextButton,
     } = this.state;
     const {
       classes,
       open,
       onClose,
-      data,
     } = this.props;
 
-    const imageSrc = data && data.srcOriginal
-      ? data.srcOriginal
+    const imageSrc = data &&
+      data.images &&
+      data.images.original &&
+      data.images.original.src
+      ? data.images.original.src
       : null;
 
     let finalImageStyle = {...imageStyle};
@@ -223,6 +306,22 @@ class ImageModal extends React.Component {
               >
                 <InfoIcon />
               </IconButton>
+              {showPrevButton &&
+                <IconButton
+                  className={classes.prevButton}
+                  onClick={this.onPrevButtonClick}
+                >
+                  <ArrowBackIcon />
+                </IconButton>
+              }
+              {showNextButton &&
+                <IconButton
+                  className={classes.nextButton}
+                  onClick={this.onNextButtonClick}
+                >
+                  <ArrowForwardIcon />
+                </IconButton>
+              }
             </div>
             {!isImageLoaded && (
               <div className={classes.circularProgressWrapper}>
@@ -252,4 +351,6 @@ class ImageModal extends React.Component {
   }
 }
 
-export default withStyles(styles)(ImageModal);
+export default connect(mapStateToProps)(
+  withStyles(styles)(ImageModal)
+);

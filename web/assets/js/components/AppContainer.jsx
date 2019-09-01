@@ -36,24 +36,24 @@ class AppContainer extends React.Component {
 
     this.state = {
       isModalOpen: false,
-      modalData: {},
+      modalFileId: {},
     };
 
     this.onImageClick = this.onImageClick.bind(this);
     this.onModalClose = this.onModalClose.bind(this);
   }
 
-  onImageClick(image) {
+  onImageClick(file) {
     this.setState({
       isModalOpen: true,
-      modalData: image,
+      modalFileId: file.id,
     });
   }
 
   onModalClose() {
     this.setState({
       isModalOpen: false,
-      modalData: {},
+      modalFileId: 0,
     });
   }
 
@@ -63,7 +63,7 @@ class AppContainer extends React.Component {
     } = this.props;
     const {
       isModalOpen,
-      modalData,
+      modalFileId,
     } = this.state;
 
     return (
@@ -81,7 +81,7 @@ class AppContainer extends React.Component {
         <ImageModal
           open={isModalOpen}
           onClose={this.onModalClose}
-          data={modalData}
+          fileId={modalFileId}
         />
       </div>
     );

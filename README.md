@@ -42,18 +42,17 @@ Your personal locally hosted smart gallery manager.
 
 ## TODO
 
-* [Backend] Support for videos, audio & maybe also PDFs
+* [Backend] Support for videos, audio & maybe also PDFs OR ognore files that are not images, videos or audio clips
 * [Backend] Write more tests
 * [Backend] Add a dashboard
 * [Backend] Add a job queue to trigger actions from there, instead of a CLI
-* [Backend] Ignore files that are not images, videos or audio clips
 * [Backend] Ability to choose the geocoding service - OSM is implemented, but does not work correctly yet
 * [Frontend] Start tackling performance issues - mostly happens when there are tens of thousands of files added & you are scrolling down too fast
 * [Frontend] More intuitive sidebar
 * [Frontend] Add a "Map view", where we could use the geolocation data from existing images and show it on the map
 * [Frontend] Add a separate view, where you can see "What happened on day XY"
 * [Frontend] Search autocomplete
-* [Python] There is a bug, where the `.dng` formats return the wrong sizes
+* [Python] There is a bug, where the `.dng` formats return the wrong sizes & orientation
 * [Design] Make a nicer 404 image
 
 
