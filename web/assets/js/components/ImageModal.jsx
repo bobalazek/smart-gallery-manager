@@ -128,15 +128,18 @@ class ImageModal extends React.Component {
     this.onPrevButtonClick = this.onPrevButtonClick.bind(this);
     this.onNextButtonClick = this.onNextButtonClick.bind(this);
     this.prepareImageStyles = this.prepareImageStyles.bind(this);
+    this.prepareEvents = this.prepareEvents.bind(this);
     this.prepareData = this.prepareData.bind(this);
   }
 
   componentDidMount() {
     window.addEventListener('resize', this.prepareImageStyles);
+    window.addEventListener('keydown', this.prepareEvents);
   }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.prepareImageStyles);
+    window.removeEventListener('keydown', this.prepareEvents);
   }
 
   componentDidUpdate(previousProps) {
@@ -218,6 +221,14 @@ class ImageModal extends React.Component {
         },
       });
     });
+  }
+
+  prepareEvents(e) {
+    if (e.keyCode === 37) { // Left
+      this.onPrevButtonClick();
+    } else if (e.keyCode === 39) { // Right
+      this.onNextButtonClick();
+    }
   }
 
   prepareData(fileId) {
