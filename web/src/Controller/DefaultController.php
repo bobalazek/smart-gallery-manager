@@ -34,6 +34,22 @@ class DefaultController extends AbstractController
     }
 
     /**
+     * @Route("/dashboard", name="dashboard")
+     */
+    public function dashboard()
+    {
+        $filesCount = $this->em->createQueryBuilder()
+            ->select('COUNT(f)')
+            ->from(File::class, 'f')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $this->render('default/dashboard.html.twig', [
+            'files_count' => $filesCount,
+        ]);
+    }
+
+    /**
      * @Route("/gallery", name="gallery")
      */
     public function gallery(Request $request)
