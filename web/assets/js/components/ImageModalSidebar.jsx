@@ -34,6 +34,20 @@ class ImageModalSidebar extends React.Component {
   }
 
   componentDidMount() {
+    this.prepareInformation();
+  }
+
+  componentDidUpdate(previousProps) {
+    if (previousProps.data.hash !== this.props.data.hash) {
+      this.prepareInformation();
+    }
+  }
+
+  prepareInformation() {
+    this.setState({
+      isFileInformationLoaded: false,
+    });
+
     axios.get(rootUrl + '/api/file/' + this.props.data.hash)
       .then(res => {
         this.setState({
