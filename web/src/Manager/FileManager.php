@@ -31,6 +31,8 @@ class FileManager {
 
         $this->allowedImageConversionTypes = $this->params->get('allowed_image_conversion_types');
 
+        // Label
+        $this->labellingConfidence = $this->params->get('labelling_confidence');
         $this->awsCredentials = $this->params->get('aws_credentials');
         $this->awsRekognitionClient = new RekognitionClient([
             'credentials' => $this->awsCredentials,
@@ -38,8 +40,9 @@ class FileManager {
             'version' => $this->params->get('amazon_rekognition_version'),
         ]);
         $this->awsRekognitionMinConfidence = $this->params->get('amazon_rekognition_min_confidence');
-        $this->labellingConfidence = $this->params->get('labelling_confidence');
 
+        // Geocode
+        $this->geocodingService = $this->params->get('geocoding_service');
         $this->hereApiCredentials = $this->params->get('here_api_credentials');
         $this->hereReverseGeocoderRadius = $this->params->get('here_reverse_geocoder_radius');
         $this->hereReverseGeocoderMaxResults = $this->params->get('here_reverse_geocoder_max_results');
@@ -93,8 +96,7 @@ class FileManager {
             'size' => $this->_fileMeta['size'],
             'width' => $this->_fileMeta['width'],
             'height' => $this->_fileMeta['height'],
-            'pixels' => is_numeric($this->_fileMeta['width'])
-                && is_numeric($this->_fileMeta['height'])
+            'pixels' => is_numeric($this->_fileMeta['width']) && is_numeric($this->_fileMeta['height'])
                 ? $this->_fileMeta['width'] * $this->_fileMeta['height']
                 : null,
             'orientation' => $this->_fileMeta['orientation'],
@@ -255,13 +257,6 @@ class FileManager {
      */
     public function geodecode(File $file, $skipFetchIfAlreadyExists = true)
     {
-        if (
-            $this->hereApiCredentials['app_id'] === '' ||
-            $this->hereApiCredentials['app_code'] === ''
-        ) {
-            throw new \Exception('HERE credentials are not set. Could not geocode the file.');
-        }
-
         $this->_geodecodeLocation['service'] = null;
         $this->_geodecodeLocation['address'] = [
             'label' => null,
@@ -274,7 +269,18 @@ class FileManager {
             'country' => null,
         ];
 
-        $this->_geocodeHere($file, $skipFetchIfAlreadyExists);
+        if ($this->geocodingService === 'here') {
+            $this->_geocodeHere($file, $skipFetchIfAlreadyExists);
+        } elseif ($this->geocodingService === 'osm') {
+            $this->_geocodeOsm($file, $skipFetchIfAlreadyExists);
+        } else {
+            throw new \Exception(
+                sprintf(
+                    'The specified geocoding service "%s" does not exist.',
+                    $this->geocodingService
+                )
+            );
+        }
 
         $file->setLocation($this->_geodecodeLocation);
 
@@ -423,10 +429,13 @@ class FileManager {
                 $return,
                 $matches
             )) {
-                $return = (new \DateTime(
-                    $matches[1] . '-' . $matches[2] . '-' . $matches[3] .
-                        'T' . $matches[4] . ':' . $matches[5] . ':' . $matches[6]
-                ))->format(DATE_ATOM);
+                $return = date(
+                    'Y-m-d H:i:s',
+                    strtotime(
+                        $matches[1] . '-' . $matches[2] . '-' . $matches[3] . ' ' .
+                        $matches[4] . ':' . $matches[5] . ':' . $matches[6]
+                    )
+                );
             } else {
                 $return = null;
             }
@@ -751,6 +760,13 @@ class FileManager {
      */
     private function _geocodeHere(File $file, $skipFetchIfAlreadyExists)
     {
+        if (
+            $this->hereApiCredentials['app_id'] === '' ||
+            $this->hereApiCredentials['app_code'] === ''
+        ) {
+            throw new \Exception('HERE credentials are not set. Could not geocode the file.');
+        }
+
         $fileMeta = $file->getMeta();
 
         if (

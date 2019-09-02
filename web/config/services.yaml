@@ -11,6 +11,7 @@ parameters:
 
     # Geocoding
     geocoding_enabled: '%env(bool:GEOCODING_ENABLED)%'
+    geocoding_service: '%env(GEOCODING_SERVICE)%'
     here_reverse_geocoder_radius: '%env(int:HERE_REVERSE_GEOCODER_RADIUS)%'
     here_reverse_geocoder_max_results: '%env(int:HERE_REVERSE_GEOCODER_MAX_RESULTS)%'
     here_api_credentials:
