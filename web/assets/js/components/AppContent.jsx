@@ -98,7 +98,7 @@ class AppContent extends React.Component {
     this.infiniteLoaderRef = React.createRef();
     this.infiniteLoaderListRef = React.createRef();
 
-    this.maxFilesPerRow = 40;
+    this.maxFilesPerRow = 48;
 
     this.cache = new CellMeasurerCache({
       fixedWidth: true,
