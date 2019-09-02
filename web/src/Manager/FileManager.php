@@ -627,7 +627,6 @@ class FileManager {
                 )
             );
         $this->_fileMeta['size'] = filesize($file->getPath());
-        // TODO: width & height are wrong. Not sure why.
         $this->_fileMeta['width'] = isset($exif['Image ImageWidth'])
             ? (int)$exif['Image ImageWidth']
             : null;
@@ -637,6 +636,19 @@ class FileManager {
         $this->_fileMeta['orientation'] = isset($exif['Image Orientation'])
             ? (int)$exif['Image Orientation']
             : null;
+
+        // Width & height hack
+        // It's unlikely that a .dng image will be that small,
+        //   so let's just get the converted version (into .jpg),
+        //   and get the correct size.
+        if (
+            $this->_fileMeta['width'] < 800 ||
+            $this->_fileMeta['height'] < 600
+        ) {
+            $image = $this->getImage($file);
+            $this->_fileMeta['width'] = $image->getWidth();
+            $this->_fileMeta['height'] = $image->getHeight();
+        }
 
         // Device
         $this->_fileMeta['device']['make'] = isset($exif['Image Make'])
