@@ -95,6 +95,7 @@ class FilesScanCommand extends Command
             ->followLinks()
             ->in($folders)
             ->sortByChangedTime()
+            ->reverseSorting()
         ;
 
         $filesCount = iterator_count($files);
