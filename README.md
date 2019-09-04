@@ -45,7 +45,7 @@ Your personal locally hosted smart gallery manager.
 * [Backend] Support for videos, audio & maybe also PDFs OR ignore files that are not images, videos or audio clips
 * [Backend] Write more tests
 * [Backend] Add a dashboard
-* [Backend] Add a job queue to trigger actions from there, instead of a CLI
+* [Backend] Add a job queue (possibly [php-enqueue](https://php-enqueue.github.io/)) to trigger actions from there, instead of a CLI
 * [Backend] Ability to choose the geocoding service - OSM is implemented, but does not work correctly yet
 * [Frontend] Start tackling performance issues - mostly happens when there are tens of thousands of files added & you are scrolling down too fast
 * [Frontend] More intuitive sidebar

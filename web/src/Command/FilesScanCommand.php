@@ -81,6 +81,27 @@ class FilesScanCommand extends Command
             return;
         }
 
+        // Start
+        $io->text('Starting to process files ...');
+
+        // Actions
+        $io->newLine();
+        $io->text(sprintf(
+            'Actions: %s',
+            implode(', ', $actions)
+        ));
+
+        // Memory usage
+        $startMemoryPeakUsage = (int)(memory_get_peak_usage() / 1024 / 1024) . 'MB';
+        $startMemoryPeakUsageReal = (int)(memory_get_peak_usage(true) / 1024 / 1024) . 'MB';
+
+        $io->newLine();
+        $io->text(sprintf(
+            'Start memory usage - current: %s, real: %s',
+            $startMemoryPeakUsage,
+            $startMemoryPeakUsageReal
+        ));
+
         // Browse the folders
         $folders = $settings['folders'];
         $foldersOption = $input->getOption('folder');
@@ -111,22 +132,22 @@ class FilesScanCommand extends Command
         }
         $io->newLine();
 
-        // TODO: optimize. Maybe fetch all the files here from the DB,
-        //   create a map ([path] => file) and compare it then,
-        //   if we've set to skip existing entries
-
         $i = 0;
         foreach ($files as $fileObject) {
             $i++;
 
             $filePath = $fileObject->getRealPath();
 
+            $memoryPeakUsage = (int)(memory_get_peak_usage() / 1024 / 1024) . 'MB';
+            $memoryPeakUsageReal = (int)(memory_get_peak_usage(true) / 1024 / 1024) . 'MB';
+
             $io->text(
                 sprintf(
-                    '%s/%s [%sMB] -- Starting to process file: %s',
+                    '%s/%s [current: %s, real: %s] -- Starting to process file: %s',
                     $i,
                     $filesCount,
-                    (int)(memory_get_peak_usage() / 1024 / 1024),
+                    $memoryPeakUsage,
+                    $memoryPeakUsageReal,
                     $filePath
                 )
             );
