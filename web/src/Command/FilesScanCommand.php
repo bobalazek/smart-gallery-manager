@@ -49,10 +49,12 @@ class FilesScanCommand extends Command
                 'instead of the cached one locally.',
                 'meta,cache,geocode,label'
             )
-            ->addArgument(
-                'folders',
-                InputArgument::IS_ARRAY | InputArgument::OPTIONAL,
-                'Which folder do you want to scan? Seperate multiple names with a space.'
+            ->addOption(
+                'folder',
+                'f',
+                InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL,
+                'Which folder do you want to scan? The value is an array, so you can chain it, like: ' .
+                '"bin/console app:files:scan -f /one/directory -f /another/dir -f /yetanother/dir"'
             )
         ;
     }
@@ -81,16 +83,19 @@ class FilesScanCommand extends Command
 
         // Browse the folders
         $folders = $settings['folders'];
-        $foldersArgument = $input->getArgument('folders');
+        $foldersOption = $input->getOption('folder');
 
-        if (count($foldersArgument) > 0) {
-            $folders = $foldersArgument;
+        if (count($foldersOption) > 0) {
+            $folders = $foldersOption;
         }
 
-        $files = $finder->files()
+        $files = $finder
+            ->files()
             ->ignoreUnreadableDirs()
             ->followLinks()
-            ->in($folders);
+            ->in($folders)
+            ->sortByChangedTime()
+        ;
 
         $filesCount = iterator_count($files);
 
