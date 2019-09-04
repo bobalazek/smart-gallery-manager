@@ -280,6 +280,16 @@ class ApiController extends AbstractController
         $fileMeta = $file->getMeta();
         $response = [];
 
+        // If it's not the default orientation, we need to reflect that here!
+        //   The meta is saved for the ORIGINAL (unprocessed & unoriented) image!
+        //   The streamed one in the /file/{hash} endpoint, has already applied orientation.
+        // .dng images are already oriented, because when we set the meta,
+        //   we get the .jpg version from the .dng file, because in .dng,
+        //   the sizes are wrong. Means, with .dgn files we already have applied the orientation
+        // See the _processFileMetaViaPython() method in FileManager.php
+        $swapWidthHeight = $file->getExtension() !== 'dng' &&
+            !in_array($fileMeta['orientation'], [null, 1, 2, 3, 4]);
+
         $imageTypes = $this->params->get('allowed_image_conversion_types');
         foreach ($imageTypes as $imageType => $imageTypeData) {
             $src = $this->generateUrl(
@@ -292,17 +302,12 @@ class ApiController extends AbstractController
                 UrlGeneratorInterface::ABSOLUTE_URL
             );
 
-            $width = $fileMeta['width'];
-            $height = $fileMeta['height'];
-
-            // If it's not the default orientation, we need to reflect that here!
-            //   The meta is saved for the ORIGINAL (unprocessed & unoriented) image!
-            //   The streamed one in the /file/{hash} endpoint, has already applied orientation.
-            $isFinalImageOriented = !in_array($fileMeta['orientation'], [null, 1, 2, 3, 4]);
-            if ($isFinalImageOriented) {
-                $width = $fileMeta['height'];
-                $height = $fileMeta['width'];
-            }
+            $width = $swapWidthHeight
+                ? $fileMeta['height']
+                : $fileMeta['width'];
+            $height = $swapWidthHeight
+                ? $fileMeta['width']
+                : $fileMeta['height'];
 
             if ($width && $height) {
                 $aspectRatio = $width / $height;
