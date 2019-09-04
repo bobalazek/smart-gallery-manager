@@ -49,12 +49,10 @@ class FilesScanCommand extends Command
                 'instead of the cached one locally.',
                 'meta,cache,geocode,label'
             )
-            ->addOption(
-                'folder',
-                'f',
-                InputOption::VALUE_OPTIONAL,
-                'Which folder do you want to scan? Note: that will override the existing folders from settings.yml',
-                null
+            ->addArgument(
+                'folders',
+                InputArgument::IS_ARRAY | InputArgument::OPTIONAL,
+                'Which folder do you want to scan? Seperate multiple names with a space.'
             )
         ;
     }
@@ -83,9 +81,10 @@ class FilesScanCommand extends Command
 
         // Browse the folders
         $folders = $settings['folders'];
+        $foldersArgument = $input->getArgument('folders');
 
-        if ($input->getOption('folder')) {
-            $folders = [$input->getOption('folder')];
+        if (count($foldersArgument) > 0) {
+            $folders = $foldersArgument;
         }
 
         $files = $finder->files()

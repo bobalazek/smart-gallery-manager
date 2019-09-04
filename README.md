@@ -35,7 +35,7 @@ Your personal locally hosted smart gallery manager.
 * Run `docker-compose up`
 * Exec into the `php-fpm` container
   * Prepare the database by running `php bin/console doctrine:schema:update -f`
-  * Scan and add files to the database by running `php bin/console app:files:scan [-u|--update-existing-entries][-a|--actions "meta,cache,geocode,label"][-f|--folder "/path/to/the/folder"]`
+  * Scan and add files to the database by running `php bin/console app:files:scan [-u|--update-existing-entries][-a|--actions "meta,cache,geocode,label"] "/path/to/the/folder" "/path/to/another/folder"`
 * Visit: http://localhost:81 (or whichever port you have set in `.env`)
 * You are ready. Start developing!
 
