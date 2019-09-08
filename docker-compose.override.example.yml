@@ -9,6 +9,20 @@ services:
   python:
     volumes:
       - server-nfs:/var/data/server
+  # For easirt DB managament, let's also add PHPMyAdmin
+  phpmyadmin:
+    container_name: sgm_phpmyadmin
+    image: phpmyadmin/phpmyadmin
+    depends_on:
+      - mysql
+    ports:
+      - '${PHPMYADMIN_PORT_80:-82}:80'
+    environment:
+      PMA_HOST: mysql
+      MYSQL_ROOT_PASSWORD: password
+    networks:
+      - app-network
+    restart: always
 volumes:
   # Add your own volumes, where your data is located down below
   server-nfs:

@@ -1,0 +1,69 @@
+{% extends 'bootstrap4.html.twig' %}
+
+{% block title %}Dashboard | Smart Gallery Manager{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>
+            Smart Gallery Manager
+            <a href="{{ url('gallery') }}" class="btn btn-primary">
+                Go to Gallery
+            </a>
+        </h1>
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+        <h2>Overview</h2>
+        <ul class="list-group">
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            Files
+            <span class="badge badge-primary badge-pill">{{ files_count }}</span>
+          </li>
+        </ul>
+        <hr />
+        <h2>Commands</h2>
+        <h3>Files - Scan</h3>
+        <div class="row">
+            <div class="col">
+                <h4>Run</h4>
+                {% form_theme form 'jquery.collection.html.twig' %}
+                {{ form(form) }}
+            </div>
+            <div class="col">
+                <div id="last-result-wrapper">
+                    <h4>Last result{{ last_result_file ? (' - ' ~ last_result_file ~ ' (last 100 rows)') : '' }}</h4>
+                    <div>
+                        {{ last_result_content | raw }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('.collection').collection({
+                allow_up: false,
+                allow_down: false,
+                allow_duplicate: false,
+            });
+
+            setInterval(function() {
+                $.get(window.location.href, function(response) {
+                    var $html = $(response);
+
+                    $('#last-result-wrapper').html(
+                        $html.find('#last-result-wrapper').html()
+                    );
+                });
+            }, 4000);
+        });
+    </script>
+{% endblock %}
