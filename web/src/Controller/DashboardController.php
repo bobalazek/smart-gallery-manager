@@ -95,6 +95,7 @@ class DashboardController extends AbstractController
 
         // Last result
         $logDir = $this->params->get('var_dir') . '/queue/logs';
+        $lastResultLinesCount = 50;
         $lastResultFile = '';
         $lastResultContent = '';
         $finder = new Finder();
@@ -111,7 +112,7 @@ class DashboardController extends AbstractController
                 $contents = $file->getContents();
                 $contentsArray = explode("\n", $contents);
                 $contentsArray = array_reverse($contentsArray);
-                $contentsArray = array_slice($contentsArray, 0, 100);
+                $contentsArray = array_slice($contentsArray, 0, $lastResultLinesCount);
                 $lastResultContent = join('<br />', $contentsArray);
 
                 break;
@@ -122,6 +123,7 @@ class DashboardController extends AbstractController
             'files_count' => $filesCount,
             'last_result_file' => $lastResultFile,
             'last_result_content' => $lastResultContent,
+            'last_result_lines_count' => $lastResultLinesCount,
             'form' => $form->createView(),
         ]);
     }

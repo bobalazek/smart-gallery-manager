@@ -34,12 +34,21 @@
                 {{ form(form) }}
             </div>
             <div class="col">
+                {% if last_result_file %}
                 <div id="last-result-wrapper">
-                    <h4>Last result{{ last_result_file ? (' - ' ~ last_result_file ~ ' (last 100 rows)') : '' }}</h4>
+                    <h4>Last result</h4>
+                    <h5>File: {{ last_result_file }}</h5>
+                    <h5>Showing {{ last_result_lines_count }} last entries</h5>
                     <div>
                         {{ last_result_content | raw }}
                     </div>
                 </div>
+                {% else %}
+                    <h4>Last result</h4>
+                    <div class="alert alert-info">
+                        No runs yet
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -55,15 +64,17 @@
                 allow_duplicate: false,
             });
 
-            setInterval(function() {
-                $.get(window.location.href, function(response) {
-                    var $html = $(response);
+            {% if last_result_file %}
+                setInterval(function() {
+                    $.get(window.location.href, function(response) {
+                        var $html = $(response);
 
-                    $('#last-result-wrapper').html(
-                        $html.find('#last-result-wrapper').html()
-                    );
-                });
-            }, 4000);
+                        $('#last-result-wrapper').html(
+                            $html.find('#last-result-wrapper').html()
+                        );
+                    });
+                }, 4000);
+            {% endif %}
         });
     </script>
 {% endblock %}
