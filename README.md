@@ -54,6 +54,7 @@ Your personal locally hosted smart gallery manager.
 * [Frontend] Search autocomplete
 * [Python] There is a bug, where the `.dng` formats return the wrong sizes & orientation
 * [Design] Make a nicer 404 image
+* [Infrastructure] Faster file delivery performance - tweak nginx, add [varnish](https://hub.docker.com/_/varnish), ...
 
 
 ## License

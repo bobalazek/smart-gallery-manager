@@ -36,8 +36,6 @@ class FileController extends AbstractController
             throw new \Exception('Invalid format. Allowed: jpg');
         }
 
-        $imageMaxAge = $this->params->get('image_max_age');
-
         $file = $this->em->getRepository(File::class)->findOneByHash($hash);
         if (!$file) {
             throw $this->createNotFoundException('The file does not exist');
@@ -69,12 +67,12 @@ class FileController extends AbstractController
         $response->headers->set('Content-Length', strlen($imageData['content']));
 
         $response->setContent($imageData['content']);
-        $response->setSharedMaxAge($imageMaxAge);
+        $response->setSharedMaxAge(600);
         $response->setCache([
             'etag' => sha1($imageData['key']),
             'last_modified' => $file->getModifiedAt(),
-            'max_age' => $imageMaxAge,
-            's_maxage' => $imageMaxAge,
+            'max_age' => 600,
+            's_maxage' => 600,
             'private' => true,
         ]);
 
