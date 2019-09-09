@@ -42,6 +42,7 @@ services:
     links:
       - mysql
       - python
+      - redis
     depends_on:
       - mysql
       - python
@@ -63,6 +64,22 @@ services:
     volumes:
       - .:/usr/src/app
       - .:/var/www # Must include that one. It's needed for some unit tests
+    networks:
+      - app-network
+    restart: always
+  redis:
+    container_name: sgm_redis
+    image: redis
+    volumes:
+      - ./var/redis:/data
+    networks:
+      - app-network
+    restart: always
+  memcached:
+    container_name: sgm_memcached
+    image: memcached
+    volumes:
+      - ./var/memcached:/var/lib/memcached
     networks:
       - app-network
     restart: always

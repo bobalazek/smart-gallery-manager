@@ -6,6 +6,8 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Mime\MimeTypes;
 use Symfony\Component\HttpClient\CurlHttpClient;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Component\Cache\Adapter\MemcachedAdapter;
+use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\Cache\ItemInterface;
 use Intervention\Image\ImageManager;
@@ -17,11 +19,6 @@ class FileManager {
     public function __construct(ParameterBagInterface $params)
     {
         $this->params = $params;
-        $this->cache = new FilesystemAdapter(
-            'files',
-            0,
-            $this->params->get('var_dir') . '/cache'
-        );
         $this->filesystem = new Filesystem();
         $this->mimeTypes = new MimeTypes();
         $this->imageManager = new ImageManager([
@@ -30,6 +27,34 @@ class FileManager {
         $this->httpClient = new CurlHttpClient();
 
         $this->allowedImageConversionTypes = $this->params->get('allowed_image_conversion_types');
+        $filesCacheAdapter = $this->params->get('files_cache_adapter');
+
+        // Cache
+        if ($filesCacheAdapter === 'filesystem') {
+            $this->cache = new FilesystemAdapter(
+                'files',
+                0,
+                $this->params->get('var_dir') . '/cache'
+            );
+        } elseif ($filesCacheAdapter === 'memcached') {
+            $this->cache = new MemcachedAdapter(
+                MemcachedAdapter::createConnection(
+                    'memcached://memcached:11211'
+                ),
+                'files',
+                0
+            );
+        } elseif ($filesCacheAdapter === 'redis') {
+            $this->cache = new RedisAdapter(
+                RedisAdapter::createConnection(
+                    'redis://redis'
+                ),
+                'files',
+                0
+            );
+        } else {
+            throw new \Exception('The file cache adapter "' . $filesCacheAdapter . '" does not exist.');
+        }
 
         // Label
         $this->labellingConfidence = $this->params->get('labelling_confidence');

@@ -8,6 +8,7 @@ parameters:
             height: 240
         original: ~
     image_max_age: 3600
+    files_cache_adapter: '%env(FILES_CACHE_ADAPTER)%'
 
     # Geocoding
     geocoding_enabled: '%env(bool:GEOCODING_ENABLED)%'
