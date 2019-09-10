@@ -79,10 +79,10 @@ class ImageModalSidebar extends React.Component {
 
     const infoData = {
       datePrimary: fileInformation
-        ? moment(fileInformation.taken_at).format('LL')
+        ? moment.parseZone(fileInformation.taken_at).format('LL')
         : '',
       dateSecondary: fileInformation
-        ? moment(fileInformation.taken_at).format('HH:mm:ss')
+        ? moment.parseZone(fileInformation.taken_at).format('HH:mm:ss')
         : '',
       filePrimary: fileInformation &&
         fileInformation.meta
@@ -112,13 +112,13 @@ class ImageModalSidebar extends React.Component {
               ? 'Orientation: ' + fileInformation.meta.orientation + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.taken_at
-              ? 'Taken at: ' + moment(fileInformation.taken_at).format('LL HH:mm:ss') + '<br />'
+              ? 'Taken at: ' + moment.parseZone(fileInformation.taken_at).format('LL HH:mm:ss') + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.created_at
-              ? 'Created at: ' + moment(fileInformation.created_at).format('LL HH:mm:ss') + '<br />'
+              ? 'Created at: ' + moment.parseZone(fileInformation.created_at).format('LL HH:mm:ss') + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.modified_at
-              ? 'Modified at: ' + moment(fileInformation.modified_at).format('LL HH:mm:ss') + '<br />'
+              ? 'Modified at: ' + moment.parseZone(fileInformation.modified_at).format('LL HH:mm:ss') + '<br />'
               : '' }} />
           </React.Fragment>
         )

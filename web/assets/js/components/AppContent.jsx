@@ -169,7 +169,7 @@ class AppContent extends React.Component {
           files: [],
           filesMap: [],
           filesSummary: filesSummary,
-          filesSummaryDatetime: moment(),
+          filesSummaryDatetime: moment.parseZone(),
           isLoaded: true,
           isLoading: false,
         });
@@ -315,7 +315,7 @@ class AppContent extends React.Component {
       filesSummary,
     } = this.props;
 
-    const now = moment();
+    const now = moment.parseZone();
 
     let rows = [];
     let lastDate = '';

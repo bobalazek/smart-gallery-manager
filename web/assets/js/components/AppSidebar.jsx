@@ -292,7 +292,7 @@ class AppSidebar extends React.Component {
                                 <ListItemText
                                   primary={(
                                     <React.Fragment>
-                                      {moment(subSubEntry.date).format('Do')}
+                                      {moment.parseZone(subSubEntry.date).format('Do')}
                                       <span className={classes.listItemCount}>{subSubEntry.count}</span>
                                     </React.Fragment>
                                   )}
@@ -315,7 +315,7 @@ class AppSidebar extends React.Component {
                         <ListItemText
                           primary={(
                             <React.Fragment>
-                              {moment(subEntry.date).format('MMMM')}
+                              {moment.parseZone(subEntry.date).format('MMMM')}
                               <span className={classes.listItemCount}>{subEntry.count}</span>
                             </React.Fragment>
                           )}
