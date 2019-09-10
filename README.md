@@ -2,7 +2,7 @@
 
 Your personal locally hosted smart gallery manager.
 
-View this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager) for TODO items.
+View this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager) for the TODO items.
 
 > Please note that this is a personal project, that is still in the pre-alpha stage, so it should only be used for development purposes.
 
