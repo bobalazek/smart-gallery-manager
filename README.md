@@ -12,6 +12,15 @@ Your personal locally hosted smart gallery manager.
 * Search images by path, location (if reverse geolocation via [HERE Geocoding](https://www.here.com/products/location-based-services/geocoding-tools) is enabled), tags, extension and more
 * Detailed modal view with information about the image
 
+
+## Requirements
+
+* Processor: dual core or higher
+* Memory: 1 GB RAM or more
+
+> May work on lower specs, but it has to be tested first.
+
+
 ## Screenshots
 
 ![Preview 1](/docs/images/preview-1.jpg)
@@ -50,12 +59,17 @@ Your personal locally hosted smart gallery manager.
 * [Frontend] Start tackling performance issues - mostly happens when there are tens of thousands of files added & you are scrolling down too fast
 * [Frontend] More intuitive sidebar
 * [Frontend] Add a "Map view", where we could use the geolocation data from existing images and show it on the map
-* [Frontend] Add a separate view, where you can see "What happened on day XY"
+* [Frontend] Add a "What happened on day XY" view
+* [Frontend] Add a "Faces"/"People" view
 * [Frontend] Search autocomplete
 * [Python] There is a bug, where the `.dng` formats return the wrong sizes & orientation
 * [Design] Make a nicer 404 image
 * [Infrastructure] Faster file delivery performance - tweak nginx, add [varnish](https://hub.docker.com/_/varnish), ...
 
+
+## Credits
+
+* Icon - https://pixabay.com/vectors/image-pictures-icon-photo-1271454/
 
 ## License
 
