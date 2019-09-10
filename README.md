@@ -2,6 +2,8 @@
 
 Your personal locally hosted smart gallery manager.
 
+The TODO list can be found View in this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager).
+
 > Please note that this is a personal project, that is still in the pre-alpha stage, so it should only be used for development purposes.
 
 
@@ -27,6 +29,7 @@ Your personal locally hosted smart gallery manager.
 ![Preview 2](/docs/images/preview-2.jpg)
 ![Preview 3](/docs/images/preview-3.jpg)
 
+
 ## Summary
 * It runs on Nginx with PHP-FPM
 * The main app (API & admin) is written in Symfony with MySQL as the database
@@ -49,27 +52,10 @@ Your personal locally hosted smart gallery manager.
 * You are ready. Start developing!
 
 
-## TODO
-
-* [Backend] Support for videos, audio & maybe also PDFs OR ignore files that are not images, videos or audio clips
-* [Backend] Write more tests
-* [Backend] Add a dashboard
-* [Backend] Add a job queue to trigger actions from there, instead of a CLI
-* [Backend] Ability to choose the geocoding service - OSM is implemented, but does not work correctly yet
-* [Frontend] Start tackling performance issues - mostly happens when there are tens of thousands of files added & you are scrolling down too fast
-* [Frontend] More intuitive sidebar
-* [Frontend] Add a "Map view", where we could use the geolocation data from existing images and show it on the map
-* [Frontend] Add a "What happened on day XY" view
-* [Frontend] Add a "Faces"/"People" view
-* [Frontend] Search autocomplete
-* [Python] There is a bug, where the `.dng` formats return the wrong sizes & orientation
-* [Design] Make a nicer 404 image
-* [Infrastructure] Faster file delivery performance - tweak nginx, add [varnish](https://hub.docker.com/_/varnish), ...
-
-
 ## Credits
 
 * Icon - https://pixabay.com/vectors/image-pictures-icon-photo-1271454/
+
 
 ## License
 
