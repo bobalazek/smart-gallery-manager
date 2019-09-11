@@ -47,7 +47,9 @@ View this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager) fo
 * Run `docker-compose up`
 * Exec into the `php-fpm` container
   * Prepare the database by running `php bin/console doctrine:schema:update -f`
-  * Scan and add files to the database by running `php bin/console app:files:scan [-u|--update-existing-entries][-a|--actions "meta,cache,geocode,label"] [-f|--folder| "/path/to/the/folder"]`
+* To scan and add files to the database:
+  * Go to http://localhost:81/dashboard or
+  * Inside the `php-fpm` container run: `php bin/console app:files:scan [-u|--update-existing-entries][-a|--action][-f|--folder]`, example: `php bin/console -a meta -a cache -a geocode -a label -f /var/data/server/Images -f /var/data/server/PhotographyImages`
 * Visit: http://localhost:81 (or whichever port you have set in `.env`)
 * You are ready. Start developing!
 
