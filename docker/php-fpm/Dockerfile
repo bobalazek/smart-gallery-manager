@@ -42,9 +42,14 @@ COPY config/general.ini $PHP_INI_DIR/conf.d/
 COPY config/opcache.ini $PHP_INI_DIR/conf.d/
 COPY config/www.conf /usr/local/etc/php-fpm.d/
 
+# Supervisor
+RUN apt-get install supervisor -y
+COPY supervisor/supervisord.conf /etc/supervisor/conf.d/
+
+# Composer
 RUN wget https://raw.githubusercontent.com/composer/getcomposer.org/ba13e3fc70f1c66250d1ea7ea4911d593aa1dba5/web/installer -O - -q | php -- --quiet
 RUN mv composer.phar /usr/local/bin/composer
 
 EXPOSE 9000
 
-CMD ["php-fpm"]
+CMD ["/usr/bin/supervisord"]
