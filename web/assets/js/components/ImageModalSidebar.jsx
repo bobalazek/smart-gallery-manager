@@ -1,6 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 import moment from 'moment';
+import L from 'leaflet';
 import { withStyles } from '@material-ui/styles';
 import Divider from '@material-ui/core/Divider';
 import Typography from '@material-ui/core/Typography';
@@ -15,6 +16,12 @@ import LocationOnIcon from '@material-ui/icons/LocationOn';
 import CalendarTodayIcon from '@material-ui/icons/CalendarToday';
 import LabelIcon from '@material-ui/icons/Label';
 import CircularProgress from '@material-ui/core/CircularProgress';
+
+import 'leaflet/dist/leaflet.css';
+L.Marker.prototype.options.icon = L.icon({
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/images/marker-shadow.png',
+});
 
 const styles = {
   list: {
@@ -59,6 +66,29 @@ class ImageModalSidebar extends React.Component {
         this.setState({
           fileInformation: res.data,
           isFileInformationLoaded: true,
+        }, () => {
+          const { fileInformation } = this.state;
+          const geolocation = fileInformation.meta.geolocation;
+          const location = fileInformation.location
+            && fileInformation.location.address
+            && fileInformation.location.address.label
+            ? fileInformation.location.address.label
+            : '';
+          const position = [
+            geolocation.latitude ? geolocation.latitude : 0,
+            geolocation.longitude ? geolocation.longitude : 0,
+          ];
+
+          this.mapMarkersLayer = L.layerGroup();
+          this.mapMarker = L.marker(position)
+            .bindPopup(location)
+            .addTo(this.mapMarkersLayer);
+          this.map = L.map('map');
+          this.map.setView(position, 13);
+          this.mapTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+          }).addTo(this.map);
+          this.mapMarkersLayer.addTo(this.map);
         });
       })
       .catch((error) => {
@@ -262,74 +292,86 @@ class ImageModalSidebar extends React.Component {
           </div>
         )}
         {isFileInformationLoaded && (
-          <List className={classes.list}>
-            <ListItem>
-              <ListItemAvatar>
-                <Avatar>
-                  <CalendarTodayIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={infoData.datePrimary}
-                secondary={infoData.dateSecondary}
-              />
-            </ListItem>
-            <ListItem>
-              <ListItemAvatar>
-                <Avatar>
-                  <InsertPhotoIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={infoData.filePrimary}
-                secondary={infoData.fileSecondary}
-                style={{
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  wordBreak: 'break-word'
-                }}
-              />
-            </ListItem>
-            {infoData.hasDeviceData &&
+          <div>
+            <List className={classes.list}>
               <ListItem>
                 <ListItemAvatar>
                   <Avatar>
-                    <CameraIcon />
+                    <CalendarTodayIcon />
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
-                  primary={infoData.devicePrimary}
-                  secondary={infoData.deviceSecondary}
+                  primary={infoData.datePrimary}
+                  secondary={infoData.dateSecondary}
                 />
               </ListItem>
-            }
-            {infoData.hasLocationData &&
               <ListItem>
                 <ListItemAvatar>
                   <Avatar>
-                    <LocationOnIcon />
+                    <InsertPhotoIcon />
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
-                  primary={infoData.locationPrimary}
-                  secondary={infoData.locationSecondary}
+                  primary={infoData.filePrimary}
+                  secondary={infoData.fileSecondary}
+                  style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    wordBreak: 'break-word'
+                  }}
                 />
               </ListItem>
-            }
-            {infoData.hasTagsData &&
-              <ListItem>
-                <ListItemAvatar>
-                  <Avatar>
-                    <LabelIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={infoData.tagsPrimary}
-                  secondary={infoData.tagsSecondary}
-                />
-              </ListItem>
-            }
-          </List>
+              {infoData.hasDeviceData &&
+                <ListItem>
+                  <ListItemAvatar>
+                    <Avatar>
+                      <CameraIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={infoData.devicePrimary}
+                    secondary={infoData.deviceSecondary}
+                  />
+                </ListItem>
+              }
+              {infoData.hasTagsData &&
+                <ListItem>
+                  <ListItemAvatar>
+                    <Avatar>
+                      <LabelIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={infoData.tagsPrimary}
+                    secondary={infoData.tagsSecondary}
+                  />
+                </ListItem>
+              }
+              {infoData.hasLocationData &&
+                <ListItem>
+                  <ListItemAvatar>
+                    <Avatar>
+                      <LocationOnIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={infoData.locationPrimary}
+                    secondary={infoData.locationSecondary}
+                  />
+                </ListItem>
+              }
+            </List>
+            <div
+              id="map"
+              style={{
+                height: 240,
+                overflow: 'hidden',
+                display: infoData.hasLocationData
+                  ? 'block'
+                  : 'none',
+              }}
+            ></div>
+          </div>
         )}
       </div>
     );
