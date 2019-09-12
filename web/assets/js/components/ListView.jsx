@@ -32,9 +32,10 @@ const styles = {
   root: {
     width: '100%',
     flexGrow: 1,
+    padding: 16,
   },
   circularProgressWrapper: {
-    position: 'fixed',
+    position: 'absolute',
     top: 32,
     right: '50%',
     marginLeft: -40,
@@ -89,7 +90,6 @@ function mapDispatchToProps(dispatch) {
 class ListView extends React.Component {
   constructor(props) {
     super(props);
-
 
     this.parent = this.props.parent;
 
@@ -147,8 +147,20 @@ class ListView extends React.Component {
     this.parent.fetchFilesSummary(orderBy)
       .then(() => {
         this.cache.clearAll();
-        this.infiniteLoaderRef.current.resetLoadMoreRowsCache(true);
-        this.infiniteLoaderListRef.recomputeRowHeights();
+
+        if (
+          this.infiniteLoaderRef &&
+          this.infiniteLoaderRef.current
+        ) {
+          this.infiniteLoaderRef.current.resetLoadMoreRowsCache(true);
+        }
+
+        if (
+          this.infiniteLoaderListRef &&
+          this.infiniteLoaderListRef.current
+        ) {
+          this.infiniteLoaderListRef.current.recomputeRowHeights();
+        }
       });
   }
 
@@ -231,7 +243,7 @@ class ListView extends React.Component {
                           onScroll={onChildScroll}
                           scrollTop={scrollTop}
                           ref={el => {
-                            this.infiniteLoaderListRef = el;
+                            this.infiniteLoaderListRef.current = el;
                             registerChild(el);
                           }}
                         />

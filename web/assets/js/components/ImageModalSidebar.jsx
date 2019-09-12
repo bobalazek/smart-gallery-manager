@@ -32,6 +32,8 @@ class ImageModalSidebar extends React.Component {
       fileInformation: {},
       isFileInformationLoaded: false,
     };
+
+    this.mapRef = React.createRef();
   }
 
   componentDidMount() {
@@ -73,16 +75,24 @@ class ImageModalSidebar extends React.Component {
             geolocation.longitude ? geolocation.longitude : 0,
           ];
 
-          this.mapMarkersLayer = L.layerGroup();
-          this.mapMarker = L.marker(position)
-            .bindPopup(location)
-            .addTo(this.mapMarkersLayer);
-          this.map = L.map('modal-sidebar-map');
-          this.map.setView(position, 13);
-          this.mapTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-          }).addTo(this.map);
-          this.mapMarkersLayer.addTo(this.map);
+          if (
+            this.mapRef &&
+            this.mapRef.current
+          ) {
+            const mapMarkersLayer = L.layerGroup();
+            const mapMarker = L.marker(position)
+              .bindPopup(location)
+              .addTo(mapMarkersLayer);
+            const map = L.map(this.mapRef.current, {
+              layers: [
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                  attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+                }),
+                mapMarkersLayer,
+              ],
+            }).setView(position, 13);
+          }
+
         });
       })
       .catch((error) => {
@@ -356,10 +366,9 @@ class ImageModalSidebar extends React.Component {
               }
             </List>
             <div
-              id="modal-sidebar-map"
+              ref={this.mapRef}
               style={{
                 height: 240,
-                overflow: 'hidden',
                 display: infoData.hasLocationData
                   ? 'block'
                   : 'none',

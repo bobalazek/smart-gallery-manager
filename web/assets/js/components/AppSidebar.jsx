@@ -17,13 +17,23 @@ import {
 
 const styles = {
   root: {
-    width: '100%',
-    flexGrow: 1,
+    width: 240,
+    top: 0,
+    flex: '1 0 auto',
+    height: '100%',
+    display: 'flex',
+    position: 'fixed',
+    overflowY: 'auto',
+    flexDirection: 'column',
   },
   listItemCount: {
     fontSize: 12,
     paddingLeft: 10,
     color: '#999999',
+  },
+  circularProgress: {
+    margin: '0 auto',
+    margin: '8px 16px',
   },
 };
 
@@ -135,7 +145,7 @@ class AppSidebar extends React.Component {
 
     const views = {
       list: 'List',
-      map: 'Map',
+      // map: 'Map',
     };
 
     return (
@@ -202,7 +212,7 @@ class AppSidebar extends React.Component {
         }
       >
         {!types &&
-          <CircularProgress />
+          <CircularProgress className={classes.circularProgress} />
         }
         {types && types.map((entry) => {
           return (
@@ -279,7 +289,7 @@ class AppSidebar extends React.Component {
         }
       >
         {!yearsCount &&
-          <CircularProgress />
+          <CircularProgress className={classes.circularProgress} />
         }
         {yearsCount && yearsCount.map((entry) => {
           const subList = (
@@ -433,7 +443,7 @@ class AppSidebar extends React.Component {
         }
       >
         {!tags &&
-          <CircularProgress />
+          <CircularProgress className={classes.circularProgress} />
         }
         {tags && tags.map((entry) => {
           return (

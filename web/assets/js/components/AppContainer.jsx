@@ -7,7 +7,6 @@ import AppContent from './AppContent';
 const styles = {
   root: {
     width: '100%',
-    padding: 16,
     display: 'flex',
     flexDirection: 'column',
     height: '100vh',
@@ -19,9 +18,7 @@ const styles = {
   },
   sidebarWrapper: {
     flexShrink: 0,
-    width: 200,
-    position: 'static',
-    paddingRight: 20,
+    width: 240,
   },
   contentWrapper: {
     flexGrow: 1,
