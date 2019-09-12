@@ -20,6 +20,7 @@ doctrine:
                 json_array: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonArray
             datetime_functions:
                 date: DoctrineExtensions\Query\Mysql\Date
+                day: DoctrineExtensions\Query\Mysql\Day
                 month: DoctrineExtensions\Query\Mysql\Month
                 year: DoctrineExtensions\Query\Mysql\Year
                 date_format: DoctrineExtensions\Query\Mysql\DateFormat

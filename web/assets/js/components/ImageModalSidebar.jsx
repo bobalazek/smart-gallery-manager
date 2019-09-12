@@ -17,12 +17,6 @@ import CalendarTodayIcon from '@material-ui/icons/CalendarToday';
 import LabelIcon from '@material-ui/icons/Label';
 import CircularProgress from '@material-ui/core/CircularProgress';
 
-import 'leaflet/dist/leaflet.css';
-L.Marker.prototype.options.icon = L.icon({
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/images/marker-shadow.png',
-});
-
 const styles = {
   list: {
     width: '100%',
@@ -83,7 +77,7 @@ class ImageModalSidebar extends React.Component {
           this.mapMarker = L.marker(position)
             .bindPopup(location)
             .addTo(this.mapMarkersLayer);
-          this.map = L.map('map');
+          this.map = L.map('modal-sidebar-map');
           this.map.setView(position, 13);
           this.mapTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
@@ -362,7 +356,7 @@ class ImageModalSidebar extends React.Component {
               }
             </List>
             <div
-              id="map"
+              id="modal-sidebar-map"
               style={{
                 height: 240,
                 overflow: 'hidden',

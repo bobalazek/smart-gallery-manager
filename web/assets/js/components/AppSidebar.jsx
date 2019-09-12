@@ -29,6 +29,7 @@ const styles = {
 
 const mapStateToProps = state => {
   return {
+    view: state.view,
     isLoading: state.isLoading,
     isLoaded: state.isLoaded,
     filesSummary: state.filesSummary,
@@ -36,7 +37,7 @@ const mapStateToProps = state => {
     selectedType: state.selectedType,
     selectedYear: state.selectedYear,
     selectedMonth: state.selectedMonth,
-    selectedDay: state.selectedDay,
+    selectedDate: state.selectedDate,
     selectedTag: state.selectedTag,
   };
 };
@@ -57,12 +58,20 @@ class AppSidebar extends React.Component {
       tagsShownCount: 16,
     };
 
-    this.onClickType = this.onClickType.bind(this);
-    this.onClickDate = this.onClickDate.bind(this);
-    this.onClickTag = this.onClickTag.bind(this);
+    this.onViewClick = this.onViewClick.bind(this);
+    this.onTypeClick = this.onTypeClick.bind(this);
+    this.onDateClick = this.onDateClick.bind(this);
+    this.onTagClick = this.onTagClick.bind(this);
   }
 
-  onClickType(type) {
+  onViewClick(view) {
+    this.props.setData(
+      'view',
+      view
+    );
+  }
+
+  onTypeClick(type) {
     this.props.setData(
       'selectedType',
       this.props.selectedType === type
@@ -71,14 +80,14 @@ class AppSidebar extends React.Component {
     );
   }
 
-  onClickDate(date, type) {
+  onDateClick(date, type) {
     if (type === 'year') {
       const isAlreadySet = this.props.selectedYear === date;
       if (isAlreadySet) {
         this.props.setDataBatch({
           selectedYear: null,
           selectedMonth: null,
-          selectedDay: null,
+          selectedDate: null,
         });
       } else {
         this.props.setData(
@@ -91,7 +100,7 @@ class AppSidebar extends React.Component {
       if (isAlreadySet) {
         this.props.setDataBatch({
           selectedMonth: null,
-          selectedDay: null,
+          selectedDate: null,
         });
       } else {
         this.props.setData(
@@ -99,17 +108,17 @@ class AppSidebar extends React.Component {
           date
         );
       }
-    } else if (type === 'day') {
+    } else if (type === 'date') {
       this.props.setData(
-        'selectedDay',
-        this.props.selectedDay === date
+        'selectedDate',
+        this.props.selectedDate === date
           ? null
           : date
       );
     }
   }
 
-  onClickTag(tag) {
+  onTagClick(tag) {
     this.props.setData(
       'selectedTag',
       this.props.selectedTag === tag
@@ -118,17 +127,42 @@ class AppSidebar extends React.Component {
     );
   }
 
-  render() {
+  renderViewList() {
     const {
       classes,
+      view,
     } = this.props;
 
+    const views = {
+      list: 'List',
+      map: 'Map',
+    };
+
     return (
-      <div className={classes.root}>
-        {this.renderTypeList()}
-        {this.renderDateList()}
-        {this.renderTagList()}
-      </div>
+      <List
+        component="nav"
+        dense
+        subheader={
+          <ListSubheader component="div">
+            View
+          </ListSubheader>
+        }
+      >
+        {Object.keys(views).map((viewKey) => {
+          return (
+            <ListItem
+              key={viewKey}
+              button
+              onClick={this.onViewClick.bind(this, viewKey)}
+              selected={view === viewKey}
+            >
+              <ListItemText
+                primary={views[viewKey]}
+              />
+            </ListItem>
+          )
+        })}
+      </List>
     );
   }
 
@@ -157,7 +191,7 @@ class AppSidebar extends React.Component {
                 {selectedType !== null &&
                   <Button
                     size="small"
-                    onClick={this.onClickType.bind(this, selectedType)}
+                    onClick={this.onTypeClick.bind(this, selectedType)}
                   >
                     Clear
                   </Button>
@@ -175,7 +209,7 @@ class AppSidebar extends React.Component {
             <ListItem
               key={entry.type}
               button
-              onClick={this.onClickType.bind(this, entry.type)}
+              onClick={this.onTypeClick.bind(this, entry.type)}
               selected={selectedType === entry.type}
             >
               <ListItemText
@@ -199,7 +233,7 @@ class AppSidebar extends React.Component {
       filesSummary,
       selectedYear,
       selectedMonth,
-      selectedDay,
+      selectedDate,
       orderBy,
     } = this.props;
 
@@ -213,10 +247,10 @@ class AppSidebar extends React.Component {
       && filesSummary.date.month
       ? filesSummary.date.month
       : null;
-    const dayCount = filesSummary
+    const dateCount = filesSummary
       && filesSummary.date
-      && filesSummary.date.day
-      ? filesSummary.date.day
+      && filesSummary.date.date
+      ? filesSummary.date.date
       : null;
 
     return (
@@ -231,10 +265,10 @@ class AppSidebar extends React.Component {
                 {orderBy === 'created_at' && 'Date created'}
               </Grid>
               <Grid item>
-                {(selectedYear !== null || selectedMonth !== null || selectedDay !== null) &&
+                {(selectedYear !== null || selectedMonth !== null || selectedDate !== null) &&
                   <Button
                     size="small"
-                    onClick={this.onClickDate.bind(this, selectedYear, 'year')}
+                    onClick={this.onDateClick.bind(this, selectedYear, 'year')}
                   >
                     Clear
                   </Button>
@@ -277,7 +311,7 @@ class AppSidebar extends React.Component {
                         disablePadding
                         style={{ paddingLeft: 8 }}
                       >
-                        {dayCount && dayCount.map((subSubEntry) => {
+                        {dateCount && dateCount.map((subSubEntry) => {
                           if (subSubEntry.date.indexOf(subEntry.date + '-') === -1) {
                             return;
                           }
@@ -286,8 +320,8 @@ class AppSidebar extends React.Component {
                             <div key={subSubEntry.date}>
                               <ListItem
                                 button
-                                onClick={this.onClickDate.bind(this, subSubEntry.date, 'day')}
-                                selected={subSubEntry.date === selectedDay}
+                                onClick={this.onDateClick.bind(this, subSubEntry.date, 'date')}
+                                selected={subSubEntry.date === selectedDate}
                               >
                                 <ListItemText
                                   primary={(
@@ -309,7 +343,7 @@ class AppSidebar extends React.Component {
                     <div key={subEntry.date}>
                       <ListItem
                         button
-                        onClick={this.onClickDate.bind(this, subEntry.date, 'month')}
+                        onClick={this.onDateClick.bind(this, subEntry.date, 'month')}
                         selected={subEntry.date === selectedMonth}
                       >
                         <ListItemText
@@ -333,7 +367,7 @@ class AppSidebar extends React.Component {
             <div key={entry.date}>
               <ListItem
                 button
-                onClick={this.onClickDate.bind(this, entry.date, 'year')}
+                onClick={this.onDateClick.bind(this, entry.date, 'year')}
                 selected={entry.date === selectedYear}
               >
                 <ListItemText
@@ -388,7 +422,7 @@ class AppSidebar extends React.Component {
                 {selectedTag !== null &&
                   <Button
                     size="small"
-                    onClick={this.onClickTag.bind(this, selectedTag)}
+                    onClick={this.onTagClick.bind(this, selectedTag)}
                   >
                     Clear
                   </Button>
@@ -406,7 +440,7 @@ class AppSidebar extends React.Component {
             <ListItem
               key={entry.tag}
               button
-              onClick={this.onClickTag.bind(this, entry.tag)}
+              onClick={this.onTagClick.bind(this, entry.tag)}
               selected={selectedTag === entry.tag}
             >
               <ListItemText
@@ -435,6 +469,21 @@ class AppSidebar extends React.Component {
           </ListItem>
         }
       </List>
+    );
+  }
+
+  render() {
+    const {
+      classes,
+    } = this.props;
+
+    return (
+      <div className={classes.root}>
+        {this.renderViewList()}
+        {this.renderTypeList()}
+        {this.renderDateList()}
+        {this.renderTagList()}
+      </div>
     );
   }
 }

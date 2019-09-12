@@ -88,21 +88,7 @@ const styles = {
 
 const mapStateToProps = state => {
   return {
-    isLoading: state.isLoading,
-    isLoaded: state.isLoaded,
-    rows: state.rows,
-    rowsIndexes: state.rowsIndexes,
     files: state.files,
-    filesMap: state.filesMap,
-    filesSummary: state.filesSummary,
-    filesSummaryDatetime: state.filesSummaryDatetime,
-    orderBy: state.orderBy,
-    search: state.search,
-    selectedType: state.selectedType,
-    selectedYear: state.selectedYear,
-    selectedMonth: state.selectedMonth,
-    selectedDay: state.selectedDay,
-    selectedTag: state.selectedTag,
   };
 };
 

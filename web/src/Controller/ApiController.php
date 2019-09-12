@@ -57,7 +57,7 @@ class ApiController extends AbstractController
             : 'createdAt';
 
         /***** Count *****/
-        $countPerDay = [];
+        $countPerDate = [];
         $countPerMonth = [];
         $countPerMonthMap = [];
         $countPerYear = [];
@@ -79,7 +79,7 @@ class ApiController extends AbstractController
             $month = $datetime->format('Y-m');
             $year = $datetime->format('Y');
 
-            $countPerDay[] = [
+            $countPerDate[] = [
                 'date' => $date,
                 'count' => $count,
             ];
@@ -158,7 +158,7 @@ class ApiController extends AbstractController
         return $this->json([
             'data' => [
                 'date' => [
-                    'day' => $countPerDay,
+                    'date' => $countPerDate,
                     'month' => $countPerMonth,
                     'year' => $countPerYear,
                 ],
@@ -359,48 +359,54 @@ class ApiController extends AbstractController
         $request = $this->requestStack->getCurrentRequest();
 
         $type = $request->get('type');
-        $year = $request->get('year');
-        $month = $request->get('month');
-        $day = $request->get('day');
-        $createdBefore = $request->get('created_before');
-        $search = $request->get('search');
-        $tag = $request->get('tag');
-
         if ($type) {
             $queryBuilder
                 ->andWhere('f.type = :type')
                 ->setParameter('type', $type);
             ;
         }
+
+        $year = $request->get('year');
         if ($year) {
             $queryBuilder
                 ->andWhere('YEAR(f.' . $dateField . ') = :year')
                 ->setParameter('year', $year);
             ;
         }
-        if ($month) {
-            if (strpos($month, '-') !== false) {
-                $monthExploded = explode('-', $month);
-                $month = $monthExploded[1];
-            }
 
+        $month = $request->get('month');
+        if ($month) {
             $queryBuilder
                 ->andWhere('MONTH(f.' . $dateField . ') = :month')
                 ->setParameter('month', $month);
             ;
         }
+
+        $day = $request->get('day');
         if ($day) {
             $queryBuilder
-                ->andWhere('DATE(f.' . $dateField . ') = :day')
+                ->andWhere('DAY(f.' . $dateField . ') = :day')
                 ->setParameter('day', $day);
             ;
         }
+
+        $date = $request->get('date');
+        if ($date) {
+            $queryBuilder
+                ->andWhere('DATE(f.' . $dateField . ') = :date')
+                ->setParameter('date', $date);
+            ;
+        }
+
+        $createdBefore = $request->get('created_before');
         if ($createdBefore) {
             $queryBuilder
                 ->andWhere('f.createdAt < :created_before')
                 ->setParameter('created_before', new \DateTime($createdBefore));
             ;
         }
+
+        $search = $request->get('search');
         if ($search) {
             $search = strtolower(rawurldecode($search));
             $queryBuilder
@@ -428,6 +434,8 @@ class ApiController extends AbstractController
                 ->setParameter('search_json', ucwords($search))
             ;
         }
+
+        $tag = $request->get('tag');
         if ($tag) {
             $search = strtolower(rawurldecode($search));
             $queryBuilder

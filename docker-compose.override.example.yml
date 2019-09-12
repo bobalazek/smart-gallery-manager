@@ -9,7 +9,24 @@ services:
   python:
     volumes:
       - server-nfs:/var/data/server
-  # For easirt DB managament, let's also add PHPMyAdmin
+  # In case you choose redis & memcached for the FILES_CACHE_ADAPTER
+  redis:
+    container_name: sgm_redis
+    image: redis
+    volumes:
+      - ./var/redis:/data
+    networks:
+      - app-network
+    restart: always
+  memcached:
+    container_name: sgm_memcached
+    image: memcached
+    volumes:
+      - ./var/memcached:/var/lib/memcached
+    networks:
+      - app-network
+    restart: always
+  # For easier DB managament, let's also add PHPMyAdmin
   phpmyadmin:
     container_name: sgm_phpmyadmin
     image: phpmyadmin/phpmyadmin

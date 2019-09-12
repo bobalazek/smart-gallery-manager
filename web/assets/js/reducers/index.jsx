@@ -5,6 +5,7 @@ import {
 } from '../actions/index';
 
 const initialState = {
+  view: 'list',
   isLoading: false,
   isLoaded: false,
   rows: [],
@@ -18,7 +19,7 @@ const initialState = {
   selectedType: null,
   selectedYear: null,
   selectedMonth: null,
-  selectedDay: null,
+  selectedDate: null,
   selectedTag: null,
 };
 

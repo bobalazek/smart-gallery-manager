@@ -53,6 +53,10 @@ View this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager) fo
 * Visit: http://localhost:81 (or whichever port you have set in `.env`)
 * You are ready. Start developing!
 
+### Notes:
+
+* When adding new dependencies to package.json (via yarn), stop the `sgm_node` container first, run the `yarn add ...` command and restart the container again
+
 
 ## Credits
 

@@ -14,7 +14,6 @@ const styles = {
   },
   containerInner: {
     width: '100%',
-    padding: 16,
     display: 'flex',
     flexGrow: 1,
   },
