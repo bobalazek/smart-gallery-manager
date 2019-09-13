@@ -15,6 +15,7 @@ const initialState = {
   filesSummary: {},
   filesSummaryDatetime: null, // When was it last fetched?
   orderBy: 'taken_at',
+  orderByDirection: 'DESC',
   search: '',
   selectedType: null,
   selectedYear: null,

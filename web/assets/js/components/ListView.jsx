@@ -71,6 +71,7 @@ const mapStateToProps = state => {
     filesSummary: state.filesSummary,
     filesSummaryDatetime: state.filesSummaryDatetime,
     orderBy: state.orderBy,
+    orderByDirection: state.orderByDirection,
     search: state.search,
     selectedType: state.selectedType,
     selectedYear: state.selectedYear,
@@ -134,7 +135,7 @@ class ListView extends React.Component {
     this.props.setData(name, value);
 
     if (name === 'orderBy') {
-      this.fetchFilesSummary(value);
+      this.fetchFilesSummary(value, this.props.orderByDirection);
     } else {
       clearTimeout(this.searchTimer)
       this.searchTimer = setTimeout(() => {
@@ -143,8 +144,8 @@ class ListView extends React.Component {
     }
   }
 
-  fetchFilesSummary(orderBy) {
-    this.parent.fetchFilesSummary(orderBy)
+  fetchFilesSummary(orderBy, orderByDirection) {
+    this.parent.fetchFilesSummary(orderBy, orderByDirection)
       .then(() => {
         this.cache.clearAll();
 
@@ -171,6 +172,7 @@ class ListView extends React.Component {
       isLoading,
       isLoaded,
       orderBy,
+      orderByDirection,
       search,
     } = this.props;
 
@@ -192,10 +194,21 @@ class ListView extends React.Component {
                 name="orderBy"
                 value={orderBy}
                 onChange={this.onChange}
-                input={<OutlinedInput name="age" />}
+                input={<OutlinedInput name="orderBy" />}
               >
                 <MenuItem value="taken_at">Date taken</MenuItem>
                 <MenuItem value="created_at">Date created</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl variant="outlined" style={{ display: 'none' }}>
+              <Select
+                name="orderByDirection"
+                value={orderByDirection}
+                onChange={this.onChange}
+                input={<OutlinedInput name="age" />}
+              >
+                <MenuItem value="DESC">Descending</MenuItem>
+                <MenuItem value="ASC">Ascending</MenuItem>
               </Select>
             </FormControl>
           </Grid>

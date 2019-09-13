@@ -67,6 +67,22 @@ services:
     networks:
       - app-network
     restart: always
+  redis:
+    container_name: sgm_redis
+    image: redis
+    volumes:
+      - ./var/redis:/data
+    networks:
+      - app-network
+    restart: always
+  memcached:
+    container_name: sgm_memcached
+    image: memcached
+    volumes:
+      - ./var/memcached:/var/lib/memcached
+    networks:
+      - app-network
+    restart: always
 networks:
   app-network:
     name: sgm_app_network

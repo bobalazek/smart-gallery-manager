@@ -29,6 +29,7 @@ const mapStateToProps = state => {
     filesSummary: state.filesSummary,
     filesSummaryDatetime: state.filesSummaryDatetime,
     orderBy: state.orderBy,
+    orderByDirection: state.orderByDirection,
     search: state.search,
     selectedType: state.selectedType,
     selectedYear: state.selectedYear,
@@ -52,11 +53,11 @@ class AppContent extends React.Component {
     this.maxFilesPerRow = 48;
   }
 
-  fetchFilesSummary(orderBy) {
+  fetchFilesSummary(orderBy, orderByDirection) {
     this.props.setData('isLoading', true);
 
     return new Promise((resolve, reject) => {
-      let url = rootUrl + '/api/files/summary' + this.getFiltersQuery(orderBy);
+      let url = rootUrl + '/api/files/summary' + this.getFiltersQuery(orderBy, orderByDirection);
 
       axios.get(url)
         .then(res => {
@@ -93,7 +94,7 @@ class AppContent extends React.Component {
     });
   }
 
-  getFiltersQuery(forcedOrderBy) {
+  getFiltersQuery(forcedOrderBy, forcedOrderByDirection) {
     const {
       selectedType,
       selectedYear,
@@ -101,10 +102,14 @@ class AppContent extends React.Component {
       selectedDate,
       selectedTag,
       orderBy,
+      orderByDirection,
       search,
     } = this.props;
 
     let query = '?order_by=' + (forcedOrderBy ? forcedOrderBy : orderBy);
+
+    query += '&order_by_direction=' + (forcedOrderByDirection ? forcedOrderByDirection : orderByDirection);
+
     if (selectedType) {
       query += '&type=' + selectedType;
     }
