@@ -12,7 +12,7 @@ services:
   # For easier DB managament, let's also add PHPMyAdmin
   phpmyadmin:
     container_name: sgm_phpmyadmin
-    image: phpmyadmin/phpmyadmin
+    build: ./docker/phpmyadmin
     depends_on:
       - mysql
     ports:
