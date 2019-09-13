@@ -52,6 +52,8 @@ services:
   node:
     container_name: sgm_node
     build: ./docker/node
+    environment:
+      - APP_ENV=${APP_ENV:-dev}
     privileged: true # TODO: fix, so we won't need it
     volumes:
       - .:/var/www

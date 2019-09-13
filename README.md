@@ -53,8 +53,10 @@ View this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager) fo
 * Visit: http://localhost:81 (or whichever port you have set in `.env`)
 * You are ready. Start developing!
 
-### Notes:
+### Notes
 
+* The `sgm_node` container doesn't yet correctly work, so after building the containers with `docker-compose build`, you'll need to manually install the dependencies via the host device with `cd web && yarn install && cd ..`
+* The `sgm_php_fpm` has a similar issue then above. Temporarily, install the dependencies with your host device: `composer install`
 * When adding new dependencies to package.json (via yarn), stop the `sgm_node` container first, run the `yarn add ...` command and restart the container again
 
 

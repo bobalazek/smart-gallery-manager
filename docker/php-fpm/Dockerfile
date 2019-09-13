@@ -50,6 +50,11 @@ COPY supervisor/supervisord.conf /etc/supervisor/conf.d/
 RUN wget https://raw.githubusercontent.com/composer/getcomposer.org/ba13e3fc70f1c66250d1ea7ea4911d593aa1dba5/web/installer -O - -q | php -- --quiet
 RUN mv composer.phar /usr/local/bin/composer
 
+# TODO: fix dependencies install
+# RUN composer install --ignore-platform-reqs
+
+# TODO: prepare production ready composer install, if APP_ENV=prod
+
 EXPOSE 9000
 
 CMD ["/usr/bin/supervisord"]
