@@ -44,11 +44,12 @@ View this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager) fo
 * Create a `settings.yml` file and add your image folders in - just copy the contents from `settings.example.yml`
 * Create a `docker-compose.override.yml` file and set your custom volumes there - just copy the contents from `docker-compose.override.example.yml`
 * Duplicate the `web/.env` into `web/.env.local` and set your the values for your custom variables there - particularly those, inside the `Project` block
-* (temporary fix) The `sgm_node` container doesn't yet correctly work, so after building the containers with `docker-compose build`, you'll need to manually install the dependencies via the host device with `cd web && yarn install && cd ..`
-* Run `docker-compose up`
+* Run: `docker-compose build`
+* (temporary fix) The `sgm_node` container doesn't yet correctly work, so after building the containers, you'll need to manually install the dependencies via the host device with: `cd web && yarn install && cd ..`
+* Run: `docker-compose up`
 * Exec into the `sgm_php_fpm` container
   * (temporary fix) Install the dependencies by running: `composer install`
-  * Prepare the database by running `php bin/console doctrine:schema:update -f`
+  * Prepare the database by running: `php bin/console doctrine:schema:update -f`
 * To scan and add files to the database:
   * Go to http://localhost:81/dashboard or
   * Inside the `php-fpm` container run: `php bin/console app:files:scan [-u|--update-existing-entries][-a|--action][-f|--folder]`, example: `php bin/console -a meta -a cache -a geocode -a label -f /var/data/server/Images -f /var/data/server/PhotographyImages`

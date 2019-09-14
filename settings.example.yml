@@ -1,6 +1,8 @@
 # Specify your own folders here.
 # That's the location of the files relative to the container they are in.
 # More information on that inside the `docer-compose.yml` file.
+# The directories need to be the locations it's mounted in the containers
+# (php-fpm & python), NOT the host device!
 folders:
   - '/var/data/server/Images'
   - '/var/data/server/Photography/Converted'
