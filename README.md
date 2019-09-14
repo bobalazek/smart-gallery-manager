@@ -44,8 +44,10 @@ View this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager) fo
 * Create a `settings.yml` file and add your image folders in - just copy the contents from `settings.example.yml`
 * Create a `docker-compose.override.yml` file and set your custom volumes there - just copy the contents from `docker-compose.override.example.yml`
 * Duplicate the `web/.env` into `web/.env.local` and set your the values for your custom variables there - particularly those, inside the `Project` block
+* (temporary fix) The `sgm_node` container doesn't yet correctly work, so after building the containers with `docker-compose build`, you'll need to manually install the dependencies via the host device with `cd web && yarn install && cd ..`
 * Run `docker-compose up`
-* Exec into the `php-fpm` container
+* Exec into the `sgm_php_fpm` container
+  * (temporary fix) Install the dependencies by running: `composer install`
   * Prepare the database by running `php bin/console doctrine:schema:update -f`
 * To scan and add files to the database:
   * Go to http://localhost:81/dashboard or
@@ -55,9 +57,7 @@ View this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager) fo
 
 ### Notes
 
-* The `sgm_node` container doesn't yet correctly work, so after building the containers with `docker-compose build`, you'll need to manually install the dependencies via the host device with `cd web && yarn install && cd ..`
-* The `sgm_php_fpm` has a similar issue then above. Temporarily, install the dependencies with your host device: `composer install`
-* When adding new dependencies to package.json (via yarn), stop the `sgm_node` container first, run the `yarn add ...` command and restart the container again
+* (temporary fix) If in development mode, when adding new dependencies to package.json (via yarn), stop the `sgm_node` container first, run the `yarn add ...` command and restart the container again
 
 
 ## Credits
