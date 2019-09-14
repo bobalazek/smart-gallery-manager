@@ -1,2 +1,8 @@
-node_modules
-vendor
+.DS_Store/
+.dockerignore
+.gitignore
+.git
+var
+web/var
+web/vendor
+web/node_modules
