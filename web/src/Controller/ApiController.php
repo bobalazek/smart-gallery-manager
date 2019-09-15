@@ -61,8 +61,8 @@ class ApiController extends AbstractController
 
         /***** Date *****/
         $datePerDate = [];
-        $datePerMonth = [];
-        $datePerMonthMap = [];
+        $datePerYearMonth = [];
+        $datePerYearMonthMap = [];
         $datePerYear = [];
         $datePerYearMap = [];
 
@@ -79,7 +79,7 @@ class ApiController extends AbstractController
             $date = $filesCount['filesDate'];
 
             $datetime = new \DateTime($date);
-            $month = $datetime->format('Y-m');
+            $yearMonth = $datetime->format('Y-m');
             $year = $datetime->format('Y');
 
             $datePerDate[] = [
@@ -87,14 +87,14 @@ class ApiController extends AbstractController
                 'count' => $count,
             ];
 
-            if (!isset($datePerMonthMap[$month])) {
-                $datePerMonthMap[$month] = count($datePerMonth);
-                $datePerMonth[$datePerMonthMap[$month]] = [
-                    'date' => $month,
+            if (!isset($datePerYearMonthMap[$yearMonth])) {
+                $datePerYearMonthMap[$yearMonth] = count($datePerYearMonth);
+                $datePerYearMonth[$datePerYearMonthMap[$yearMonth]] = [
+                    'date' => $yearMonth,
                     'count' => 0,
                 ];
             }
-            $datePerMonth[$datePerMonthMap[$month]]['count'] += $count;
+            $datePerYearMonth[$datePerYearMonthMap[$yearMonth]]['count'] += $count;
 
             if (!isset($datePerYearMap[$year])) {
                 $datePerYearMap[$year] = count($datePerYear);
@@ -217,7 +217,7 @@ class ApiController extends AbstractController
             'data' => [
                 'date' => [
                     'date' => $datePerDate,
-                    'month' => $datePerMonth,
+                    'year_month' => $datePerYearMonth,
                     'year' => $datePerYear,
                 ],
                 'location' => [

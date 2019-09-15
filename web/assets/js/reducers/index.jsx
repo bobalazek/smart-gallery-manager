@@ -19,7 +19,7 @@ const initialState = {
   search: '',
   selectedType: null,
   selectedYear: null,
-  selectedMonth: null,
+  selectedYearMonth: null,
   selectedDate: null,
   selectedTag: null,
 };

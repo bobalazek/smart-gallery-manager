@@ -75,7 +75,7 @@ const mapStateToProps = state => {
     search: state.search,
     selectedType: state.selectedType,
     selectedYear: state.selectedYear,
-    selectedMonth: state.selectedMonth,
+    selectedYearMonth: state.selectedYearMonth,
     selectedDate: state.selectedDate,
     selectedTag: state.selectedTag,
   };
@@ -120,7 +120,7 @@ class ListView extends React.Component {
     if (
       prevProps.selectedType !== this.props.selectedType ||
       prevProps.selectedYear !== this.props.selectedYear ||
-      prevProps.selectedMonth !== this.props.selectedMonth ||
+      prevProps.selectedYearMonth !== this.props.selectedYearMonth ||
       prevProps.selectedDate !== this.props.selectedDate ||
       prevProps.selectedTag !== this.props.selectedTag
     ) {

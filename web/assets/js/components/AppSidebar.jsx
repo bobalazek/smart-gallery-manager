@@ -46,7 +46,7 @@ const mapStateToProps = state => {
     orderBy: state.orderBy,
     selectedType: state.selectedType,
     selectedYear: state.selectedYear,
-    selectedMonth: state.selectedMonth,
+    selectedYearMonth: state.selectedYearMonth,
     selectedDate: state.selectedDate,
     selectedTag: state.selectedTag,
   };
@@ -96,7 +96,7 @@ class AppSidebar extends React.Component {
       if (isAlreadySet) {
         this.props.setDataBatch({
           selectedYear: null,
-          selectedMonth: null,
+          selectedYearMonth: null,
           selectedDate: null,
         });
       } else {
@@ -105,16 +105,16 @@ class AppSidebar extends React.Component {
           date
         );
       }
-    } else if (type === 'month') {
-      const isAlreadySet = this.props.selectedMonth === date;
+    } else if (type === 'year_month') {
+      const isAlreadySet = this.props.selectedYearMonth === date;
       if (isAlreadySet) {
         this.props.setDataBatch({
-          selectedMonth: null,
+          selectedYearMonth: null,
           selectedDate: null,
         });
       } else {
         this.props.setData(
-          'selectedMonth',
+          'selectedYearMonth',
           date
         );
       }
@@ -242,7 +242,7 @@ class AppSidebar extends React.Component {
       classes,
       filesSummary,
       selectedYear,
-      selectedMonth,
+      selectedYearMonth,
       selectedDate,
       orderBy,
     } = this.props;
@@ -252,10 +252,10 @@ class AppSidebar extends React.Component {
       && filesSummary.date.year
       ? filesSummary.date.year
       : null;
-    const monthsCount = filesSummary
+    const yearMonthsCount = filesSummary
       && filesSummary.date
-      && filesSummary.date.month
-      ? filesSummary.date.month
+      && filesSummary.date.year_month
+      ? filesSummary.date.year_month
       : null;
     const dateCount = filesSummary
       && filesSummary.date
@@ -275,7 +275,7 @@ class AppSidebar extends React.Component {
                 {orderBy === 'created_at' && 'Date created'}
               </Grid>
               <Grid item>
-                {(selectedYear !== null || selectedMonth !== null || selectedDate !== null) &&
+                {(selectedYear !== null || selectedYearMonth !== null || selectedDate !== null) &&
                   <Button
                     size="small"
                     onClick={this.onDateClick.bind(this, selectedYear, 'year')}
@@ -304,14 +304,14 @@ class AppSidebar extends React.Component {
                 disablePadding
                 style={{ paddingLeft: 8 }}
               >
-                {monthsCount && monthsCount.map((subEntry) => {
+                {yearMonthsCount && yearMonthsCount.map((subEntry) => {
                   if (subEntry.date.indexOf(entry.date + '-') === -1) {
                     return;
                   }
 
                   const subSubList = (
                     <Collapse
-                      in={subEntry.date === selectedMonth}
+                      in={subEntry.date === selectedYearMonth}
                       timeout="auto"
                       unmountOnExit
                     >
@@ -353,8 +353,8 @@ class AppSidebar extends React.Component {
                     <div key={subEntry.date}>
                       <ListItem
                         button
-                        onClick={this.onDateClick.bind(this, subEntry.date, 'month')}
-                        selected={subEntry.date === selectedMonth}
+                        onClick={this.onDateClick.bind(this, subEntry.date, 'year_month')}
+                        selected={subEntry.date === selectedYearMonth}
                       >
                         <ListItemText
                           primary={(

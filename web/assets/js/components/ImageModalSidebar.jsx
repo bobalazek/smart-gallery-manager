@@ -56,7 +56,7 @@ class ImageModalSidebar extends React.Component {
     axios.get(rootUrl + '/api/file/' + this.props.data.hash, {
       cancelToken: new axios.CancelToken((cancelToken) => {
         this.requestCancelToken = cancelToken;
-      })
+      }),
     })
       .then(res => {
         this.setState({

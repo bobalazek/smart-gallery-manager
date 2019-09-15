@@ -33,7 +33,7 @@ const mapStateToProps = state => {
     search: state.search,
     selectedType: state.selectedType,
     selectedYear: state.selectedYear,
-    selectedMonth: state.selectedMonth,
+    selectedYearMonth: state.selectedYearMonth,
     selectedDate: state.selectedDate,
     selectedTag: state.selectedTag,
   };
@@ -59,7 +59,13 @@ class AppContent extends React.Component {
     return new Promise((resolve, reject) => {
       let url = rootUrl + '/api/files/summary' + this.getFiltersQuery(orderBy, orderByDirection);
 
-      axios.get(url)
+      this.requestCancelToken && this.requestCancelToken();
+
+      axios.get(url, {
+        cancelToken: new axios.CancelToken((cancelToken) => {
+          this.requestCancelToken = cancelToken;
+        }),
+      })
         .then(res => {
           const filesSummary = res.data.data;
           let rowsIndexes = [];
@@ -89,7 +95,11 @@ class AppContent extends React.Component {
           resolve();
         })
         .catch((error) => {
-          reject(error);
+          if (axios.isCancel(error)) {
+            // Request was canceled
+          } else {
+            reject(error);
+          }
         });
     });
   }
@@ -98,7 +108,7 @@ class AppContent extends React.Component {
     const {
       selectedType,
       selectedYear,
-      selectedMonth,
+      selectedYearMonth,
       selectedDate,
       selectedTag,
       orderBy,
@@ -113,19 +123,24 @@ class AppContent extends React.Component {
     if (selectedType) {
       query += '&type=' + selectedType;
     }
+
     if (selectedYear) {
       query += '&year=' + selectedYear;
     }
-    if (selectedMonth) {
-      const month = selectedMonth.split('-')[1];
+
+    if (selectedYearMonth) {
+      const month = selectedYearMonth.split('-')[1];
       query += '&month=' + month;
     }
+
     if (selectedDate) {
       query += '&date=' + selectedDate;
     }
+
     if (selectedTag) {
       query += '&tag=' + selectedTag;
     }
+
     if (search) {
       query += '&search=' + encodeURIComponent(search);
     }
