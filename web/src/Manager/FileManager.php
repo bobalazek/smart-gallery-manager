@@ -885,6 +885,16 @@ class FileManager {
             }
         }
 
+        $country = $locationData['Country'] ?? null;
+        if (isset($locationData['AdditionalData'])) {
+            foreach ($locationData['AdditionalData'] as $additionalData) {
+                if ($additionalData['key'] === 'CountryName') {
+                    $country = $additionalData['value'];
+                    break;
+                }
+            }
+        }
+
         $this->_geodecodeLocation['service'] = 'here';
         $this->_geodecodeLocation['address']['label'] = $locationData['Label'] ?? null;
         $this->_geodecodeLocation['address']['street'] = $locationData['Street'] ?? null;
@@ -893,6 +903,6 @@ class FileManager {
         $this->_geodecodeLocation['address']['city'] = $locationData['City'] ?? null;
         $this->_geodecodeLocation['address']['district'] = $locationData['District'] ?? null;
         $this->_geodecodeLocation['address']['state'] = $locationData['State'] ?? null;
-        $this->_geodecodeLocation['address']['country'] = $locationData['Country'] ?? null;
+        $this->_geodecodeLocation['address']['country'] = $country;
     }
 }

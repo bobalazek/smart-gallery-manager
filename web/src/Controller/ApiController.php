@@ -126,10 +126,10 @@ class ApiController extends AbstractController
         /***** Tags & locations *****/
         $tags = [];
         $tagsMap = [];
-        $locationsPerCity = [];
-        $locationsPerCityMap = [];
-        $locationsPerCountry = [];
-        $locationsPerCountryMap = [];
+        $locationPerCity = [];
+        $locationPerCityMap = [];
+        $locationPerCountry = [];
+        $locationPerCountryMap = [];
 
         $filesQueryBuilder = $this->em->createQueryBuilder()
             ->select('f')
@@ -155,17 +155,21 @@ class ApiController extends AbstractController
             ) {
                 // City
                 $city = $location['address']['city'];
-                if (!isset($locationsPerCityMap[$city])) {
-                    $locationsPerCityMap[$city] = 0;
+                if ($city) {
+                    if (!isset($locationPerCityMap[$city])) {
+                        $locationPerCityMap[$city] = 0;
+                    }
+                    $locationPerCityMap[$city]++;
                 }
-                $locationsPerCityMap[$city]++;
 
                 // Country
                 $country = $location['address']['country'];
-                if (!isset($locationsPerCountryMap[$country])) {
-                    $locationsPerCountryMap[$country] = 0;
+                if ($country) {
+                    if (!isset($locationPerCountryMap[$country])) {
+                        $locationPerCountryMap[$country] = 0;
+                    }
+                    $locationPerCountryMap[$country]++;
                 }
-                $locationsPerCountryMap[$country]++;
             }
         }
 
@@ -184,30 +188,30 @@ class ApiController extends AbstractController
 
         /***** Locations - continued *****/
         // City
-        foreach ($locationsPerCityMap as $location => $count) {
-            $locationsPerCity[] = [
+        foreach ($locationPerCityMap as $location => $count) {
+            $locationPerCity[] = [
                 'location' => $location,
                 'count' => $count,
             ];
         }
 
-        usort($locationsPerCity, function($a, $b) {
+        usort($locationPerCity, function($a, $b) {
             return $a['count'] <=> $b['count'];
         });
-        $locationsPerCity = array_reverse($locationsPerCity);
+        $locationPerCity = array_reverse($locationPerCity);
 
         // Country
-        foreach ($locationsPerCountryMap as $location => $count) {
-            $locationsPerCountry[] = [
+        foreach ($locationPerCountryMap as $location => $count) {
+            $locationPerCountry[] = [
                 'location' => $location,
                 'count' => $count,
             ];
         }
 
-        usort($locationsPerCountryMap, function($a, $b) {
+        usort($locationPerCountry, function($a, $b) {
             return $a['count'] <=> $b['count'];
         });
-        $locationsPerCountryMap = array_reverse($locationsPerCountryMap);
+        $locationPerCountry = array_reverse($locationPerCountry);
 
         return $this->json([
             'data' => [
@@ -216,12 +220,12 @@ class ApiController extends AbstractController
                     'month' => $datePerMonth,
                     'year' => $datePerYear,
                 ],
+                'location' => [
+                    'city' => $locationPerCity,
+                    'country' => $locationPerCountry,
+                ],
                 'types' => $types,
                 'tags' => $tags,
-                'locations' => [
-                    'city' => $locationsPerCity,
-                    'country' => $locationsPerCountry,
-                ],
             ],
         ]);
     }
