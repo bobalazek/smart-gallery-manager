@@ -14,7 +14,9 @@ class FilesScanType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('updateExistingEntries', CheckboxType::class)
+            ->add('updateExistingEntries', CheckboxType::class, [
+                'required' => false,
+            ])
             ->add('actions', CollectionType::class, [
                 'entry_type' => TextType::class,
                 'entry_options' => [

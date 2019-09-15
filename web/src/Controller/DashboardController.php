@@ -47,7 +47,7 @@ class DashboardController extends AbstractController
 
         // Files scan
         $filesScanForm = $this->createForm(FilesScanType::class, [
-            'updateExistingEntries' => true,
+            'updateExistingEntries' => false,
             'actions' => [
                 'meta',
                 'cache',

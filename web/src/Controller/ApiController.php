@@ -40,6 +40,8 @@ class ApiController extends AbstractController
     }
 
     /**
+     * This whole function needs some major optimizations!
+     *
      * @Route("/api/files/summary", name="api.files.summary")
      */
     public function filesSummary(Request $request)
@@ -57,12 +59,12 @@ class ApiController extends AbstractController
             ? 'takenAt'
             : 'createdAt';
 
-        /***** Count *****/
-        $countPerDate = [];
-        $countPerMonth = [];
-        $countPerMonthMap = [];
-        $countPerYear = [];
-        $countPerYearMap = [];
+        /***** Date *****/
+        $datePerDate = [];
+        $datePerMonth = [];
+        $datePerMonthMap = [];
+        $datePerYear = [];
+        $datePerYearMap = [];
 
         $filesCountQueryBuilder = $this->em->createQueryBuilder()
             ->select('DATE_FORMAT(f.' . $dateField . ', \'%Y-%m-%d\') as filesDate, COUNT(f.id) as filesCount')
@@ -80,28 +82,28 @@ class ApiController extends AbstractController
             $month = $datetime->format('Y-m');
             $year = $datetime->format('Y');
 
-            $countPerDate[] = [
+            $datePerDate[] = [
                 'date' => $date,
                 'count' => $count,
             ];
 
-            if (!isset($countPerMonthMap[$month])) {
-                $countPerMonthMap[$month] = count($countPerMonth);
-                $countPerMonth[$countPerMonthMap[$month]] = [
+            if (!isset($datePerMonthMap[$month])) {
+                $datePerMonthMap[$month] = count($datePerMonth);
+                $datePerMonth[$datePerMonthMap[$month]] = [
                     'date' => $month,
                     'count' => 0,
                 ];
             }
-            $countPerMonth[$countPerMonthMap[$month]]['count'] += $count;
+            $datePerMonth[$datePerMonthMap[$month]]['count'] += $count;
 
-            if (!isset($countPerYearMap[$year])) {
-                $countPerYearMap[$year] = count($countPerYear);
-                $countPerYear[$countPerYearMap[$year]] = [
+            if (!isset($datePerYearMap[$year])) {
+                $datePerYearMap[$year] = count($datePerYear);
+                $datePerYear[$datePerYearMap[$year]] = [
                     'date' => $year,
                     'count' => 0,
                 ];
             }
-            $countPerYear[$countPerYearMap[$year]]['count'] += $count;
+            $datePerYear[$datePerYearMap[$year]]['count'] += $count;
         }
 
         /***** Types *****/
@@ -121,11 +123,14 @@ class ApiController extends AbstractController
             ];
         }
 
-        /***** Tags *****/
+        /***** Tags & locations *****/
         $tags = [];
         $tagsMap = [];
+        $locationsPerCity = [];
+        $locationsPerCityMap = [];
+        $locationsPerCountry = [];
+        $locationsPerCountryMap = [];
 
-        // TODO: optimize
         $filesQueryBuilder = $this->em->createQueryBuilder()
             ->select('f')
             ->from(File::class, 'f');
@@ -142,8 +147,29 @@ class ApiController extends AbstractController
 
                 $tagsMap[$fileTag]++;
             }
+
+            $location = $file->getLocation();
+            if (
+                $location &&
+                isset($location['address'])
+            ) {
+                // City
+                $city = $location['address']['city'];
+                if (!isset($locationsPerCityMap[$city])) {
+                    $locationsPerCityMap[$city] = 0;
+                }
+                $locationsPerCityMap[$city]++;
+
+                // Country
+                $country = $location['address']['country'];
+                if (!isset($locationsPerCountryMap[$country])) {
+                    $locationsPerCountryMap[$country] = 0;
+                }
+                $locationsPerCountryMap[$country]++;
+            }
         }
 
+        /***** Tags - continued *****/
         foreach ($tagsMap as $tag => $count) {
             $tags[] = [
                 'tag' => $tag,
@@ -156,15 +182,46 @@ class ApiController extends AbstractController
         });
         $tags = array_reverse($tags);
 
+        /***** Locations - continued *****/
+        // City
+        foreach ($locationsPerCityMap as $location => $count) {
+            $locationsPerCity[] = [
+                'location' => $location,
+                'count' => $count,
+            ];
+        }
+
+        usort($locationsPerCity, function($a, $b) {
+            return $a['count'] <=> $b['count'];
+        });
+        $locationsPerCity = array_reverse($locationsPerCity);
+
+        // Country
+        foreach ($locationsPerCountryMap as $location => $count) {
+            $locationsPerCountryMap[] = [
+                'location' => $location,
+                'count' => $count,
+            ];
+        }
+
+        usort($locationsPerCountryMap, function($a, $b) {
+            return $a['count'] <=> $b['count'];
+        });
+        $locationsPerCountryMap = array_reverse($locationsPerCountryMap);
+
         return $this->json([
             'data' => [
                 'date' => [
-                    'date' => $countPerDate,
-                    'month' => $countPerMonth,
-                    'year' => $countPerYear,
+                    'date' => $datePerDate,
+                    'month' => $datePerMonth,
+                    'year' => $datePerYear,
                 ],
                 'types' => $types,
                 'tags' => $tags,
+                'locations' => [
+                    'city' => $locationsPerCity,
+                    'country' => $locationsPerCountry,
+                ],
             ],
         ]);
     }
