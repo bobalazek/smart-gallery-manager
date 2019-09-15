@@ -35,6 +35,8 @@ const mapStateToProps = state => {
     selectedYear: state.selectedYear,
     selectedYearMonth: state.selectedYearMonth,
     selectedDate: state.selectedDate,
+    selectedCountry: state.selectedCountry,
+    selectedCity: state.selectedCity,
     selectedTag: state.selectedTag,
   };
 };
@@ -110,6 +112,8 @@ class AppContent extends React.Component {
       selectedYear,
       selectedYearMonth,
       selectedDate,
+      selectedCountry,
+      selectedCity,
       selectedTag,
       orderBy,
       orderByDirection,
@@ -120,24 +124,32 @@ class AppContent extends React.Component {
 
     query += '&order_by_direction=' + (forcedOrderByDirection ? forcedOrderByDirection : orderByDirection);
 
-    if (selectedType) {
+    if (selectedType !== null) {
       query += '&type=' + selectedType;
     }
 
-    if (selectedYear) {
+    if (selectedYear !== null) {
       query += '&year=' + selectedYear;
     }
 
-    if (selectedYearMonth) {
+    if (selectedYearMonth !== null) {
       const month = selectedYearMonth.split('-')[1];
       query += '&month=' + month;
     }
 
-    if (selectedDate) {
+    if (selectedDate !== null) {
       query += '&date=' + selectedDate;
     }
 
-    if (selectedTag) {
+    if (selectedCountry !== null) {
+      query += '&country=' + selectedCountry;
+    }
+
+    if (selectedCity !== null) {
+      query += '&city=' + selectedCity;
+    }
+
+    if (selectedTag !== null) {
       query += '&tag=' + selectedTag;
     }
 

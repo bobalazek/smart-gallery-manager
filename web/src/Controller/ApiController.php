@@ -126,6 +126,7 @@ class ApiController extends AbstractController
         /***** Tags & locations *****/
         $tags = [];
         $tagsMap = [];
+        $locationCityCountryMap = [];
         $locationPerCity = [];
         $locationPerCityMap = [];
         $locationPerCountry = [];
@@ -149,28 +150,24 @@ class ApiController extends AbstractController
             }
 
             $location = $file->getLocation();
-            if (
-                $location &&
-                isset($location['address'])
-            ) {
-                // City
-                $city = $location['address']['city'];
-                if ($city) {
-                    if (!isset($locationPerCityMap[$city])) {
-                        $locationPerCityMap[$city] = 0;
-                    }
-                    $locationPerCityMap[$city]++;
-                }
 
-                // Country
-                $country = $location['address']['country'];
-                if ($country) {
-                    if (!isset($locationPerCountryMap[$country])) {
-                        $locationPerCountryMap[$country] = 0;
-                    }
-                    $locationPerCountryMap[$country]++;
-                }
+            // Country
+            $country = $location['address']['country'] ?? '';
+            if (!isset($locationPerCountryMap[$country])) {
+                $locationPerCountryMap[$country] = 0;
             }
+            $locationPerCountryMap[$country]++;
+
+            // City
+            $city = $location['address']['city'] ?? '';
+            if (!isset($locationPerCityMap[$city])) {
+                $locationPerCityMap[$city] = 0;
+            }
+            $locationPerCityMap[$city]++;
+
+            $locationCityCountryMap[$city] = $city === ''
+                ? ''
+                : $country;
         }
 
         /***** Tags - continued *****/
@@ -192,6 +189,7 @@ class ApiController extends AbstractController
             $locationPerCity[] = [
                 'location' => $location,
                 'count' => $count,
+                'parent' => $locationCityCountryMap[$location],
             ];
         }
 
@@ -431,7 +429,7 @@ class ApiController extends AbstractController
         $request = $this->requestStack->getCurrentRequest();
 
         $type = $request->get('type');
-        if ($type) {
+        if ($type !== null) {
             $queryBuilder
                 ->andWhere('f.type = :type')
                 ->setParameter('type', $type);
@@ -439,7 +437,7 @@ class ApiController extends AbstractController
         }
 
         $year = $request->get('year');
-        if ($year) {
+        if ($year !== null) {
             $queryBuilder
                 ->andWhere('YEAR(f.' . $dateField . ') = :year')
                 ->setParameter('year', $year);
@@ -447,7 +445,7 @@ class ApiController extends AbstractController
         }
 
         $month = $request->get('month');
-        if ($month) {
+        if ($month !== null) {
             $queryBuilder
                 ->andWhere('MONTH(f.' . $dateField . ') = :month')
                 ->setParameter('month', $month);
@@ -455,7 +453,7 @@ class ApiController extends AbstractController
         }
 
         $day = $request->get('day');
-        if ($day) {
+        if ($day !== null) {
             $queryBuilder
                 ->andWhere('DAY(f.' . $dateField . ') = :day')
                 ->setParameter('day', $day);
@@ -463,15 +461,47 @@ class ApiController extends AbstractController
         }
 
         $date = $request->get('date');
-        if ($date) {
+        if ($date !== null) {
             $queryBuilder
                 ->andWhere('DATE(f.' . $dateField . ') = :date')
                 ->setParameter('date', $date);
             ;
         }
 
+        $country = $request->get('country');
+        if ($country !== null) {
+            $country = strtolower(rawurldecode($country));
+            // TODO: not working yet when $country === '' (Unknown)
+            $queryBuilder
+                ->andWhere(
+                    $queryBuilder->expr()->like('LOWER(JSON_UNQUOTE(JSON_EXTRACT(
+                        f.location,
+                        :json_location_address_country
+                    )))', ':country')
+                )
+                ->setParameter('json_location_address_country', '$.address.country')
+                ->setParameter('country', $country)
+            ;
+        }
+
+        $city = $request->get('city');
+        if ($city !== null) {
+            $city = strtolower(rawurldecode($city));
+            // TODO: not working yet when $city === '' (Unknown)
+            $queryBuilder
+                ->andWhere(
+                    $queryBuilder->expr()->like('LOWER(JSON_UNQUOTE(JSON_EXTRACT(
+                        f.location,
+                        :json_location_address_city
+                    )))', ':city')
+                )
+                ->setParameter('json_location_address_city', '$.address.city')
+                ->setParameter('city', $city)
+            ;
+        }
+
         $createdBefore = $request->get('created_before');
-        if ($createdBefore) {
+        if ($createdBefore !== null) {
             $queryBuilder
                 ->andWhere('f.createdAt < :created_before')
                 ->setParameter('created_before', new \DateTime($createdBefore));
@@ -508,8 +538,8 @@ class ApiController extends AbstractController
         }
 
         $tag = $request->get('tag');
-        if ($tag) {
-            $search = strtolower(rawurldecode($search));
+        if ($tag !== null) {
+            $tag = strtolower(rawurldecode($tag));
             $queryBuilder
                 ->andWhere(
                     $queryBuilder->expr()->eq('JSON_CONTAINS(

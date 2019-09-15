@@ -21,6 +21,8 @@ const initialState = {
   selectedYear: null,
   selectedYearMonth: null,
   selectedDate: null,
+  selectedCountry: null,
+  selectedCity: null,
   selectedTag: null,
 };
 

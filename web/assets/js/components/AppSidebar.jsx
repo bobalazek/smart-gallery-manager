@@ -48,6 +48,8 @@ const mapStateToProps = state => {
     selectedYear: state.selectedYear,
     selectedYearMonth: state.selectedYearMonth,
     selectedDate: state.selectedDate,
+    selectedCountry: state.selectedCountry,
+    selectedCity: state.selectedCity,
     selectedTag: state.selectedTag,
   };
 };
@@ -71,6 +73,7 @@ class AppSidebar extends React.Component {
     this.onViewClick = this.onViewClick.bind(this);
     this.onTypeClick = this.onTypeClick.bind(this);
     this.onDateClick = this.onDateClick.bind(this);
+    this.onLocationClick = this.onLocationClick.bind(this);
     this.onTagClick = this.onTagClick.bind(this);
   }
 
@@ -124,6 +127,30 @@ class AppSidebar extends React.Component {
         this.props.selectedDate === date
           ? null
           : date
+      );
+    }
+  }
+
+  onLocationClick(location, type) {
+    if (type === 'country') {
+      const isAlreadySet = this.props.selectedCountry === location;
+      if (isAlreadySet) {
+        this.props.setDataBatch({
+          selectedCountry: null,
+          selectedCity: null,
+        });
+      } else {
+        this.props.setData(
+          'selectedCountry',
+          location
+        );
+      }
+    } else if (type === 'city') {
+      this.props.setData(
+        'selectedCity',
+        this.props.selectedCity === location
+          ? null
+          : location
       );
     }
   }
@@ -397,6 +424,128 @@ class AppSidebar extends React.Component {
     );
   }
 
+  renderLocationList() {
+    const {
+      classes,
+      filesSummary,
+      selectedCountry,
+      selectedCity,
+      orderBy,
+    } = this.props;
+
+    const countriesCount = filesSummary
+      && filesSummary.location
+      && filesSummary.location.country
+      ? filesSummary.location.country
+      : null;
+    const citiesCount = filesSummary
+      && filesSummary.location
+      && filesSummary.location.city
+      ? filesSummary.location.city
+      : null;
+
+    return (
+      <List
+        dense
+        component="nav"
+        subheader={
+          <ListSubheader component="div">
+            <Grid container justify="space-between">
+              <Grid item>
+                Location
+              </Grid>
+              <Grid item>
+                {(selectedCountry !== null || selectedCity !== null) &&
+                  <Button
+                    size="small"
+                    onClick={this.onLocationClick.bind(this, selectedCountry, 'country')}
+                  >
+                    Clear
+                  </Button>
+                }
+              </Grid>
+            </Grid>
+          </ListSubheader>
+        }
+      >
+        {!countriesCount &&
+          <CircularProgress className={classes.circularProgress} />
+        }
+        {countriesCount && countriesCount.map((entry) => {
+          const subList = (
+            <Collapse
+              in={entry.location === selectedCountry}
+              timeout="auto"
+              unmountOnExit
+            >
+              <List
+                dense
+                component="div"
+                disablePadding
+                style={{ paddingLeft: 8 }}
+              >
+                {citiesCount && citiesCount.map((subEntry) => {
+                  if (entry.location !== subEntry.parent) {
+                    return;
+                  }
+
+                  if (subEntry.location === '') {
+                    // TODO: not yet working correctly on the backend
+                    return;
+                  }
+
+                  return (
+                    <div key={subEntry.location}>
+                      <ListItem
+                        button
+                        onClick={this.onLocationClick.bind(this, subEntry.location, 'city')}
+                        selected={subEntry.location === selectedCity}
+                      >
+                        <ListItemText
+                          primary={(
+                            <React.Fragment>
+                              {subEntry.location ? subEntry.location : 'Unknown'}
+                              <span className={classes.listItemCount}>{subEntry.count}</span>
+                            </React.Fragment>
+                          )}
+                        />
+                      </ListItem>
+                    </div>
+                  )
+                })}
+              </List>
+            </Collapse>
+          );
+
+          if (entry.location === '') {
+            // TODO: not yet working correctly on the backend
+            return;
+          }
+
+          return (
+            <div key={entry.location}>
+              <ListItem
+                button
+                onClick={this.onLocationClick.bind(this, entry.location, 'country')}
+                selected={entry.location === selectedCountry}
+              >
+                <ListItemText
+                  primary={(
+                    <React.Fragment>
+                      {entry.location ? entry.location : 'Unknown'}
+                      <span className={classes.listItemCount}>{entry.count}</span>
+                    </React.Fragment>
+                  )}
+                />
+              </ListItem>
+              {subList}
+            </div>
+          )
+        })}
+      </List>
+    );
+  }
+
   renderTagList() {
     const {
       classes,
@@ -492,6 +641,7 @@ class AppSidebar extends React.Component {
         {this.renderViewList()}
         {this.renderTypeList()}
         {this.renderDateList()}
+        {this.renderLocationList()}
         {this.renderTagList()}
       </div>
     );

@@ -14,9 +14,11 @@ doctrine:
         auto_mapping: true
         dql:
             string_functions:
+                cast: Oro\ORM\Query\AST\Functions\Cast
                 json_unquote: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonUnquote
                 json_extract: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonExtract
                 json_contains: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonContains
+                json_type: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonType
                 json_array: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonArray
             datetime_functions:
                 date: DoctrineExtensions\Query\Mysql\Date

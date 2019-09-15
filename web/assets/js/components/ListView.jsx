@@ -77,6 +77,8 @@ const mapStateToProps = state => {
     selectedYear: state.selectedYear,
     selectedYearMonth: state.selectedYearMonth,
     selectedDate: state.selectedDate,
+    selectedCountry: state.selectedCountry,
+    selectedCity: state.selectedCity,
     selectedTag: state.selectedTag,
   };
 };
@@ -122,6 +124,8 @@ class ListView extends React.Component {
       prevProps.selectedYear !== this.props.selectedYear ||
       prevProps.selectedYearMonth !== this.props.selectedYearMonth ||
       prevProps.selectedDate !== this.props.selectedDate ||
+      prevProps.selectedCountry !== this.props.selectedCountry ||
+      prevProps.selectedCity !== this.props.selectedCity ||
       prevProps.selectedTag !== this.props.selectedTag
     ) {
       this.fetchFilesSummary();
