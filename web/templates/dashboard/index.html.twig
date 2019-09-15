@@ -19,34 +19,38 @@
         {% endfor %}
         <h2>Overview</h2>
         <ul class="list-group">
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            Files
-            <span class="badge badge-primary badge-pill">{{ files_count }}</span>
-          </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                Files
+                <span class="badge badge-primary badge-pill">{{ files_count }}</span>
+            </li>
         </ul>
         <hr />
-        <h2>Commands</h2>
-        <h3>Files - Scan</h3>
         <div class="row">
-            <div class="col">
-                <h4>Run</h4>
-                {% form_theme form 'jquery.collection.html.twig' %}
-                {{ form(form) }}
+            <div class="col col-md-6">
+                <h2>Commands</h2>
+                <h3>Files - Scan</h3>
+                {% form_theme files_scan_form 'jquery.collection.html.twig' %}
+                {{ form(files_scan_form) }}
+                <hr />
+                <h3>Queue - Stop workers</h3>
+                {{ form(queue_stop_workers_form) }}
             </div>
-            <div class="col">
-                {% if last_result_file %}
-                <div id="last-result-wrapper">
-                    <h4>Last result</h4>
-                    <h5>File: {{ last_result_file }}</h5>
-                    <h5>Showing {{ last_result_lines_count }} last entries</h5>
-                    <div>
-                        {{ last_result_content | raw }}
-                    </div>
-                </div>
+            <div class="col col-md-6">
+                <h2>Log files</h2>
+                {% if log_files %}
+                    <div class="list-group">
+                        {% for log_file in log_files %}
+                            <a href="{{ url('dashboard.log', {
+                                name: log_file.name,
+                            }) }}"
+                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                {{ log_file.name }}
+                            </a>
+                        {% endfor %}
+                    </ul>
                 {% else %}
-                    <h4>Last result</h4>
                     <div class="alert alert-info">
-                        No runs yet
+                        No logs yet
                     </div>
                 {% endif %}
             </div>
@@ -63,18 +67,6 @@
                 allow_down: false,
                 allow_duplicate: false,
             });
-
-            {% if last_result_file %}
-                setInterval(function() {
-                    $.get(window.location.href, function(response) {
-                        var $html = $(response);
-
-                        $('#last-result-wrapper').html(
-                            $html.find('#last-result-wrapper').html()
-                        );
-                    });
-                }, 4000);
-            {% endif %}
         });
     </script>
 {% endblock %}

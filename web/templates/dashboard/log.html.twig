@@ -1,0 +1,36 @@
+{% extends 'bootstrap4.html.twig' %}
+
+{% block title %}Dashboard | Smart Gallery Manager{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>
+            Smart Gallery Manager
+            <a href="{{ url('gallery') }}" class="btn btn-primary">
+                Go to Gallery
+            </a>
+        </h1>
+        <h2>{{ name }}</h2>
+        <div id="contents">
+            {% for row in contents %}
+                <div>{{ row }}</div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            setInterval(function() {
+                $.get(window.location.href, function(response) {
+                    var $html = $(response);
+                    $('#contents').html(
+                        $html.find('#contents').html()
+                    );
+                });
+            }, 5000);
+        });
+    </script>
+{% endblock %}

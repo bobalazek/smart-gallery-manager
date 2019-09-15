@@ -49,11 +49,11 @@ class ImageGrid extends React.Component {
     this.setState({
       containerWidth: this.props.container.innerWidth
         || this.props.container.clientWidth,
+    }, () => {
+      if (this.props.onReady) {
+        this.props.onReady();
+      }
     });
-
-    if (this.props.onReady) {
-      this.props.onReady();
-    }
   }
 
   render() {
@@ -62,6 +62,7 @@ class ImageGrid extends React.Component {
       heading,
       files,
       isVisible,
+      isScrolling,
       onClick,
     } = this.props;
     const {

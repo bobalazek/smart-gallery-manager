@@ -480,7 +480,14 @@ class FileManager {
      */
     private function _processFileMetaViaGd($file)
     {
-        $exif = exif_read_data($file->getPath(), 0, true);
+        $exif = @exif_read_data($file->getPath(), 0, true);
+        if (!$exif) {
+            throw new \Exception(sprintf(
+                'Could not read the file on path "%s".',
+                $file->getPath()
+            ));
+        }
+
         $this->_fileMeta['date'] = isset($exif['IFD0']['DateTime'])
             ? $this->_eval($exif['IFD0']['DateTime'], 'datetime')
             : (isset($exif['EXIF']['DateTimeOriginal'])

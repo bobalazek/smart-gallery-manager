@@ -45,7 +45,7 @@ View this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager) fo
 * Create a `docker-compose.override.yml` file and set your custom volumes there - just copy the contents from `docker-compose.override.example.yml`
 * Duplicate the `web/.env` into `web/.env.local` and set your the values for your custom variables there - particularly those, inside the `Project` block
 * Run: `docker-compose build`
-* **(temporary fix)** The `sgm_node` container does not work as it should, so you'll need to manually install the node dependencies via the **host** device with: `cd web && yarn install && cd ..`
+* **(temporary fix)** The `sgm_node` container does not yet work as it should, so you'll need to manually install the node dependencies via the **host** device with: `cd web && yarn install && cd ..`
 * Run: `docker-compose up`
 * Run: `docker exec -i sgm_php_fpm composer install`
 * Run: `docker exec -i sgm_php_fpm php bin/console doctrine:schema:update -f`

@@ -55,7 +55,7 @@ class QueueEntryHandler implements MessageHandlerInterface
         $logFile = str_replace(
             ':',
             '_',
-            $logDir . '/' . date('Ymd-His') . '-' . $command . '.log'
+            $logDir . '/' . date('Ymd--His') . '--' . $command . '.log'
         );
         if (!$this->filesystem->exists($logFile)) {
             $this->filesystem->touch($logFile);
@@ -67,11 +67,14 @@ class QueueEntryHandler implements MessageHandlerInterface
         $process = new Process($commandArray);
 
         $process->setTimeout(0);
-        $process->setIdleTimeout(0);
+        $process->setIdleTimeout(60);
         $process->start();
 
         $filesystem = $this->filesystem;
         $process->wait(function ($type, $buffer) use ($filesystem, $logFile) {
+            // TODO: implement stopping the process
+            // $process->stop(3, SIGINT) or $process->signal(SIGKILL) ?
+
             $filesystem->appendToFile($logFile, $buffer);
         });
     }

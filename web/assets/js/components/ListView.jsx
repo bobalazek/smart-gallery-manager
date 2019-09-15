@@ -445,6 +445,7 @@ class ListView extends React.Component {
               heading={row.heading}
               files={row.files}
               isVisible={isVisible}
+              isScrolling={isScrolling}
               container={container}
               onReady={measure}
               onClick={this.props.onImageClick}

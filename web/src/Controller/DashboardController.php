@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\File;
 use App\Form\Type\FilesScanType;
@@ -20,6 +21,7 @@ class DashboardController extends AbstractController
     {
         $this->params = $params;
         $this->em = $em;
+        $this->logDir = $this->params->get('var_dir') . '/queue/logs';
     }
 
     /**
@@ -43,8 +45,8 @@ class DashboardController extends AbstractController
             }
         } catch (\Exception $e) {}
 
-        // Form
-        $form = $this->createForm(FilesScanType::class, [
+        // Files scan
+        $filesScanForm = $this->createForm(FilesScanType::class, [
             'updateExistingEntries' => true,
             'actions' => [
                 'meta',
@@ -54,12 +56,13 @@ class DashboardController extends AbstractController
             ],
             'folders' => $folders,
         ]);
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
-            $data = $form->getData();
+        $filesScanForm->handleRequest($request);
+        if ($filesScanForm->isSubmitted() && $filesScanForm->isValid()) {
+            $command = 'app:files:scan';
+            $data = $filesScanForm->getData();
 
             $entry = [
-                'command' => 'app:files:scan',
+                'command' => $command,
                 'options' => [],
             ];
 
@@ -86,7 +89,31 @@ class DashboardController extends AbstractController
                 'success',
                 sprintf(
                     'You have successfully triggered the "%s" command',
-                    'app:files:scan'
+                    $command
+                )
+            );
+
+            return $this->redirect('dashboard');
+        }
+
+        // Queue stop workers
+        $queueStopWorkersForm = $this->createFormBuilder()
+            ->add('Execute', SubmitType::class)
+            ->getForm();
+        $queueStopWorkersForm->handleRequest($request);
+        if ($queueStopWorkersForm->isSubmitted() && $queueStopWorkersForm->isValid()) {
+            $command = 'messenger:stop-workers';
+            $entry = [
+                'command' => $command,
+                'options' => [],
+            ];
+
+            $this->dispatchMessage(new QueueEntry($entry));
+            $this->addFlash(
+                'success',
+                sprintf(
+                    'You have successfully triggered the "%s" command',
+                    $command
                 )
             );
 
@@ -94,40 +121,50 @@ class DashboardController extends AbstractController
         }
 
         // Last result
-        $lastResultLinesCount = 50;
-        $lastResultFile = '';
-        $lastResultContent = '';
-
-        $logDir = $this->params->get('var_dir') . '/queue/logs';
-        if (file_exists($logDir)) {
+        $logFiles = [];
+        if (file_exists($this->logDir)) {
             $finder = new Finder();
             $files = $finder
                 ->files()
                 ->followLinks()
-                ->in($logDir)
+                ->in($this->logDir)
                 ->sortByName()
                 ->reverseSorting()
             ;
             if ($finder->hasResults()) {
                 foreach ($files as $file) {
-                    $lastResultFile = $file->getRelativePathname();
-                    $contents = $file->getContents();
-                    $contentsArray = explode("\n", $contents);
-                    $contentsArray = array_reverse($contentsArray);
-                    $contentsArray = array_slice($contentsArray, 0, $lastResultLinesCount);
-                    $lastResultContent = join('<br />', $contentsArray);
-
-                    break;
+                    $logFile = [
+                        'name' => $file->getRelativePathname(),
+                    ];
+                    $logFiles[] = $logFile;
                 }
             }
         }
 
         return $this->render('dashboard/index.html.twig', [
             'files_count' => $filesCount,
-            'last_result_file' => $lastResultFile,
-            'last_result_content' => $lastResultContent,
-            'last_result_lines_count' => $lastResultLinesCount,
-            'form' => $form->createView(),
+            'log_files' => $logFiles,
+            'files_scan_form' => $filesScanForm->createView(),
+            'queue_stop_workers_form' => $queueStopWorkersForm->createView(),
+        ]);
+    }
+
+    /**
+     * @Route("/dashboard/log/{name}", name="dashboard.log")
+     */
+    public function log(Request $request, $name)
+    {
+        $file = $this->logDir . '/' . $name;
+
+        if (!file_exists($file)) {
+            throw $this->createNotFoundException('The product does not exist');
+        }
+
+        $contents = file_get_contents($file);
+
+        return $this->render('dashboard/log.html.twig', [
+            'name' => $name,
+            'contents' => explode("\n", $contents),
         ]);
     }
 }
