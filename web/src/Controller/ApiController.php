@@ -198,7 +198,7 @@ class ApiController extends AbstractController
 
         // Country
         foreach ($locationsPerCountryMap as $location => $count) {
-            $locationsPerCountryMap[] = [
+            $locationsPerCountry[] = [
                 'location' => $location,
                 'count' => $count,
             ];
