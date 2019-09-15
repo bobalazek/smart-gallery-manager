@@ -480,7 +480,7 @@ class FileManager {
      */
     private function _processFileMetaViaGd($file)
     {
-        $exif = @exif_read_data($file->getPath(), 0, true);
+        $exif = exif_read_data($file->getPath(), 0, true);
         if (!$exif) {
             throw new \Exception(sprintf(
                 'Could not read the file on path "%s".',
