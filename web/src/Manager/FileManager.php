@@ -75,9 +75,9 @@ class FileManager {
     }
 
     /**
-     *
+     * @param LoggerInterface $logger
      */
-    public setLogger(LoggerInterface $logger)
+    public function setLogger(LoggerInterface $logger)
     {
         $this->logger = $logger
     }
