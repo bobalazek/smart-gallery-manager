@@ -12,6 +12,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Contracts\Cache\ItemInterface;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Image;
+use Psr\Log\LoggerInterface;
 use Aws\Rekognition\RekognitionClient;
 use App\Entity\File;
 
@@ -71,6 +72,14 @@ class FileManager {
         $this->hereApiCredentials = $this->params->get('here_api_credentials');
         $this->hereReverseGeocoderRadius = $this->params->get('here_reverse_geocoder_radius');
         $this->hereReverseGeocoderMaxResults = $this->params->get('here_reverse_geocoder_max_results');
+    }
+
+    /**
+     *
+     */
+    public setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger
     }
 
     private $_fileMeta = [];
@@ -346,6 +355,8 @@ class FileManager {
         if ($alreadyExists) {
             $result = json_decode(file_get_contents($path), true);
         } else {
+            $this->logger->debug('Labeling data does not exist. Feching from service ...');
+
             $image->widen(1024, function ($constraint) {
                 $constraint->upsize();
             });
@@ -757,6 +768,8 @@ class FileManager {
         }
 
         if (!isset($this->_geodecodeCache[$cacheHash])) {
+            $this->logger->debug('Geocoding data does not exist. Feching from service ...');
+
             $url = 'https://nominatim.openstreetmap.org/reverse';
             $response = $this->httpClient->request('GET', $url, [
                 'query' => array_merge([
@@ -839,6 +852,8 @@ class FileManager {
         }
 
         if (!isset($this->_geodecodeCache[$cacheHash])) {
+            $this->logger->debug('Geocoding data does not exist. Feching from service ...');
+
             $url = 'https://reverse.geocoder.api.here.com/6.2/reversegeocode.json';
             $response = $this->httpClient->request('GET', $url, [
                 'query' => [

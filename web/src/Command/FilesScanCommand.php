@@ -33,6 +33,8 @@ class FilesScanCommand extends Command
         $this->fileManager = $fileManager;
         $this->logger = $logger;
 
+        $this->fileManager->setLogger($this->logger);
+
         parent::__construct();
     }
 
