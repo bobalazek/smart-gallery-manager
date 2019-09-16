@@ -355,7 +355,9 @@ class FileManager {
         if ($alreadyExists) {
             $result = json_decode(file_get_contents($path), true);
         } else {
-            $this->logger->debug('Labeling data does not exist. Feching from service ...');
+            if ($this->logger) {
+                $this->logger->debug('Labeling data does not exist. Feching from service ...');
+            }
 
             $image->widen(1024, function ($constraint) {
                 $constraint->upsize();
@@ -768,7 +770,9 @@ class FileManager {
         }
 
         if (!isset($this->_geodecodeCache[$cacheHash])) {
-            $this->logger->debug('Geocoding data does not exist. Feching from service ...');
+            if ($this->logger) {
+                $this->logger->debug('Geocoding data does not exist. Feching from service ...');
+            }
 
             $url = 'https://nominatim.openstreetmap.org/reverse';
             $response = $this->httpClient->request('GET', $url, [
@@ -852,7 +856,9 @@ class FileManager {
         }
 
         if (!isset($this->_geodecodeCache[$cacheHash])) {
-            $this->logger->debug('Geocoding data does not exist. Feching from service ...');
+            if ($this->logger) {
+                $this->logger->debug('Geocoding data does not exist. Feching from service ...');
+            }
 
             $url = 'https://reverse.geocoder.api.here.com/6.2/reversegeocode.json';
             $response = $this->httpClient->request('GET', $url, [
