@@ -35,7 +35,7 @@
                 <h3>Queue - Stop workers</h3>
                 {{ form(queue_stop_workers_form) }}
             </div>
-            <div class="col col-md-6">
+            <div id="logs-wrapper" class="col col-md-6">
                 <h2>Log files</h2>
                 {% if log_files %}
                     <div class="list-group">
@@ -43,8 +43,10 @@
                             <a href="{{ url('dashboard.log', {
                                 name: log_file.name,
                             }) }}"
-                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                            >
                                 {{ log_file.name }}
+                                <span class="badge badge-primary badge-pill">{{ log_file.lines }}</span>
                             </a>
                         {% endfor %}
                     </ul>
@@ -67,6 +69,16 @@
                 allow_down: false,
                 allow_duplicate: false,
             });
+
+            // TODO: implement a nicer solution
+            setInterval(function() {
+                $.get(window.location.href, function(response) {
+                    var $html = $(response);
+                    $('#logs-wrapper').html(
+                        $html.find('#logs-wrapper').html()
+                    );
+                });
+            }, 5000);
         });
     </script>
 {% endblock %}

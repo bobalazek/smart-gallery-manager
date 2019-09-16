@@ -20,6 +20,7 @@ parameters:
 
     # Labeling
     labelling_enabled: '%env(bool:LABELLING_ENABLED)%'
+    labelling_service: '%env(LABELLING_SERVICE)%'
     labelling_confidence: '%env(bool:LABELLING_CONFIDENCE)%'
     amazon_rekognition_region: '%env(AMAZON_REKOGNITION_REGION)%'
     amazon_rekognition_version: '%env(AMAZON_REKOGNITION_VERSION)%'

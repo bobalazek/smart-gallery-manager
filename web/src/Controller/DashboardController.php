@@ -10,6 +10,7 @@ use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
+use Symfony\Component\Filesystem\Filesystem;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Entity\File;
 use App\Form\Type\FilesScanType;
@@ -93,7 +94,7 @@ class DashboardController extends AbstractController
                 )
             );
 
-            return $this->redirect('dashboard');
+            return $this->redirectToRoute('dashboard');
         }
 
         // Queue stop workers
@@ -117,7 +118,7 @@ class DashboardController extends AbstractController
                 )
             );
 
-            return $this->redirect('dashboard');
+            return $this->redirectToRoute('dashboard');
         }
 
         // Last result
@@ -128,13 +129,23 @@ class DashboardController extends AbstractController
                 ->files()
                 ->followLinks()
                 ->in($this->logDir)
+                ->notName('*.stop')
                 ->sortByName()
                 ->reverseSorting()
             ;
             if ($finder->hasResults()) {
                 foreach ($files as $file) {
+                    $lines = 0;
+
+                    $handle = fopen($file->getRealPath(), 'r');
+                    while (!feof($handle)){
+                        $lines += substr_count(fread($handle, 8192), "\n");
+                    }
+                    fclose($handle);
+
                     $logFile = [
                         'name' => $file->getRelativePathname(),
+                        'lines' => $lines,
                     ];
                     $logFiles[] = $logFile;
                 }
@@ -157,7 +168,7 @@ class DashboardController extends AbstractController
         $file = $this->logDir . '/' . $name;
 
         if (!file_exists($file)) {
-            throw $this->createNotFoundException('The product does not exist');
+            throw $this->createNotFoundException('The log does not exist');
         }
 
         $contents = file_get_contents($file);
@@ -165,6 +176,34 @@ class DashboardController extends AbstractController
         return $this->render('dashboard/log.html.twig', [
             'name' => $name,
             'contents' => explode("\n", $contents),
+        ]);
+    }
+
+    /**
+     * @Route("/dashboard/log/{name}/stop", name="dashboard.log.stop")
+     */
+    public function logStop(Request $request, $name)
+    {
+        $file = $this->logDir . '/' . $name;
+
+        if (!file_exists($file)) {
+            throw $this->createNotFoundException('The log does not exist');
+        }
+
+        $this->filesystem = new Filesystem();
+
+        $this->filesystem->touch($file . '.stop');
+
+        $this->addFlash(
+            'success',
+            sprintf(
+                'You have successfully created a stop file for "%s"',
+                $name
+            )
+        );
+
+        return $this->redirectToRoute('dashboard.log', [
+            'name' => $name,
         ]);
     }
 }

@@ -406,12 +406,15 @@ class ApiController extends AbstractController
                     [],
                     UrlGeneratorInterface::ABSOLUTE_URL
                 ) . 'img/404.jpg';
+
+                $aspectRatio = $width / $height;
             }
 
             $response[$imageType] = [
                 'src' => $src,
                 'width' => $width,
                 'height' => $height,
+                'aspect_ratio' => $aspectRatio,
             ];
         }
 

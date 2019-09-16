@@ -6,11 +6,29 @@
     <div class="container">
         <h1>
             Smart Gallery Manager
-            <a href="{{ url('gallery') }}" class="btn btn-primary">
-                Go to Gallery
+            <a href="{{ url('dashboard') }}" class="btn btn-primary">
+                Go to Dashboard
             </a>
         </h1>
-        <h2>{{ name }}</h2>
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="alert alert-{{ label }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+        <h2 class="clearfix">
+            <div class="float-left">
+                {{ name }}
+            </div>
+            <div class="float-right">
+                <a href="{{ url('dashboard.log.stop', {
+                    name: name,
+                }) }}" class="btn btn-danger">
+                    Stop process
+                </a>
+            </div>
+        </h2>
         <div id="contents">
             {% for row in contents %}
                 <div>{{ row }}</div>
@@ -23,6 +41,7 @@
     {{ parent() }}
     <script type="text/javascript">
         $(document).ready(function() {
+            // TODO: implement a nicer solution
             setInterval(function() {
                 $.get(window.location.href, function(response) {
                     var $html = $(response);

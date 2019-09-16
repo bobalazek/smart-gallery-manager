@@ -182,15 +182,17 @@ class ImageModal extends React.Component {
   }
 
   onPrevButtonClick() {
-    this.prepareData(
-      this.props.files[this.state.fileIndex - 1].id
-    );
+    const file = this.props.files[this.state.fileIndex - 1];
+    if (file) {
+      this.prepareData(file.id);
+    }
   }
 
   onNextButtonClick() {
-    this.prepareData(
-      this.props.files[this.state.fileIndex + 1].id
-    );
+    const file = this.props.files[this.state.fileIndex + 1];
+    if (file) {
+      this.prepareData(file.id);
+    }
   }
 
   prepareImageStyles(width, height) {

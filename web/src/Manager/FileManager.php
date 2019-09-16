@@ -54,10 +54,14 @@ class FileManager {
                 0
             );
         } else {
-            throw new \Exception('The file cache adapter "' . $filesCacheAdapter . '" does not exist.');
+            throw new \Exception(sprintf(
+                'The file cache adapter "%s" does not exist.',
+                $filesCacheAdapter
+            ));
         }
 
         // Label
+        $this->labellingService = $this->params->get('labelling_service');
         $this->labellingConfidence = $this->params->get('labelling_confidence');
         $this->awsCredentials = $this->params->get('aws_credentials');
         $this->awsRekognitionClient = new RekognitionClient([
@@ -321,6 +325,8 @@ class FileManager {
         return true;
     }
 
+    private $_labelTags = [];
+
     /**
      * Labels the image
      *
@@ -329,61 +335,20 @@ class FileManager {
      */
     public function label(File $file, $skipFetchIfAlreadyExists = true)
     {
-        if (
-            $this->awsCredentials['key'] === '' ||
-            $this->awsCredentials['secret'] === ''
-        ) {
-            throw new \Exception('AWS credentials are not set. Could not label the file.');
-        }
+        $this->_labelTags = [];
 
-        // Check if it's a viable file first. If not, it will throw an exception,
-        //   so it won't continue any execution.
-        try {
-            $image = $this->getImage($file);
-        } catch (\Exception $e) {
+        if ($this->labellingService === 'amazon_rekognition') {
+            $this->_labelAmazonRekognition($file, $skipFetchIfAlreadyExists);
+        } else {
             throw new \Exception(
-                'Can not label, because it is not an image. Error: ' .
-                $e->getMessage()
+                sprintf(
+                    'The specified labelling service "%s" does not exist.',
+                    $this->labellingService
+                )
             );
         }
 
-        $path = $this->getFileDataDir($file) . '/amazon_rekognition_labels.json';
-
-        $alreadyExists = $skipFetchIfAlreadyExists && file_exists($path);
-        $result = [];
-
-        if ($alreadyExists) {
-            $result = json_decode(file_get_contents($path), true);
-        } else {
-            if ($this->logger) {
-                $this->logger->debug('Labeling data does not exist. Feching from service ...');
-            }
-
-            $image->widen(1024, function ($constraint) {
-                $constraint->upsize();
-            });
-            $image->heighten(1024, function ($constraint) {
-                $constraint->upsize();
-            });
-
-            $result = $this->awsRekognitionClient->detectLabels([
-                'Image' => [
-                    'Bytes' => $image->encode('jpg'),
-                ],
-                'MinConfidence' => $this->awsRekognitionMinConfidence,
-            ]);
-
-            file_put_contents($path, json_encode($result->toArray()));
-        }
-
-        $tags = [];
-        foreach ($result['Labels'] as $label) {
-            if ($label['Confidence'] >= $this->labellingConfidence) {
-                $tags[] = $label['Name'];
-            }
-        }
-
-        $file->setTags($tags);
+        $file->setLocation($this->_labelTags);
 
         return true;
     }
@@ -758,7 +723,7 @@ class FileManager {
 
         $cacheHash = 'osm.' . sha1(json_encode($latitude_and_longitude));
 
-        $path = $this->getFileDataDir($file) . '/osm_geocode.json';
+        $path = $this->getFileDataDir($file) . '/' . $this->_getGeocodeFileName('osm');
 
         $alreadyExists = $skipFetchIfAlreadyExists && file_exists($path);
 
@@ -844,7 +809,7 @@ class FileManager {
 
         $cacheHash = 'here.' . sha1(json_encode($latitude_and_longitude));
 
-        $path = $this->getFileDataDir($file) . '/here_geocode.json';
+        $path = $this->getFileDataDir($file) . '/' . $this->_getGeocodeFileName('here');
 
         $alreadyExists = $skipFetchIfAlreadyExists && file_exists($path);
 
@@ -925,5 +890,102 @@ class FileManager {
         $this->_geodecodeLocation['address']['district'] = $locationData['District'] ?? null;
         $this->_geodecodeLocation['address']['state'] = $locationData['State'] ?? null;
         $this->_geodecodeLocation['address']['country'] = $country;
+    }
+
+    /**
+     * Labels via amazon rekognition
+     *
+     * @param File $file
+     * @param bool $skipFetchIfAlreadyExists
+     */
+    private function _labelAmazonRekognition(File $file, $skipFetchIfAlreadyExists)
+    {
+        if (
+            $this->awsCredentials['key'] === '' ||
+            $this->awsCredentials['secret'] === ''
+        ) {
+            throw new \Exception('AWS credentials are not set. Could not label the file.');
+        }
+
+        // Check if it's a viable file first. If not, it will throw an exception,
+        //   so it won't continue any execution.
+        try {
+            $image = $this->getImage($file);
+        } catch (\Exception $e) {
+            throw new \Exception(
+                'Can not label, because it is not an image. Error: ' .
+                $e->getMessage()
+            );
+        }
+
+        $path = $this->getFileDataDir($file) . '/' . $this->_getLabelFileName('amazon_rekognition');
+
+        $alreadyExists = $skipFetchIfAlreadyExists && file_exists($path);
+        $result = [];
+
+        if ($alreadyExists) {
+            $result = json_decode(file_get_contents($path), true);
+        } else {
+            if ($this->logger) {
+                $this->logger->debug('Labeling data does not exist. Feching from service ...');
+            }
+
+            $image->widen(1024, function ($constraint) {
+                $constraint->upsize();
+            });
+            $image->heighten(1024, function ($constraint) {
+                $constraint->upsize();
+            });
+
+            $result = $this->awsRekognitionClient->detectLabels([
+                'Image' => [
+                    'Bytes' => $image->encode('jpg'),
+                ],
+                'MinConfidence' => $this->awsRekognitionMinConfidence,
+            ]);
+
+            file_put_contents($path, json_encode($result->toArray()));
+        }
+
+        $tags = [];
+        foreach ($result['Labels'] as $label) {
+            if ($label['Confidence'] >= $this->labellingConfidence) {
+                $tags[] = $label['Name'];
+            }
+        }
+
+        $this->_labelTags = $tags;
+    }
+
+    /**
+     * @param string $service
+     */
+    private function _getLabelFileName($service)
+    {
+        if ($service === 'amazon_rekognition') {
+            return 'amazon_rekognition_labels.json';
+        }
+
+        throw new \Exception(sprintf(
+            'The labelling service "%s" does not exist.',
+            $service
+        ));
+    }
+
+    /**
+     * @param string $service
+     */
+    private function _getGeocodeFileName($service)
+    {
+        if ($service === 'osm') {
+            return 'osm_geocode.json';
+        } elseif ($service === 'here') {
+            return 'here_geocode.json';
+        }
+
+        throw new \Exception(sprintf(
+            'The geocoding service "%s" does not exist.',
+            $service
+        ));
     }
 }

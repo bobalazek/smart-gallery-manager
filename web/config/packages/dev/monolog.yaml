@@ -12,3 +12,4 @@ monolog:
             verbosity_levels:
                 VERBOSITY_NORMAL: NOTICE
                 VERBOSITY_VERBOSE: INFO
+                VERBOSITY_VERY_VERBOSE: DEBUG

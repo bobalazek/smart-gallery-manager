@@ -157,6 +157,8 @@ class FilesScanCommand extends Command
                 $fileExists &&
                 !$updateExistingEntries
             ) {
+                $this->logger->debug('File already exists. Skipping ...');
+
                 $this->em->detach($file);
 
                 continue;

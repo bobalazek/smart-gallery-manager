@@ -8,6 +8,7 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
 use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\Process;
+use Symfony\Component\Messenger\Exception\UnrecoverableMessageHandlingException;
 use Psr\Log\LoggerInterface;
 use App\Message\QueueEntry;
 
@@ -65,17 +66,17 @@ class QueueEntryHandler implements MessageHandlerInterface
 
         // Process
         $process = new Process($commandArray);
-
         $process->setTimeout(0);
         $process->setIdleTimeout(60);
         $process->start();
 
+        $processStopFile = $logFile . '.stop';
         $filesystem = $this->filesystem;
-        $process->wait(function ($type, $buffer) use ($filesystem, $logFile) {
-            // TODO: implement stopping the process
-            // $process->stop(3, SIGINT) or $process->signal(SIGKILL) ?
-
+        $process->wait(function ($type, $buffer) use ($process, $filesystem, $logFile, $processStopFile) {
             $filesystem->appendToFile($logFile, $buffer);
+            if (file_exists($processStopFile)) {
+                throw new UnrecoverableMessageHandlingException();
+            }
         });
     }
 }
