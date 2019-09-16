@@ -79,7 +79,7 @@ class FileManager {
      */
     public function setLogger(LoggerInterface $logger)
     {
-        $this->logger = $logger
+        $this->logger = $logger;
     }
 
     private $_fileMeta = [];
