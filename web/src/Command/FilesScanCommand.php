@@ -194,7 +194,8 @@ class FilesScanCommand extends Command
                 $geocodeForce &&
                 $updateExistingEntries
             ) {
-                $filesToBeGeocoded = $filesCount;
+                $filesToBeGeocoded = $newFilesCount +
+                    $this->_getExistingFilesWithGeolocationCount($folders);
             } elseif (
                 !$geocodeForce &&
                 $updateExistingEntries
@@ -202,7 +203,8 @@ class FilesScanCommand extends Command
                 $this->logger->debug('Calculating the number of files that still need to be geocoded. This may take a while ...');
 
                 $filesToBeGeocoded = $newFilesCount +
-                    $this->_getExistingFilesWithoutGeolocationCount($existingFilePathsMap, $folders);
+                    $this->_getExistingFilesWithoutGeolocationCount($existingFilePathsMap) -
+                    $this->_getExistingFilesWithGeolocationCount($folders);
             }
 
             $this->logger->notice(sprintf(
@@ -403,14 +405,13 @@ class FilesScanCommand extends Command
     }
 
     /**
-     * Gets the number of existing files with geolocation
+     * Gets the number of existing files without geolocation
      *
      * @param array $existingFilePathsMap
-     * @param array $folders
      *
      * @return int
      */
-    private function _getExistingFilesWithoutGeolocationCount($existingFilePathsMap, $folders) {
+    private function _getExistingFilesWithoutGeolocationCount($existingFilePathsMap) {
         $filesDataDir = $this->fileManager->getFilesDataDir();
         $geocodeFileName = $this->fileManager->getGeocodeFileName();
         $count = 0;
@@ -425,7 +426,18 @@ class FilesScanCommand extends Command
             }
         }
 
-        // Now subtract the files that can't be geocoded, because they don't have geolocation
+        return $count;
+    }
+    /**
+     * Gets the number of existing files with geolocation
+     *
+     * @param array $folders
+     *
+     * @return int
+     */
+    private function _getExistingFilesWithGeolocationCount($folders) {
+        $count = 0;
+
         $qb = $this->em->createQueryBuilder()
             ->select('f.meta')
             ->from(File::class, 'f');
@@ -441,12 +453,12 @@ class FilesScanCommand extends Command
             $meta = json_decode($existingFile['meta'], true);
 
             if (
-                empty($meta) ||
-                empty($meta['geolocation']) ||
-                empty($meta['geolocation']['latitude']) ||
-                empty($meta['geolocation']['longitude'])
+                !empty($meta) &&
+                !empty($meta['geolocation']) &&
+                !empty($meta['geolocation']['latitude']) &&
+                !empty($meta['geolocation']['longitude'])
             ) {
-                $count--;
+                $count++;
             }
         }
 
