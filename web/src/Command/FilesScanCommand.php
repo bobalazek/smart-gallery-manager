@@ -80,6 +80,18 @@ class FilesScanCommand extends Command
         $actions = $input->getOption('action');
         $updateExistingEntries = $input->getOption('update-existing-entries') !== false;
 
+        $shouldGeocode = $isGeocodingEnabled && (
+            in_array('geocode', $actions) ||
+            in_array('geocode:force', $actions)
+        );
+        $shouldLabel = $isLabellingEnabled && (
+            in_array('label', $actions) ||
+            in_array('label:force', $actions)
+        );
+
+        $geocodeForce = in_array('geocode:force', $actions);
+        $labelForce = in_array('label:force', $actions);
+
         // Get the settings
         try {
             $settings = Yaml::parseFile(
@@ -87,23 +99,36 @@ class FilesScanCommand extends Command
             );
         } catch (\Exception $e) {
             $this->logger->critical($e->getMessage());
-
             return;
         }
 
-        // Log
-        $this->logger->notice('Starting to process files ...');
+        if (empty($actions)) {
+            $this->logger->critical('You need to specify at least one action');
+            return;
+        }
+
+        // General
+        $this->logger->notice('======== General information ========');
         $this->logger->notice(sprintf(
             'Start time: %s',
             date(DATE_ATOM)
         ));
-        $this->logger->notice(sprintf(
-            'Actions: %s',
-            implode(', ', $actions)
-        ));
+        $this->logger->notice('Actions:');
+        foreach ($actions as $action) {
+            $this->logger->notice(
+                '* ' . $action .
+                (
+                    ($action === 'label' && !$shouldLabel) ||
+                    ($action === 'geocode' && !$shouldGeocode)
+                        ? ' (disabled)'
+                        : ''
+                )
+            );
+        }
+
         $this->logger->notice(sprintf(
             'Memory usage: %s',
-            $this->getMemoryUsageText()
+            $this->_getMemoryUsageText()
         ));
 
         // Browse the folders
@@ -123,16 +148,104 @@ class FilesScanCommand extends Command
             ->reverseSorting()
         ;
 
-        $filesCount = iterator_count($files);
+        $this->logger->debug('Calculating the total number of files in folders. This may take a while ...');
 
+        $filesCount = iterator_count($files);
+        $newFilesCount = $filesCount;
+
+        $existingFilePathsMap = [];
+        $existingFiles = $this->em->createQueryBuilder()
+            ->select('f.path')
+            ->from(File::class, 'f')
+            ->getQuery()
+            ->getScalarResult();
+        foreach ($existingFiles as $existingFile) {
+            $existingFilePathsMap[$existingFile['path']] = true;
+        }
+
+        foreach ($files as $fileObject) {
+            if (isset($existingFilePathsMap[$fileObject->getRealPath()])) {
+                $newFilesCount--;
+            }
+        }
+
+        $this->logger->notice('-------- Files & folders --------');
         $this->logger->notice(sprintf(
-            '%s files found in folders:',
+            'Total files count: %s',
             $filesCount
         ));
+        $this->logger->notice(sprintf(
+            'New files count: %s',
+            $newFilesCount
+        ));
 
+        $this->logger->notice('Folders:');
         foreach ($folders as $folder) {
             $this->logger->notice('* ' . $folder);
         }
+
+        if ($shouldGeocode) {
+            $this->logger->notice('-------- Geocoding --------');
+
+            $filesToBeGeocoded = 0;
+            if (!$updateExistingEntries) {
+                $filesToBeGeocoded = $newFilesCount;
+            } elseif (
+                $geocodeForce &&
+                $updateExistingEntries
+            ) {
+                $filesToBeGeocoded = $filesCount;
+            } elseif (
+                !$geocodeForce &&
+                $updateExistingEntries
+            ) {
+                $this->logger->debug('Calculating the number of files that still need to be geocoded. This may take a while ...');
+
+                $filesToBeGeocoded = $newFilesCount +
+                    $this->_getExistingFilesWithoutGeolocationCount($existingFilePathsMap, $folders);
+            }
+
+            $this->logger->notice(sprintf(
+                'Maximum files to be geocoded: %s',
+                $filesToBeGeocoded
+            ));
+            $this->logger->notice('Note: This is an upper estimate. It is assumed that all new files will contain geolocation data, which in reality it may not.');
+        }
+
+        if ($shouldLabel) {
+            $this->logger->notice('-------- Labelling --------');
+
+            $filesToBeLabeled = 0;
+            if (!$updateExistingEntries) {
+                $filesToBeLabeled = $newFilesCount;
+            } elseif (
+                $labelForce &&
+                $updateExistingEntries
+            ) {
+                $filesToBeLabeled = $filesCount;
+            } elseif (
+                !$geocodeForce &&
+                $updateExistingEntries
+            ) {
+                $this->logger->debug('Calculating the number of files that still need to be labeled. This may take a while ...');
+
+                $filesToBeLabeled = $newFilesCount +
+                    $this->_getExistingUnlabeledFilesCount($existingFilePathsMap);
+            }
+
+            $this->logger->notice(sprintf(
+                'Files to be labeled: %s',
+                $filesToBeLabeled
+            ));
+        }
+
+        $this->logger->notice(sprintf(
+            'Memory usage: %s',
+            $this->_getMemoryUsageText()
+        ));
+
+        // File processing
+        $this->logger->notice('======== File processing ... ========');
 
         $i = 0;
         foreach ($files as $fileObject) {
@@ -144,11 +257,11 @@ class FilesScanCommand extends Command
                 '%s/%s [%s] -- Starting to process file: %s',
                 $i,
                 $filesCount,
-                $this->getMemoryUsageText(),
+                $this->_getMemoryUsageText(),
                 $filePath
             ));
 
-            $fileHash = sha1($filePath);
+            $fileHash = $this->fileManager->generateFilePathHash($filePath);
 
             $file = $filesRepository->findOneByHash($fileHash);
             $fileExists = $file !== null;
@@ -221,19 +334,13 @@ class FilesScanCommand extends Command
             }
 
             /********** Geocode  **********/
-            if (
-                $isGeocodingEnabled &&
-                (
-                    in_array('geocode', $actions) ||
-                    in_array('geocode:force', $actions)
-                )
-            ) {
+            if ($shouldGeocode) {
                 $this->logger->info('Geocoding ...');
 
                 try {
                     $this->fileManager->geodecode(
                         $file,
-                        !in_array('geocode:force', $actions)
+                        !$geocodeForce
                     );
                 } catch (\Exception $e) {
                     $this->logger->warning($e->getMessage());
@@ -241,19 +348,13 @@ class FilesScanCommand extends Command
             }
 
             /********** Label **********/
-            if (
-                $isLabellingEnabled &&
-                (
-                    in_array('label', $actions) ||
-                    in_array('label:force', $actions)
-                )
-            ) {
+            if ($shouldLabel) {
                 $this->logger->info('Labeling ...');
 
                 try {
                     $this->fileManager->label(
                         $file,
-                        !in_array('label:force', $actions)
+                        !$labelForce
                     );
                 } catch (\Exception $e) {
                     $this->logger->warning($e->getMessage());
@@ -274,6 +375,8 @@ class FilesScanCommand extends Command
         $this->em->flush();
         $this->em->clear();
 
+        $this->logger->notice('======== File processing completed ========');
+
         $this->logger->notice(sprintf(
             'End time: %s',
             date(DATE_ATOM)
@@ -284,9 +387,11 @@ class FilesScanCommand extends Command
     }
 
     /**
-     * Gets the memory data & stuff
+     * Gets the memory data
+     *
+     * @return string
      */
-    protected function getMemoryUsageText() {
+    private function _getMemoryUsageText() {
         $startMemoryPeakUsage = (int)(memory_get_peak_usage() / 1024 / 1024) . 'MB';
         $startMemoryPeakUsageReal = (int)(memory_get_peak_usage(true) / 1024 / 1024) . 'MB';
 
@@ -295,5 +400,80 @@ class FilesScanCommand extends Command
             $startMemoryPeakUsage,
             $startMemoryPeakUsageReal
         );
+    }
+
+    /**
+     * Gets the number of existing files with geolocation
+     *
+     * @param array $existingFilePathsMap
+     * @param array $folders
+     *
+     * @return int
+     */
+    private function _getExistingFilesWithoutGeolocationCount($existingFilePathsMap, $folders) {
+        $filesDataDir = $this->fileManager->getFilesDataDir();
+        $geocodeFileName = $this->fileManager->getGeocodeFileName();
+        $count = 0;
+
+        foreach ($existingFilePathsMap as $filePath => $_) {
+            $fileHash = $this->fileManager->generateFilePathHash($filePath);
+            $geocodeFilePath = $this->fileManager->getFileDataDir($fileHash)
+                . '/' . $geocodeFileName;
+
+            if (!file_exists($geocodeFilePath)) {
+                $count++;
+            }
+        }
+
+        // Now subtract the files that can't be geocoded, because they don't have geolocation
+        $qb = $this->em->createQueryBuilder()
+            ->select('f.meta')
+            ->from(File::class, 'f');
+        foreach ($folders as $i => $folder) {
+            $qb
+                ->orWhere('f.path LIKE :path' . $i)
+                ->setParameter('path' . $i, $folder . '%')
+            ;
+        }
+
+        $existingFiles = $qb->getQuery()->getScalarResult();
+        foreach ($existingFiles as $existingFile) {
+            $meta = json_decode($existingFile['meta'], true);
+
+            if (
+                empty($meta) ||
+                empty($meta['geolocation']) ||
+                empty($meta['geolocation']['latitude']) ||
+                empty($meta['geolocation']['longitude'])
+            ) {
+                $count--;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Gets the number of existing files, that have no labeling file yet
+     *
+     * @param array $existingFilePathsMap
+     *
+     * @return int
+     */
+    private function _getExistingUnlabeledFilesCount($existingFilePathsMap) {
+        $labelFileName = $this->fileManager->getLabelFileName();
+        $count = 0;
+
+        foreach ($existingFilePathsMap as $filePath => $_) {
+            $fileHash = $this->fileManager->generateFilePathHash($filePath);
+            $labelFilePath = $this->fileManager->getFileDataDir($fileHash)
+                . '/' . $labelFileName;
+
+            if (!file_exists($labelFilePath)) {
+                $count++;
+            }
+        }
+
+        return $count;
     }
 }

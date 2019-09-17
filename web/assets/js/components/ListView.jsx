@@ -204,7 +204,7 @@ class ListView extends React.Component {
                 <MenuItem value="created_at">Date created</MenuItem>
               </Select>
             </FormControl>
-            <FormControl variant="outlined" style={{ display: 'none' }}>
+            <FormControl variant="outlined">
               <Select
                 name="orderByDirection"
                 value={orderByDirection}
@@ -242,6 +242,8 @@ class ListView extends React.Component {
                   loadMoreRows={this._loadMoreRows}
                   isRowLoaded={this._isRowLoaded}
                   rowCount={this._getRowCount()}
+                  minimumBatchSize={4}
+                  threshold={4}
                   ref={this.infiniteLoaderRef}
                 >
                   {({ onRowsRendered, registerChild }) => (
@@ -366,9 +368,6 @@ class ListView extends React.Component {
       filesSummaryDatetime,
     } = this.props;
 
-    const dateFrom = rowsIndexes[stopIndex];
-    const dateTo = rowsIndexes[startIndex];
-
     clearTimeout(this.loadRowsTimeout);
     return new Promise((resolve, reject) => {
       this.loadRowsTimeout = setTimeout(() => {
@@ -376,9 +375,9 @@ class ListView extends React.Component {
 
         const url = rootUrl + '/api/files' +
           this.parent.getFiltersQuery() +
-          '&date_from=' + dateFrom +
-          '&date_to=' + dateTo +
-          '&created_before=' + filesSummaryDatetime.format('YYYY-MM-DDTHH:mm:ss');
+            '&limit=' + (this.parent.maxFilesPerRow * (stopIndex - startIndex)) +
+            '&offset=' + (this.parent.maxFilesPerRow * startIndex) +
+            '&created_before=' + filesSummaryDatetime.format('YYYY-MM-DDTHH:mm:ss');
 
         return axios.get(url)
           .then(res => {

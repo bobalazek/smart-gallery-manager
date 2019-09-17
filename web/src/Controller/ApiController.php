@@ -267,22 +267,22 @@ class ApiController extends AbstractController
             ->orderBy('f.' . $dateField, $orderByDirection)
         ;
 
-        if ($offset) {
+        if ($offset !== null) {
             $filesQueryBuilder->setFirstResult((int)$offset);
         }
 
-        if ($limit) {
+        if ($limit !== null) {
             $filesQueryBuilder->setMaxResults((int)$limit);
         }
 
-        if ($dateFrom) {
+        if ($dateFrom !== null) {
             $filesQueryBuilder
                 ->andWhere('f.' . $dateField . ' >= :date_from')
                 ->setParameter('date_from', new \DateTime($dateFrom . ' 00:00:00'))
             ;
         }
 
-        if ($dateTo) {
+        if ($dateTo !== null) {
             $filesQueryBuilder
                 ->andWhere('f.' . $dateField . ' <= :date_to')
                 ->setParameter('date_to', new \DateTime($dateTo . ' 23:59:59'))
@@ -308,8 +308,8 @@ class ApiController extends AbstractController
         return $this->json([
             'data' => $data,
             'meta' => [
-                'offset' => $offset,
-                'limit' => $limit,
+                'offset' => (int)$offset,
+                'limit' => (int)$limit,
                 'date_from' => $dateTo,
                 'date_to' => $dateTo,
                 'order_by' => $orderBy,

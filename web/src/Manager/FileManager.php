@@ -217,23 +217,47 @@ class FileManager {
         return $path;
     }
 
-
     /**
-     * Gets the image instance for data or further manipulation.
-     *
-     * @param File $file
+     * Gets the path where files data is cached
      *
      * @return string
      */
-    public function getFileDataDir($file): string
+    public function getFilesDataDir(): string
     {
-        $fileDataDir = $this->params->get('var_dir') .
-            '/data/files/' . $file->getHash();
+        return $this->params->get('var_dir'). '/data/files';
+    }
+
+    /**
+     * Gets the path for the file dir
+     *
+     * @param File|string $fileOrFileHash
+     *
+     * @return string
+     */
+    public function getFileDataDir($fileOrFileHash): string
+    {
+        $hash = is_string($fileOrFileHash)
+            ? $fileOrFileHash
+            : $fileOrFileHash->getHash();
+
+        $fileDataDir = $this->getFilesDataDir() . '/' . $hash;
         if (!$this->filesystem->exists($fileDataDir)) {
             $this->filesystem->mkdir($fileDataDir);
         }
 
         return $fileDataDir;
+    }
+
+    /**
+     * Generates the file path hash
+     *
+     * @param string $filePath
+     *
+     * @return string
+     */
+    public function generateFilePathHash($filePath): string
+    {
+        return sha1($filePath);
     }
 
     /**
@@ -351,6 +375,46 @@ class FileManager {
         $file->setLocation($this->_labelTags);
 
         return true;
+    }
+
+    /**
+     * @param string|null $service
+     */
+    public function getLabelFileName($service = null)
+    {
+        if ($service === null) {
+            $service = $this->labellingService;
+        }
+
+        if ($service === 'amazon_rekognition') {
+            return 'amazon_rekognition_labels.json';
+        }
+
+        throw new \Exception(sprintf(
+            'The labelling service "%s" does not exist.',
+            $service
+        ));
+    }
+
+    /**
+     * @param string|null $service
+     */
+    public function getGeocodeFileName($service = null)
+    {
+        if ($service === null) {
+            $service = $this->geocodingService;
+        }
+
+        if ($service === 'osm') {
+            return 'osm_geocode.json';
+        } elseif ($service === 'here') {
+            return 'here_geocode.json';
+        }
+
+        throw new \Exception(sprintf(
+            'The geocoding service "%s" does not exist.',
+            $service
+        ));
     }
 
     /**
@@ -536,13 +600,13 @@ class FileManager {
 
         // Geolocation
         $this->_fileMeta['geolocation']['altitude'] = isset($exif['GPS']['GPSAltitude'])
-            ? $this->_eval($exif['GPS']['GPSAltitude'], 'altitude')
+            ? (float) $this->_eval($exif['GPS']['GPSAltitude'], 'altitude')
             : null;
         $this->_fileMeta['geolocation']['latitude'] = isset($exif['GPS']['GPSLatitude'])
-            ? $this->_eval($exif['GPS']['GPSLatitude'], 'latitude')
+            ? (float) $this->_eval($exif['GPS']['GPSLatitude'], 'latitude')
             : null;
         $this->_fileMeta['geolocation']['longitude'] = isset($exif['GPS']['GPSLongitude'])
-            ? $this->_eval($exif['GPS']['GPSLongitude'], 'longitude')
+            ? (float) $this->_eval($exif['GPS']['GPSLongitude'], 'longitude')
             : null;
     }
 
@@ -596,13 +660,13 @@ class FileManager {
 
         // Geolocation
         $this->_fileMeta['geolocation']['altitude'] = isset($imageMagickProperties['exif:GPSAltitude'])
-            ? $this->_eval($imageMagickProperties['exif:GPSAltitude'], 'altitude')
+            ? (float) $this->_eval($imageMagickProperties['exif:GPSAltitude'], 'altitude')
             : null;
         $this->_fileMeta['geolocation']['latitude'] = isset($imageMagickProperties['exif:GPSLatitude'])
-            ? $this->_eval($imageMagickProperties['exif:GPSLatitude'], 'latitude')
+            ? (float) $this->_eval($imageMagickProperties['exif:GPSLatitude'], 'latitude')
             : null;
         $this->_fileMeta['geolocation']['longitude'] = isset($imageMagickProperties['exif:GPSLongitude'])
-            ? $this->_eval($imageMagickProperties['exif:GPSLongitude'], 'longitude')
+            ? (float) $this->_eval($imageMagickProperties['exif:GPSLongitude'], 'longitude')
             : null;
     }
 
@@ -694,13 +758,13 @@ class FileManager {
 
         // Geolocation
         $this->_fileMeta['geolocation']['altitude'] = isset($exif['EXIF GPSAltitude'])
-            ? $this->_eval($exif['EXIF GPSAltitude'], 'altitude')
+            ? (float) $this->_eval($exif['EXIF GPSAltitude'], 'altitude')
             : null;
         $this->_fileMeta['geolocation']['latitude'] = isset($exif['EXIF GPSLatitude'])
-            ? $this->_eval($exif['EXIF GPSLatitude'], 'latitude')
+            ? (float) $this->_eval($exif['EXIF GPSLatitude'], 'latitude')
             : null;
         $this->_fileMeta['geolocation']['longitude'] = isset($exif['EXIF GPSLongitude'])
-            ? $this->_eval($exif['EXIF GPSLongitude'], 'longitude')
+            ? (float) $this->_eval($exif['EXIF GPSLongitude'], 'longitude')
             : null;
     }
 
@@ -918,7 +982,7 @@ class FileManager {
             );
         }
 
-        $path = $this->getFileDataDir($file) . '/' . $this->_getLabelFileName('amazon_rekognition');
+        $path = $this->getFileDataDir($file) . '/' . $this->getLabelFileName('amazon_rekognition');
 
         $alreadyExists = $skipFetchIfAlreadyExists && file_exists($path);
         $result = [];
@@ -927,7 +991,7 @@ class FileManager {
             $result = json_decode(file_get_contents($path), true);
         } else {
             if ($this->logger) {
-                $this->logger->debug('Labeling data does not exist. Feching from service ...');
+                $this->logger->debug('Labelling data does not exist. Feching from service ...');
             }
 
             $image->widen(1024, function ($constraint) {
@@ -955,37 +1019,5 @@ class FileManager {
         }
 
         $this->_labelTags = $tags;
-    }
-
-    /**
-     * @param string $service
-     */
-    private function _getLabelFileName($service)
-    {
-        if ($service === 'amazon_rekognition') {
-            return 'amazon_rekognition_labels.json';
-        }
-
-        throw new \Exception(sprintf(
-            'The labelling service "%s" does not exist.',
-            $service
-        ));
-    }
-
-    /**
-     * @param string $service
-     */
-    private function _getGeocodeFileName($service)
-    {
-        if ($service === 'osm') {
-            return 'osm_geocode.json';
-        } elseif ($service === 'here') {
-            return 'here_geocode.json';
-        }
-
-        throw new \Exception(sprintf(
-            'The geocoding service "%s" does not exist.',
-            $service
-        ));
     }
 }

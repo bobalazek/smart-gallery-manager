@@ -52,7 +52,7 @@ class AppContent extends React.Component {
   constructor(props) {
     super(props);
 
-    this.maxFilesPerRow = 48;
+    this.maxFilesPerRow = 50;
   }
 
   fetchFilesSummary(orderBy, orderByDirection) {
