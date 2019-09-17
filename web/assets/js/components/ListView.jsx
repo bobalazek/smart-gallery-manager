@@ -364,7 +364,6 @@ class ListView extends React.Component {
 
   _loadMoreRows({ startIndex, stopIndex }) {
     const {
-      rowsIndexes,
       filesSummaryDatetime,
     } = this.props;
 
@@ -373,10 +372,13 @@ class ListView extends React.Component {
       this.loadRowsTimeout = setTimeout(() => {
         this.props.setData('isLoading', true);
 
+        const limit = this.parent.maxFilesPerRow * ((stopIndex - startIndex) + 1);
+        const offset = this.parent.maxFilesPerRow * startIndex;
+
         const url = rootUrl + '/api/files' +
           this.parent.getFiltersQuery() +
-            '&limit=' + (this.parent.maxFilesPerRow * (stopIndex - startIndex)) +
-            '&offset=' + (this.parent.maxFilesPerRow * startIndex) +
+            '&limit=' + limit +
+            '&offset=' + offset +
             '&created_before=' + filesSummaryDatetime.format('YYYY-MM-DDTHH:mm:ss');
 
         return axios.get(url)
