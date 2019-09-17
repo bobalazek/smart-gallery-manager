@@ -674,7 +674,7 @@ class FileManager {
             ? strtolower($this->_eval($imageMagickProperties['exif:GPSLatitudeRef']))
             : null;
         $this->_fileMeta['geolocation']['longitude_ref'] = isset($imageMagickProperties['exif:GPSLongitudeRef'])
-            ? strtolower($imageMagickProperties['exif:GPSLongitudeRef']))
+            ? strtolower($this->_eval($imageMagickProperties['exif:GPSLongitudeRef']))
             : null;
         $negateLatitude = in_array($this->_fileMeta['geolocation']['latitude_ref'], ['s', 'south']);
         $negateLongitude = in_array($this->_fileMeta['geolocation']['longitude_ref'], ['w', 'west']);
