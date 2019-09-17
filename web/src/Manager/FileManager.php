@@ -670,11 +670,11 @@ class FileManager {
         $this->_fileMeta['device']['lens_model'] = $imageMagickProperties['exif:LensModel'] ?? null;
 
         // Geolocation
-        $this->_fileMeta['geolocation']['latitude_ref'] = isset($exif['GPS']['GPSLatitudeRef'])
-            ? strtolower($this->_eval($exif['GPS']['GPSLatitudeRef']))
+        $this->_fileMeta['geolocation']['latitude_ref'] = isset($imageMagickProperties['exif:GPSLatitudeRef'])
+            ? strtolower($this->_eval($imageMagickProperties['exif:GPSLatitudeRef']))
             : null;
-        $this->_fileMeta['geolocation']['longitude_ref'] = isset($exif['GPS']['GPSLongitudeRef'])
-            ? strtolower($this->_eval($exif['GPS']['GPSLongitudeRef']))
+        $this->_fileMeta['geolocation']['longitude_ref'] = isset($imageMagickProperties['exif:GPSLongitudeRef'])
+            ? strtolower($imageMagickProperties['exif:GPSLongitudeRef']))
             : null;
         $negateLatitude = in_array($this->_fileMeta['geolocation']['latitude_ref'], ['s', 'south']);
         $negateLongitude = in_array($this->_fileMeta['geolocation']['longitude_ref'], ['w', 'west']);
@@ -777,11 +777,11 @@ class FileManager {
             : null;
 
         // Geolocation
-        $this->_fileMeta['geolocation']['latitude_ref'] = isset($exif['GPS']['GPSLatitudeRef'])
-            ? strtolower($this->_eval($exif['GPS']['GPSLatitudeRef']))
+        $this->_fileMeta['geolocation']['latitude_ref'] = isset($exif['EXIF GPSLatitudeRef'])
+            ? strtolower($this->_eval($exif['EXIF GPSLatitudeRef']))
             : null;
-        $this->_fileMeta['geolocation']['longitude_ref'] = isset($exif['GPS']['GPSLongitudeRef'])
-            ? strtolower($this->_eval($exif['GPS']['GPSLongitudeRef']))
+        $this->_fileMeta['geolocation']['longitude_ref'] = isset($exif['EXIF GPSLongitudeRef'])
+            ? strtolower($this->_eval($exif['EXIF GPSLongitudeRef']))
             : null;
         $negateLatitude = in_array($this->_fileMeta['geolocation']['latitude_ref'], ['s', 'south']);
         $negateLongitude = in_array($this->_fileMeta['geolocation']['longitude_ref'], ['w', 'west']);
