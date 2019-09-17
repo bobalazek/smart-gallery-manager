@@ -113,7 +113,9 @@ class FileManager {
         $this->_fileMeta['geolocation'] = [
             'altitude' => null,
             'latitude' => null,
+            'latitude_ref' => null,
             'longitude' => null,
+            'longitude_ref' => null,
         ];
 
         try {
@@ -599,14 +601,23 @@ class FileManager {
             );
 
         // Geolocation
+        $this->_fileMeta['geolocation']['latitude_ref'] = isset($exif['GPS']['GPSLatitudeRef'])
+            ? strtolower($this->_eval($exif['GPS']['GPSLatitudeRef']))
+            : null;
+        $this->_fileMeta['geolocation']['longitude_ref'] = isset($exif['GPS']['GPSLongitudeRef'])
+            ? strtolower($this->_eval($exif['GPS']['GPSLongitudeRef']))
+            : null;
+        $negateLatitude = in_array($this->_fileMeta['geolocation']['latitude_ref'], ['s', 'south']);
+        $negateLongitude = in_array($this->_fileMeta['geolocation']['longitude_ref'], ['w', 'west']);
+
         $this->_fileMeta['geolocation']['altitude'] = isset($exif['GPS']['GPSAltitude'])
             ? (float) $this->_eval($exif['GPS']['GPSAltitude'], 'altitude')
             : null;
         $this->_fileMeta['geolocation']['latitude'] = isset($exif['GPS']['GPSLatitude'])
-            ? (float) $this->_eval($exif['GPS']['GPSLatitude'], 'latitude')
+            ? (float) $this->_eval($exif['GPS']['GPSLatitude'], 'latitude') * ($negateLatitude ? -1 : 1)
             : null;
         $this->_fileMeta['geolocation']['longitude'] = isset($exif['GPS']['GPSLongitude'])
-            ? (float) $this->_eval($exif['GPS']['GPSLongitude'], 'longitude')
+            ? (float) $this->_eval($exif['GPS']['GPSLongitude'], 'longitude') * ($negateLongitude ? -1 : 1)
             : null;
     }
 
@@ -659,14 +670,23 @@ class FileManager {
         $this->_fileMeta['device']['lens_model'] = $imageMagickProperties['exif:LensModel'] ?? null;
 
         // Geolocation
+        $this->_fileMeta['geolocation']['latitude_ref'] = isset($exif['GPS']['GPSLatitudeRef'])
+            ? strtolower($this->_eval($exif['GPS']['GPSLatitudeRef']))
+            : null;
+        $this->_fileMeta['geolocation']['longitude_ref'] = isset($exif['GPS']['GPSLongitudeRef'])
+            ? strtolower($this->_eval($exif['GPS']['GPSLongitudeRef']))
+            : null;
+        $negateLatitude = in_array($this->_fileMeta['geolocation']['latitude_ref'], ['s', 'south']);
+        $negateLongitude = in_array($this->_fileMeta['geolocation']['longitude_ref'], ['w', 'west']);
+
         $this->_fileMeta['geolocation']['altitude'] = isset($imageMagickProperties['exif:GPSAltitude'])
             ? (float) $this->_eval($imageMagickProperties['exif:GPSAltitude'], 'altitude')
             : null;
         $this->_fileMeta['geolocation']['latitude'] = isset($imageMagickProperties['exif:GPSLatitude'])
-            ? (float) $this->_eval($imageMagickProperties['exif:GPSLatitude'], 'latitude')
+            ? (float) $this->_eval($imageMagickProperties['exif:GPSLatitude'], 'latitude') * ($negateLatitude ? -1 : 1)
             : null;
         $this->_fileMeta['geolocation']['longitude'] = isset($imageMagickProperties['exif:GPSLongitude'])
-            ? (float) $this->_eval($imageMagickProperties['exif:GPSLongitude'], 'longitude')
+            ? (float) $this->_eval($imageMagickProperties['exif:GPSLongitude'], 'longitude') * ($negateLongitude ? -1 : 1)
             : null;
     }
 
@@ -757,14 +777,23 @@ class FileManager {
             : null;
 
         // Geolocation
+        $this->_fileMeta['geolocation']['latitude_ref'] = isset($exif['GPS']['GPSLatitudeRef'])
+            ? strtolower($this->_eval($exif['GPS']['GPSLatitudeRef']))
+            : null;
+        $this->_fileMeta['geolocation']['longitude_ref'] = isset($exif['GPS']['GPSLongitudeRef'])
+            ? strtolower($this->_eval($exif['GPS']['GPSLongitudeRef']))
+            : null;
+        $negateLatitude = in_array($this->_fileMeta['geolocation']['latitude_ref'], ['s', 'south']);
+        $negateLongitude = in_array($this->_fileMeta['geolocation']['longitude_ref'], ['w', 'west']);
+
         $this->_fileMeta['geolocation']['altitude'] = isset($exif['EXIF GPSAltitude'])
             ? (float) $this->_eval($exif['EXIF GPSAltitude'], 'altitude')
             : null;
         $this->_fileMeta['geolocation']['latitude'] = isset($exif['EXIF GPSLatitude'])
-            ? (float) $this->_eval($exif['EXIF GPSLatitude'], 'latitude')
+            ? (float) $this->_eval($exif['EXIF GPSLatitude'], 'latitude') * ($negateLatitude ? -1 : 1)
             : null;
         $this->_fileMeta['geolocation']['longitude'] = isset($exif['EXIF GPSLongitude'])
-            ? (float) $this->_eval($exif['EXIF GPSLongitude'], 'longitude')
+            ? (float) $this->_eval($exif['EXIF GPSLongitude'], 'longitude') * ($negateLongitude ? -1 : 1)
             : null;
     }
 
@@ -787,7 +816,7 @@ class FileManager {
 
         $cacheHash = 'osm.' . sha1(json_encode($latitude_and_longitude));
 
-        $path = $this->getFileDataDir($file) . '/' . $this->_getGeocodeFileName('osm');
+        $path = $this->getFileDataDir($file) . '/' . $this->getGeocodeFileName('osm');
 
         $alreadyExists = $skipFetchIfAlreadyExists && file_exists($path);
 
@@ -873,7 +902,7 @@ class FileManager {
 
         $cacheHash = 'here.' . sha1(json_encode($latitude_and_longitude));
 
-        $path = $this->getFileDataDir($file) . '/' . $this->_getGeocodeFileName('here');
+        $path = $this->getFileDataDir($file) . '/' . $this->getGeocodeFileName('here');
 
         $alreadyExists = $skipFetchIfAlreadyExists && file_exists($path);
 
