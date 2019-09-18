@@ -9,9 +9,9 @@ const initialState = {
   isLoading: false,
   isLoaded: false,
   rows: [],
-  rowsIndexes: [],
+  rowsDateMap: [],
   files: [],
-  filesMap: [],
+  filesIdMap: [],
   filesSummary: {},
   filesSummaryDatetime: null, // When was it last fetched?
   orderBy: 'taken_at',

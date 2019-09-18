@@ -23,9 +23,9 @@ const mapStateToProps = state => {
     isLoading: state.isLoading,
     isLoaded: state.isLoaded,
     rows: state.rows,
-    rowsIndexes: state.rowsIndexes,
+    rowsDateMap: state.rowsDateMap,
     files: state.files,
-    filesMap: state.filesMap,
+    filesIdMap: state.filesIdMap,
     filesSummary: state.filesSummary,
     filesSummaryDatetime: state.filesSummaryDatetime,
     orderBy: state.orderBy,
@@ -70,26 +70,26 @@ class AppContent extends React.Component {
       })
         .then(res => {
           const filesSummary = res.data.data;
-          let rowsIndexes = [];
+          let rowsDateMap = [];
 
           filesSummary.date.date.forEach((data) => {
             if (data.count <= this.maxFilesPerRow) {
-              rowsIndexes.push(data.date);
+              rowsDateMap.push(data.date);
             } else {
               const totalRows = Math.round(data.count / this.maxFilesPerRow);
               for(let i = 0; i < totalRows; i++) {
-                rowsIndexes.push(data.date);
+                rowsDateMap.push(data.date);
               }
             }
           });
 
           this.props.setDataBatch({
             rows: [],
-            rowsIndexes,
+            rowsDateMap,
             files: [],
-            filesMap: [],
+            filesIdMap: [],
             filesSummary,
-            filesSummaryDatetime: moment.parseZone(),
+            filesSummaryDatetime: moment(),
             isLoaded: true,
             isLoading: false,
           });

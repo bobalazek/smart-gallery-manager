@@ -65,9 +65,9 @@ const mapStateToProps = state => {
     isLoading: state.isLoading,
     isLoaded: state.isLoaded,
     rows: state.rows,
-    rowsIndexes: state.rowsIndexes,
+    rowsDateMap: state.rowsDateMap,
     files: state.files,
-    filesMap: state.filesMap,
+    filesIdMap: state.filesIdMap,
     filesSummary: state.filesSummary,
     filesSummaryDatetime: state.filesSummaryDatetime,
     orderBy: state.orderBy,
@@ -242,7 +242,7 @@ class ListView extends React.Component {
                   loadMoreRows={this._loadMoreRows}
                   isRowLoaded={this._isRowLoaded}
                   rowCount={this._getRowCount()}
-                  minimumBatchSize={4}
+                  minimumBatchSize={6}
                   threshold={4}
                   ref={this.infiniteLoaderRef}
                 >
@@ -261,6 +261,7 @@ class ListView extends React.Component {
                           isScrolling={isScrolling}
                           onScroll={onChildScroll}
                           scrollTop={scrollTop}
+                          overscanRowCount={4}
                           ref={el => {
                             this.infiniteLoaderListRef.current = el;
                             registerChild(el);
@@ -367,59 +368,69 @@ class ListView extends React.Component {
       filesSummaryDatetime,
     } = this.props;
 
-    clearTimeout(this.loadRowsTimeout);
     return new Promise((resolve, reject) => {
-      this.loadRowsTimeout = setTimeout(() => {
-        this.props.setData('isLoading', true);
+      const limit = this.parent.maxFilesPerRow * ((stopIndex - startIndex) + 1);
+      const offset = this.parent.maxFilesPerRow * startIndex;
 
-        const limit = this.parent.maxFilesPerRow * ((stopIndex - startIndex) + 1);
-        const offset = this.parent.maxFilesPerRow * startIndex;
+      // Prevent doing a request for the same offset
+      if (this.lastOffset === offset) {
+        resolve();
 
-        const url = rootUrl + '/api/files' +
-          this.parent.getFiltersQuery() +
-            '&limit=' + limit +
-            '&offset=' + offset +
-            '&created_before=' + filesSummaryDatetime.format('YYYY-MM-DDTHH:mm:ss');
+        return;
+      }
 
-        return axios.get(url)
-          .then(res => {
-            const requestFiles = res.data.data;
-            let {
-              files,
-              filesMap,
-            } = this.props;
+      this.lastOffset = offset;
 
-            requestFiles.forEach(file => {
-              if (!filesMap.includes(file.id)) {
-                files.push(file);
-                filesMap.push(file.id);
-              }
-            });
+      this.props.setData('isLoading', true);
 
-            this.props.setDataBatch({
-              files,
-              filesMap,
-              isLoading: false,
-            });
+      const url = rootUrl + '/api/files' +
+        this.parent.getFiltersQuery() +
+        '&limit=' + limit +
+        '&offset=' + offset +
+        '&created_before=' + filesSummaryDatetime.format('YYYY-MM-DDTHH:mm:ss');
 
-            this._prepareRowsPerIndex(files);
+      return axios.get(url)
+        .then(res => {
+          const requestFiles = res.data.data;
+          let {
+            files,
+            filesIdMap,
+          } = this.props;
 
-            resolve();
+          requestFiles.forEach(file => {
+            if (!filesIdMap.includes(file.id)) {
+              files.push(file);
+              filesIdMap.push(file.id);
+            }
           });
-      }, 200);
+
+          this.props.setDataBatch({
+            files,
+            filesIdMap,
+            isLoading: false,
+          });
+
+          this._prepareRowsPerIndex(files);
+
+          resolve();
+        });
     });
   }
 
   _isRowLoaded({ index }) {
-    const { rows } = this.props;
+    const {
+      rows,
+    } = this.props;
 
     return !!rows[index];
   }
 
   _getRowCount() {
-    const { rowsIndexes } = this.props;
+    const {
+      rowsDateMap,
+    } = this.props;
 
-    return rowsIndexes.length;
+    return rowsDateMap.length;
   }
 
   _rowRenderer({ index, key, parent, style, isVisible, isScrolling }) {
