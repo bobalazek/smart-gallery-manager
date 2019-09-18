@@ -369,13 +369,13 @@ class ListView extends React.Component {
     } = this.props;
 
     return new Promise((resolve, reject) => {
+      const query = this.parent.getFiltersQuery();
       const limit = this.parent.maxFilesPerRow * ((stopIndex - startIndex) + 1);
       const offset = this.parent.maxFilesPerRow * startIndex;
-      const query = this.parent.getFiltersQuery();
 
-      // Prevent doing a request for the same offset
+      // Prevent doing a request if it's the same query and offset
       if (
-        this.query === query &&
+        this.lastQuery === query &&
         this.lastOffset === offset
       ) {
         resolve();
@@ -383,8 +383,8 @@ class ListView extends React.Component {
         return;
       }
 
+      this.lastQuery = query;
       this.lastOffset = offset;
-      this.query = query;
 
       this.props.setData('isLoading', true);
 
