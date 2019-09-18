@@ -121,19 +121,20 @@ class ImageModal extends React.Component {
     this.onInfoButtonClick = this.onInfoButtonClick.bind(this);
     this.onPrevButtonClick = this.onPrevButtonClick.bind(this);
     this.onNextButtonClick = this.onNextButtonClick.bind(this);
+    this.onResize = this.onResize.bind(this);
+    this.onKeydown = this.onKeydown.bind(this);
     this.prepareImageStyles = this.prepareImageStyles.bind(this);
-    this.prepareEvents = this.prepareEvents.bind(this);
     this.prepareData = this.prepareData.bind(this);
   }
 
   componentDidMount() {
-    window.addEventListener('resize', this.prepareImageStyles);
-    window.addEventListener('keydown', this.prepareEvents);
+    window.addEventListener('resize', this.onResize);
+    window.addEventListener('keydown', this.onKeydown);
   }
 
   componentWillUnmount() {
-    window.removeEventListener('resize', this.prepareImageStyles);
-    window.removeEventListener('keydown', this.prepareEvents);
+    window.removeEventListener('resize', this.onResize);
+    window.removeEventListener('keydown', this.onKeydown);
   }
 
   componentDidUpdate(previousProps) {
@@ -195,6 +196,18 @@ class ImageModal extends React.Component {
     }
   }
 
+  onResize(e) {
+    this.prepareImageStyles();
+  }
+
+  onKeydown(e) {
+    if (e.keyCode === 37) { // Left
+      this.onPrevButtonClick();
+    } else if (e.keyCode === 39) { // Right
+      this.onNextButtonClick();
+    }
+  }
+
   prepareImageStyles(width, height) {
     if (
       !this.imageRef.current ||
@@ -205,8 +218,12 @@ class ImageModal extends React.Component {
 
     const containerWidth = this.imageContentRef.current.clientWidth;
     const containerHeight = this.imageContentRef.current.clientHeight;
-    const imageWidth = width || this.imageRef.current.naturalWidth;
-    const imageHeight = height || this.imageRef.current.naturalHeight;
+    const imageWidth = width ||
+      this.imageRef.current.naturalWidth ||
+      this.imageRef.current.clientWidth;
+    const imageHeight = height ||
+      this.imageRef.current.naturalHeight ||
+      this.imageRef.current.clientHeight;
     const imageAspectRatio = imageWidth / imageHeight;
 
     let finalImageWidth = imageWidth;
@@ -236,14 +253,6 @@ class ImageModal extends React.Component {
         top: wrapperTop,
       },
     });
-  }
-
-  prepareEvents(e) {
-    if (e.keyCode === 37) { // Left
-      this.onPrevButtonClick();
-    } else if (e.keyCode === 39) { // Right
-      this.onNextButtonClick();
-    }
   }
 
   prepareData(fileId) {

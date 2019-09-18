@@ -40,6 +40,10 @@ class ImageModalSidebar extends React.Component {
     this.prepareInformation();
   }
 
+  componentWillUnmount() {
+    this.requestCancelToken && this.requestCancelToken();
+  }
+
   componentDidUpdate(previousProps) {
     if (previousProps.data.hash !== this.props.data.hash) {
       this.prepareInformation();

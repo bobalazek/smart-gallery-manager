@@ -371,20 +371,24 @@ class ListView extends React.Component {
     return new Promise((resolve, reject) => {
       const limit = this.parent.maxFilesPerRow * ((stopIndex - startIndex) + 1);
       const offset = this.parent.maxFilesPerRow * startIndex;
+      const query = this.parent.getFiltersQuery();
 
       // Prevent doing a request for the same offset
-      if (this.lastOffset === offset) {
+      if (
+        this.query === query &&
+        this.lastOffset === offset
+      ) {
         resolve();
 
         return;
       }
 
       this.lastOffset = offset;
+      this.query = query;
 
       this.props.setData('isLoading', true);
 
-      const url = rootUrl + '/api/files' +
-        this.parent.getFiltersQuery() +
+      const url = rootUrl + '/api/files' + query +
         '&limit=' + limit +
         '&offset=' + offset +
         '&created_before=' + filesSummaryDatetime.format('YYYY-MM-DDTHH:mm:ss');
