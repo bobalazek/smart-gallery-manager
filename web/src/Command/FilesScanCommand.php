@@ -375,7 +375,7 @@ class FilesScanCommand extends Command
                 try {
                     $this->fileManager->faces(
                         $file,
-                        !$labelForce
+                        !$facesForce
                     );
                 } catch (\Exception $e) {
                     $this->logger->warning($e->getMessage());

@@ -9,6 +9,8 @@ services:
       # or if it's not on the same server:
       - server-nfs:/var/data/server
   python:
+    ports:
+      - '${PYTHON_PORT_8000:-8001}:8000'
     volumes:
       # - /srv:/var/data/server
       # or if it's not on the same server:

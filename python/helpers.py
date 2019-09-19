@@ -32,9 +32,48 @@ def get_file_faces(filename):
         return result
 
     try:
-        img = cv2.cvtColor(cv2.imread(filename), cv2.COLOR_BGR2RGB)
+        img = cv2.imread(filename)
+        height, width, channels = img.shape
+        cvt_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         detector = MTCNN()
-        result['data'] = detector.detect_faces(img)
+        faces = detector.detect_faces(img)
+
+        data = []
+
+        for face in faces:
+            item = face
+            print(item)
+            item['box'] = [
+                item['box'][0] / width,
+                item['box'][1] / height,
+                item['box'][2] / width,
+                item['box'][3] / height,
+            ]
+            item['keypoints'] = {
+                'left_eye': [
+                    item['keypoints']['left_eye'][0] / width,
+                    item['keypoints']['left_eye'][1] / height,
+                ],
+                'right_eye': [
+                    item['keypoints']['right_eye'][0] / width,
+                    item['keypoints']['right_eye'][1] / height,
+                ],
+                'nose': [
+                    item['keypoints']['nose'][0] / width,
+                    item['keypoints']['nose'][1] / height,
+                ],
+                'mouth_left': [
+                    item['keypoints']['mouth_left'][0] / width,
+                    item['keypoints']['mouth_left'][1] / height,
+                ],
+                'mouth_right': [
+                    item['keypoints']['mouth_right'][0] / width,
+                    item['keypoints']['mouth_right'][1] / height,
+                ],
+            }
+            data.append(item)
+
+        result['data'] = data
     except:
         result['error'] = 'Something went wrong'
 

@@ -3,7 +3,7 @@ import rawpy
 import simplejson as json
 from PIL import Image
 from bottle import Bottle, request, response, run
-from helpers import get_file_info
+from helpers import get_file_info, get_file_faces
 
 PORT = 8000
 
