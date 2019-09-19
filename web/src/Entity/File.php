@@ -71,6 +71,11 @@ class File
     private $tags = [];
 
     /**
+     * @ORM\Column(type="json_array")
+     */
+    private $faces = [];
+
+    /**
      * @ORM\Column(type="datetime")
      */
     private $createdAt;
@@ -198,6 +203,18 @@ class File
         return $this;
     }
 
+    public function getFaces(): ?array
+    {
+        return $this->faces;
+    }
+
+    public function setFaces(array $faces): self
+    {
+        $this->faces = $faces;
+
+        return $this;
+    }
+
     public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
@@ -247,6 +264,7 @@ class File
             'meta' => $this->getMeta(),
             'location' => $this->getLocation(),
             'tags' => $this->getTags(),
+            'faces' => $this->getFaces(),
             'created_at' => $this->getCreatedAt()->format(DATE_ATOM),
             'modified_at' => $this->getModifiedAt()->format(DATE_ATOM),
             'taken_at' => $this->getTakenAt()->format(DATE_ATOM),

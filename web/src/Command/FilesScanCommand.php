@@ -118,16 +118,27 @@ class FilesScanCommand extends Command
             'Start time: %s',
             date(DATE_ATOM)
         ));
+        $this->logger->notice(
+            'Update existing entries: ' .
+            $updateExistingEntries ? 'yes' : 'no'
+        );
         $this->logger->notice('Actions:');
         foreach ($actions as $action) {
+            $isDisabled = (
+                (
+                    !$shouldLabel &&
+                    ($action === 'label' || $action === 'label:force')
+                ) ||
+                (
+                    !$shouldGeocode &&
+                    ($action === 'geocode' || $action === 'geocode:force')
+                )
+            );
             $this->logger->notice(
                 '* ' . $action .
-                (
-                    ($action === 'label' && !$shouldLabel) ||
-                    ($action === 'geocode' && !$shouldGeocode)
-                        ? ' (disabled)'
-                        : ''
-                )
+                ($isDisabled
+                    ? ' (disabled)'
+                    : '')
             );
         }
 
@@ -386,7 +397,7 @@ class FilesScanCommand extends Command
             // Save the entity
             $this->em->persist($file);
 
-            if (($i % 50) === 0) {
+            if (($i % 25) === 0) {
                 $this->em->flush();
                 $this->em->clear();
                 gc_collect_cycles();

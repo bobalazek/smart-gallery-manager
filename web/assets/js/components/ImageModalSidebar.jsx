@@ -2,6 +2,7 @@ import React from 'react';
 import axios from 'axios';
 import moment from 'moment';
 import L from 'leaflet';
+import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/styles';
 import Divider from '@material-ui/core/Divider';
 import Typography from '@material-ui/core/Typography';
@@ -16,6 +17,9 @@ import LocationOnIcon from '@material-ui/icons/LocationOn';
 import CalendarTodayIcon from '@material-ui/icons/CalendarToday';
 import LabelIcon from '@material-ui/icons/Label';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import {
+  setData,
+} from '../actions/index';
 
 const styles = {
   list: {
@@ -23,6 +27,12 @@ const styles = {
     maxWidth: 360,
   },
 };
+
+function mapDispatchToProps(dispatch) {
+  return {
+    setData: (type, data) => dispatch(setData(type, data)),
+  };
+}
 
 class ImageModalSidebar extends React.Component {
   constructor(props) {
@@ -51,6 +61,7 @@ class ImageModalSidebar extends React.Component {
   }
 
   prepareInformation() {
+    this.props.setData('imageModalData', {});
     this.setState({
       isFileInformationLoaded: false,
     });
@@ -97,6 +108,7 @@ class ImageModalSidebar extends React.Component {
             }).setView(position, 13);
           }
 
+          this.props.setData('imageModalData', fileInformation);
         });
       })
       .catch((error) => {
@@ -385,4 +397,6 @@ class ImageModalSidebar extends React.Component {
   }
 }
 
-export default withStyles(styles)(ImageModalSidebar);
+export default connect(null, mapDispatchToProps)(
+  withStyles(styles)(ImageModalSidebar)
+);

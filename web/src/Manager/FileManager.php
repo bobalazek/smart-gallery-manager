@@ -379,6 +379,8 @@ class FileManager {
         return true;
     }
 
+    private $_faces = [];
+
     /**
      * Finds the faces on the image
      *
@@ -387,6 +389,8 @@ class FileManager {
      */
     public function faces(File $file, $skipFetchIfAlreadyExists = true)
     {
+        $this->_faces = [];
+
         // Check if it's a viable file first. If not, it will throw an exception,
         //   so it won't continue any execution.
         try {
@@ -419,13 +423,21 @@ class FileManager {
                 ],
             ]);
 
-            $content = json_decode($response->getContent(), true);
-            if (isset($content['error'])) {
-                throw new \Exception($content['error']);
+            $result = json_decode($response->getContent(), true);
+            if (isset($result['error'])) {
+                throw new \Exception($result['error']);
             }
 
-            file_put_contents($path, json_encode($content));
+            file_put_contents($path, json_encode($result));
         }
+
+        $faces = [];
+        foreach ($result['data'] as $face) {
+            $faces[] = $face['box'];
+        }
+        $this->_faces = $faces;
+
+        $file->setFaces($this->_faces);
 
         return true;
     }

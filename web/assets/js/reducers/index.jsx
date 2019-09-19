@@ -14,6 +14,7 @@ const initialState = {
   filesIdMap: [],
   filesSummary: {},
   filesSummaryDatetime: null, // When was it last fetched?
+  imageModalData: {},
   orderBy: 'taken_at',
   orderByDirection: 'DESC',
   search: '',

@@ -51,6 +51,13 @@ const styles = {
     maxWidth: '100%',
     maxHeight: '100%',
   },
+  imageWrapper: {
+    position: 'relative',
+  },
+  imageFace: {
+    border: '1px solid red',
+    position: 'absolute',
+  },
   closeButton: {
     position: 'absolute',
     top: 16,
@@ -89,6 +96,7 @@ const styles = {
 const mapStateToProps = state => {
   return {
     files: state.files,
+    imageModalData: state.imageModalData,
   };
 };
 
@@ -311,6 +319,7 @@ class ImageModal extends React.Component {
       classes,
       open,
       onClose,
+      imageModalData,
     } = this.props;
 
     let finalImageStyle = {...imageStyle};
@@ -367,13 +376,29 @@ class ImageModal extends React.Component {
             </div>
             {imageSrc &&
               <div style={imageWrapperStyle}>
-                <img
-                  src={imageSrc}
-                  onLoad={this.onImageLoad}
-                  ref={this.imageRef}
-                  className={classes.image}
-                  style={finalImageStyle}
-                />
+                <div className={classes.imageWrapper}>
+                  <img
+                    src={imageSrc}
+                    onLoad={this.onImageLoad}
+                    ref={this.imageRef}
+                    className={classes.image}
+                    style={finalImageStyle}
+                  />
+                </div>
+                {imageModalData.faces && imageModalData.faces.map((face, index) => {
+                  return (
+                    <div
+                      key={index}
+                      className={classes.imageFace}
+                      style={{
+                        left: (face[0] * 100) + '%',
+                        top: (face[1] * 100) + '%',
+                        width: (face[2] * 100) + '%',
+                        height: (face[3] * 100) + '%',
+                      }}
+                    ></div>
+                  )
+                })}
               </div>
             }
             {isImageLoading && (
