@@ -120,7 +120,7 @@ class FilesScanCommand extends Command
         ));
         $this->logger->notice(
             'Update existing entries: ' .
-            $updateExistingEntries ? 'yes' : 'no'
+            ($updateExistingEntries ? 'yes' : 'no')
         );
         $this->logger->notice('Actions:');
         foreach ($actions as $action) {
