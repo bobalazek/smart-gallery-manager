@@ -374,13 +374,66 @@ class FileManager {
             );
         }
 
-        $file->setLocation($this->_labelTags);
+        $file->setTags($this->_labelTags);
+
+        return true;
+    }
+
+    /**
+     * Finds the faces on the image
+     *
+     * @param File $file
+     * @param bool $skipFetchIfAlreadyExists
+     */
+    public function faces(File $file, $skipFetchIfAlreadyExists = true)
+    {
+        // Check if it's a viable file first. If not, it will throw an exception,
+        //   so it won't continue any execution.
+        try {
+            $image = $this->getImage($file);
+        } catch (\Exception $e) {
+            throw new \Exception(
+                'Can not label, because it is not an image. Error: ' .
+                $e->getMessage()
+            );
+        }
+
+        $path = $this->getFileDataDir($file) . '/' . $this->getFacesFileName();
+
+        $alreadyExists = $skipFetchIfAlreadyExists && file_exists($path);
+        $result = [];
+
+        if ($alreadyExists) {
+            $result = json_decode(file_get_contents($path), true);
+        } else {
+            if ($this->logger) {
+                $this->logger->debug('Faces data does not exist. Feching from service ...');
+            }
+
+            // TODO: do same as with labelling? Send jpeg bytes?
+
+            $url = 'http://python:8000/file-faces';
+            $response = $this->httpClient->request('GET', $url, [
+                'query' => [
+                    'file' => $file->getPath(),
+                ],
+            ]);
+
+            $content = json_decode($response->getContent(), true);
+            if (isset($content['error'])) {
+                throw new \Exception($content['error']);
+            }
+
+            file_put_contents($path, json_encode($content));
+        }
 
         return true;
     }
 
     /**
      * @param string|null $service
+     *
+     * @return string
      */
     public function getLabelFileName($service = null)
     {
@@ -400,6 +453,8 @@ class FileManager {
 
     /**
      * @param string|null $service
+     *
+     * @return string
      */
     public function getGeocodeFileName($service = null)
     {
@@ -417,6 +472,14 @@ class FileManager {
             'The geocoding service "%s" does not exist.',
             $service
         ));
+    }
+
+    /**
+     * @return string
+     */
+    public function getFacesFileName()
+    {
+        return 'faces.json';
     }
 
     /**
@@ -705,8 +768,8 @@ class FileManager {
         ]);
 
         $content = json_decode($response->getContent(), true);
-        if (isset($content['data']['error'])) {
-            throw new \Exception($content['data']['error']);
+        if (isset($content['error'])) {
+            throw new \Exception($content['error']);
         }
 
         $exif = $content['data']['exif'];

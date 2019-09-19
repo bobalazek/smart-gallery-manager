@@ -3,7 +3,7 @@ import rawpy
 import simplejson as json
 from PIL import Image
 from bottle import Bottle, request, response, run
-from processor import get_file_info
+from helpers import get_file_info
 
 PORT = 8000
 
@@ -41,9 +41,16 @@ def file_view():
 @app.route("/file-info")
 def file_info():
     response.content_type = "application/json"
-    return json.dumps({
-        "data": get_file_info(request.query.file),
-    })
+    return json.dumps(
+        get_file_info(request.query.file)
+    )
+
+@app.route("/file-faces")
+def file_info():
+    response.content_type = "application/json"
+    return json.dumps(
+        get_file_faces(request.query.file)
+    )
 
 if __name__ == "__main__":
     run(app, host="0.0.0.0", port=PORT, reloader=True, debug=True)

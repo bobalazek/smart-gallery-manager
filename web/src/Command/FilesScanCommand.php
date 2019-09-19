@@ -56,7 +56,7 @@ class FilesScanCommand extends Command
                 'What actions should be executed - must be a comma-separated value: Default: bin/console app:files:scan -a meta -a cache -a geocode -a label. ' .
                 'You can also use "geocode:force" (instead of "geocode") and "label:force" (instead of "label") to force the API to get new data, ' .
                 'instead of the cached one locally.',
-                ['meta', 'cache', 'geocode', 'label']
+                ['meta', 'cache', 'geocode', 'label' , 'faces']
             )
             ->addOption(
                 'folder',
@@ -88,9 +88,14 @@ class FilesScanCommand extends Command
             in_array('label', $actions) ||
             in_array('label:force', $actions)
         );
+        $shouldFaces = (
+            in_array('faces', $actions) ||
+            in_array('faces:force', $actions)
+        );
 
         $geocodeForce = in_array('geocode:force', $actions);
         $labelForce = in_array('label:force', $actions);
+        $facesForce = in_array('faces:force', $actions);
 
         // Get the settings
         try {
@@ -363,6 +368,21 @@ class FilesScanCommand extends Command
                 }
             }
 
+            /********** Faces **********/
+            if ($shouldFaces) {
+                $this->logger->info('Faces ...');
+
+                try {
+                    $this->fileManager->faces(
+                        $file,
+                        !$labelForce
+                    );
+                } catch (\Exception $e) {
+                    $this->logger->warning($e->getMessage());
+                }
+            }
+
+            /********** Persist **********/
             // Save the entity
             $this->em->persist($file);
 
