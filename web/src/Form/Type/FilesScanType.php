@@ -27,10 +27,10 @@ class FilesScanType extends AbstractType
                 'attr' => [
                     'class' => 'collection',
                 ],
-                'help' => 'Available options: "meta", "cache", "geocode" and "label". ' .
+                'help' => 'Available options: "meta", "cache", "geocode", "label" and "faces". ' .
                     'You can also use "geocode:force" instead of "geocode", ' .
                     'if you want to forcefully get new data from the API. ' .
-                    'Same goes for "label" ("label:force").',
+                    'Same goes for "label" ("label:force") and "faces" ("faces:label").',
             ])
             ->add('folders', CollectionType::class, [
                 'entry_type' => TextType::class,

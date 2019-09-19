@@ -54,6 +54,7 @@ class DashboardController extends AbstractController
                 'cache',
                 'geocode',
                 'label',
+                'faces',
             ],
             'folders' => $folders,
         ]);
