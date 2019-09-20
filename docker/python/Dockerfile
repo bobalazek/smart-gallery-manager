@@ -15,6 +15,7 @@ RUN pip install exifread
 RUN pip install rawpy
 RUN pip install Pillow
 RUN pip install simplejson
+RUN pip install numpy
 RUN pip install mtcnn
 RUN pip install tensorflow==1.13.2
 RUN pip install opencv-contrib-python==4.1.1.26

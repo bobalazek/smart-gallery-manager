@@ -414,16 +414,23 @@ class FileManager {
                 $this->logger->debug('Faces data does not exist. Feching from service ...');
             }
 
-            // TODO: do same as with labelling? Send jpeg bytes?
+            $image->widen(1024, function ($constraint) {
+                $constraint->upsize();
+            });
+            $image->heighten(1024, function ($constraint) {
+                $constraint->upsize();
+            });
 
             $url = 'http://python:8000/file-faces';
-            $response = $this->httpClient->request('GET', $url, [
-                'query' => [
-                    'file' => $file->getPath(),
-                ],
+            $response = $this->httpClient->request('POST', $url, [
+                'body' => (string) $image->encode('jpg'),
             ]);
 
             $result = json_decode($response->getContent(), true);
+            if ($result === null) {
+                throw new \Exception('Invalid JSON returned from service.');
+            }
+
             if (isset($result['error'])) {
                 throw new \Exception($result['error']);
             }
@@ -780,6 +787,10 @@ class FileManager {
         ]);
 
         $content = json_decode($response->getContent(), true);
+        if ($result === null) {
+            throw new \Exception('Invalid JSON returned from service.');
+        }
+
         if (isset($content['error'])) {
             throw new \Exception($content['error']);
         }

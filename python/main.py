@@ -46,10 +46,17 @@ def file_info():
     )
 
 @app.route("/file-faces")
-def file_info():
+def file_faces():
     response.content_type = "application/json"
     return json.dumps(
         get_file_faces(request.query.file)
+    )
+
+@app.route("/file-faces", method="POST")
+def file_faces_post():
+    response.content_type = "application/json"
+    return json.dumps(
+        get_file_faces(None, request.body.read())
     )
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ import os, io, glob
 import magic
 import exifread
 import cv2
+import numpy as np
 from PIL import Image
 from PIL.ExifTags import TAGS
 from mtcnn.mtcnn import MTCNN
@@ -24,17 +25,28 @@ def get_file_info(filename):
 
     return result
 
-def get_file_faces(filename):
+def get_file_faces(filename=None, bytes=None):
     result = dict()
 
-    if not os.path.isfile(filename):
+    if filename is None and bytes is None:
+        result['error'] = 'You need to either set the filename or the bytes'
+        return result
+
+    if filename is not None and not os.path.isfile(filename):
         result['error'] = 'File does not exist'
         return result
 
     try:
-        img = cv2.imread(filename)
+        if filename is not None:
+            img = cv2.imread(filename)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        else:
+            # https://stackoverflow.com/questions/17170752/python-opencv-load-image-from-byte-string
+            img_array = np.fromstring(bytes, np.uint8)
+            img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+
         height, width, channels = img.shape
-        cvt_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
         detector = MTCNN()
         faces = detector.detect_faces(img)
 
