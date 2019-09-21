@@ -371,13 +371,15 @@ class ListView extends React.Component {
     } = this.props;
 
     const query = this.parent.getFiltersQuery();
-    let limit = 0;
     let offset = 0;
+    let limit = 0;
 
-    for (let i = 0; i < stopIndex; i++) {
+    for (let i = 0; i <= stopIndex; i++) {
       if (i < startIndex) {
         offset += rowsFilesCountMap[i];
-      } else {
+      }
+
+      if (i >= startIndex) {
         limit += rowsFilesCountMap[i];
       }
     }
@@ -401,8 +403,8 @@ class ListView extends React.Component {
       this.props.setData('isLoading', true);
 
       const url = rootUrl + '/api/files' + query +
-        '&limit=' + limit +
         '&offset=' + offset +
+        '&limit=' + limit +
         '&created_before=' + filesSummaryDatetime.format('YYYY-MM-DDTHH:mm:ss');
 
       return axios.get(url)

@@ -69,7 +69,7 @@ class AppContent extends React.Component {
           filesSummary.date.date.forEach((data) => {
             let rowsCountPerDate = 1;
             if (data.count > this.maxFilesPerRow) {
-              rowsCountPerDate = Math.round(data.count / this.maxFilesPerRow);
+              rowsCountPerDate = Math.ceil(data.count / this.maxFilesPerRow);
 
               for (let i = 0; i < rowsCountPerDate-1; i++) {
                 rowsFilesCountMap.push(this.maxFilesPerRow);
