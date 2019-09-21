@@ -29,6 +29,10 @@ parameters:
         key: '%env(AWS_KEY)%'
         secret: '%env(AWS_SECRET)%'
 
+    # Faces
+    faces_enabled: '%env(bool:FACES_ENABLED)%'
+    faces_service: '%env(FACES_SERVICE)%'
+
 services:
     _defaults:
         autowire: true

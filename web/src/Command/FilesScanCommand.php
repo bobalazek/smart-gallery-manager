@@ -76,6 +76,7 @@ class FilesScanCommand extends Command
 
         $isGeocodingEnabled = $this->params->get('geocoding_enabled');
         $isLabellingEnabled = $this->params->get('labelling_enabled');
+        $isFacesEnabled = $this->params->get('faces_enabled');
 
         $actions = $input->getOption('action');
         $updateExistingEntries = $input->getOption('update-existing-entries') !== false;
@@ -88,7 +89,7 @@ class FilesScanCommand extends Command
             in_array('label', $actions) ||
             in_array('label:force', $actions)
         );
-        $shouldFaces = (
+        $shouldFaces = $isFacesEnabled && (
             in_array('faces', $actions) ||
             in_array('faces:force', $actions)
         );
@@ -356,7 +357,7 @@ class FilesScanCommand extends Command
                 $this->logger->info('Geocoding ...');
 
                 try {
-                    $this->fileManager->geodecode(
+                    $this->fileManager->geocode(
                         $file,
                         !$geocodeForce
                     );
