@@ -242,7 +242,7 @@ class FileManager {
     }
 
     /**
-     * Prepares the file
+     * Prepares a general.json file in the file data root, with some basic information.
      *
      * @param File $file
      * @param bool $skipFetchIfAlreadyExists

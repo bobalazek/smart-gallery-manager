@@ -20,14 +20,6 @@ const styles = {
 const mapStateToProps = state => {
   return {
     view: state.view,
-    isLoading: state.isLoading,
-    isLoaded: state.isLoaded,
-    rows: state.rows,
-    rowsDateMap: state.rowsDateMap,
-    files: state.files,
-    filesIdMap: state.filesIdMap,
-    filesSummary: state.filesSummary,
-    filesSummaryDatetime: state.filesSummaryDatetime,
     orderBy: state.orderBy,
     orderByDirection: state.orderByDirection,
     search: state.search,
@@ -70,26 +62,47 @@ class AppContent extends React.Component {
       })
         .then(res => {
           const filesSummary = res.data.data;
-          let rowsDateMap = [];
+          let rowsTotalCount = 0;
+          let rowsFilesCountMap = [];
+          let filesPerDate = [];
 
           filesSummary.date.date.forEach((data) => {
-            if (data.count <= this.maxFilesPerRow) {
-              rowsDateMap.push(data.date);
-            } else {
-              const totalRows = Math.round(data.count / this.maxFilesPerRow);
-              for(let i = 0; i < totalRows; i++) {
-                rowsDateMap.push(data.date);
+            let rowsCountPerDate = 1;
+            if (data.count > this.maxFilesPerRow) {
+              rowsCountPerDate = Math.round(data.count / this.maxFilesPerRow);
+
+              for (let i = 0; i < rowsCountPerDate-1; i++) {
+                rowsFilesCountMap.push(this.maxFilesPerRow);
               }
+              rowsFilesCountMap.push(
+                data.count % this.maxFilesPerRow
+              );
+            } else {
+              rowsFilesCountMap.push(data.count);
             }
+
+            filesPerDate.push({
+              date: data.date,
+              count: data.count,
+              rows: rowsCountPerDate,
+            });
+
+            rowsTotalCount += rowsCountPerDate;
           });
+
+          if (res.data.meta.order_by_direction === 'ASC') {
+            filesPerDate = filesPerDate.reverse();
+          }
 
           this.props.setDataBatch({
             rows: [],
-            rowsDateMap,
+            rowsFilesCountMap,
+            rowsTotalCount,
             files: [],
             filesIdMap: [],
             filesSummary,
             filesSummaryDatetime: moment(),
+            filesPerDate,
             isLoaded: true,
             isLoading: false,
           });

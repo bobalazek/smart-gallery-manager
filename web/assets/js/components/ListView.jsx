@@ -65,11 +65,13 @@ const mapStateToProps = state => {
     isLoading: state.isLoading,
     isLoaded: state.isLoaded,
     rows: state.rows,
-    rowsDateMap: state.rowsDateMap,
+    rowsFilesCountMap: state.rowsFilesCountMap,
+    rowsTotalCount: state.rowsTotalCount,
     files: state.files,
     filesIdMap: state.filesIdMap,
     filesSummary: state.filesSummary,
     filesSummaryDatetime: state.filesSummaryDatetime,
+    filesPerDate: state.filesPerDate,
     orderBy: state.orderBy,
     orderByDirection: state.orderByDirection,
     search: state.search,
@@ -242,7 +244,7 @@ class ListView extends React.Component {
                   loadMoreRows={this._loadMoreRows}
                   isRowLoaded={this._isRowLoaded}
                   rowCount={this._getRowCount()}
-                  minimumBatchSize={6}
+                  minimumBatchSize={4}
                   threshold={4}
                   ref={this.infiniteLoaderRef}
                 >
@@ -261,7 +263,7 @@ class ListView extends React.Component {
                           isScrolling={isScrolling}
                           onScroll={onChildScroll}
                           scrollTop={scrollTop}
-                          overscanRowCount={4}
+                          overscanRowCount={8}
                           ref={el => {
                             this.infiniteLoaderListRef.current = el;
                             registerChild(el);
@@ -280,12 +282,12 @@ class ListView extends React.Component {
   }
 
   /***** Infinite loader stuff *****/
-  _prepareRowsPerIndex(files) {
+  _prepareRowsPerIndex(files, startIndex, stopIndex) {
     const {
       filesSummary,
     } = this.props;
 
-    const now = moment.parseZone();
+    const now = moment();
 
     let rows = [];
     let lastDate = '';
@@ -298,10 +300,10 @@ class ListView extends React.Component {
       dateMap[data.date] = Object.keys(dateMap).length;
     });
 
-    files.forEach((file, index) => {
+    files.forEach((file) => {
       let fileDate = file.date;
 
-      // We shall remote the timezone from the string,
+      // We shall remove the timezone from the string,
       //   else it won't find the date inside filesSummary,
       //   if it's before noon
       if (fileDate.indexOf('+') !== -1) {
@@ -354,8 +356,7 @@ class ListView extends React.Component {
       lastDate = date;
     });
 
-    // It's very likely that there will be remaining files
-    // in the last row after the loop, so add it to the rows.
+    // Add the remaining row, if it has any files left in
     if (row.files.length > 0) {
       rows.push(row);
     }
@@ -365,27 +366,38 @@ class ListView extends React.Component {
 
   _loadMoreRows({ startIndex, stopIndex }) {
     const {
+      rowsFilesCountMap,
       filesSummaryDatetime,
     } = this.props;
 
-    return new Promise((resolve, reject) => {
-      const query = this.parent.getFiltersQuery();
-      const limit = this.parent.maxFilesPerRow * ((stopIndex - startIndex) + 1);
-      const offset = this.parent.maxFilesPerRow * startIndex;
+    const query = this.parent.getFiltersQuery();
+    let limit = 0;
+    let offset = 0;
 
-      // Prevent doing a request if it's the same query and offset
-      if (
+    for (let i = 0; i < stopIndex; i++) {
+      if (i < startIndex) {
+        offset += rowsFilesCountMap[i];
+      } else {
+        limit += rowsFilesCountMap[i];
+      }
+    }
+
+    // Prevent doing a request if it's the same query and offset
+    //   or if limit is 0, which basically means, that we are at the end of the page
+    if (
+      (
         this.lastQuery === query &&
         this.lastOffset === offset
-      ) {
-        resolve();
+      ) ||
+      limit === 0
+    ) {
+      return;
+    }
 
-        return;
-      }
+    this.lastQuery = query;
+    this.lastOffset = offset;
 
-      this.lastQuery = query;
-      this.lastOffset = offset;
-
+    return new Promise((resolve, reject) => {
       this.props.setData('isLoading', true);
 
       const url = rootUrl + '/api/files' + query +
@@ -414,7 +426,7 @@ class ListView extends React.Component {
             isLoading: false,
           });
 
-          this._prepareRowsPerIndex(files);
+          this._prepareRowsPerIndex(files, startIndex, stopIndex);
 
           resolve();
         });
@@ -431,10 +443,10 @@ class ListView extends React.Component {
 
   _getRowCount() {
     const {
-      rowsDateMap,
+      rowsTotalCount,
     } = this.props;
 
-    return rowsDateMap.length;
+    return rowsTotalCount;
   }
 
   _rowRenderer({ index, key, parent, style, isVisible, isScrolling }) {

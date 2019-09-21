@@ -9,11 +9,13 @@ const initialState = {
   isLoading: false,
   isLoaded: false,
   rows: [],
-  rowsDateMap: [],
+  rowsFilesCountMap: [], // [ index: fileCount ]
+  rowsTotalCount: 0, // What is the total number of rows?
   files: [],
   filesIdMap: [],
   filesSummary: {},
   filesSummaryDatetime: null, // When was it last fetched?
+  filesPerDate: [],
   imageModalData: {},
   orderBy: 'taken_at',
   orderByDirection: 'DESC',

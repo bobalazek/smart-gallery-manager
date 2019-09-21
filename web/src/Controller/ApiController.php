@@ -55,6 +55,15 @@ class ApiController extends AbstractController
             ], 500);
         }
 
+        $orderByDirection = $request->get('order_by_direction', 'DESC');
+        if (!in_array($orderByDirection, ['ASC', 'DESC'])) {
+            return $this->json([
+                'error' => [
+                    'message' => 'Invalid order_by_direction parameter.',
+                ],
+            ], 500);
+        }
+
         $dateField = $orderBy === 'taken_at'
             ? 'takenAt'
             : 'createdAt';
@@ -224,6 +233,10 @@ class ApiController extends AbstractController
                 ],
                 'types' => $types,
                 'tags' => $tags,
+            ],
+            'meta' => [
+                'order_by' => $orderBy,
+                'order_by_direction' => $orderByDirection,
             ],
         ]);
     }
