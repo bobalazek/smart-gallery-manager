@@ -244,7 +244,7 @@ class ListView extends React.Component {
                   loadMoreRows={this._loadMoreRows}
                   isRowLoaded={this._isRowLoaded}
                   rowCount={this._getRowCount()}
-                  minimumBatchSize={5}
+                  minimumBatchSize={10}
                   threshold={10}
                   ref={this.infiniteLoaderRef}
                 >
