@@ -91,6 +91,13 @@ trait FileMetaTrait {
                     )
                 )
             );
+        if ($this->_fileMeta['date'] !== null) {
+            try {
+                $this->_fileMeta['date'] = (new \DateTime($this->_fileMeta['date']))->format(DATE_ATOM);
+            } catch (\Exception $e) {
+                $this->_fileMeta['date'] = null;
+            }
+        }
         $this->_fileMeta['size'] = isset($exif['FILE']['FileSize'])
             ? (int)$exif['FILE']['FileSize']
             : filesize($file->getPath());
@@ -187,6 +194,13 @@ trait FileMetaTrait {
                     : null
                 )
             );
+        if ($this->_fileMeta['date'] !== null) {
+            try {
+                $this->_fileMeta['date'] = (new \DateTime($this->_fileMeta['date']))->format(DATE_ATOM);
+            } catch (\Exception $e) {
+                $this->_fileMeta['date'] = null;
+            }
+        }
         $this->_fileMeta['size'] = $imageMagick->getImageLength();
         $this->_fileMeta['width'] = $imageMagick->getImageWidth();
         $this->_fileMeta['height'] = $imageMagick->getImageHeight();
@@ -252,7 +266,7 @@ trait FileMetaTrait {
         ]);
 
         $content = json_decode($response->getContent(), true);
-        if ($result === null) {
+        if ($content === null) {
             throw new \Exception('Invalid JSON returned from service.');
         }
 
@@ -271,6 +285,13 @@ trait FileMetaTrait {
                     : null
                 )
             );
+        if ($this->_fileMeta['date'] !== null) {
+            try {
+                $this->_fileMeta['date'] = (new \DateTime($this->_fileMeta['date']))->format(DATE_ATOM);
+            } catch (\Exception $e) {
+                $this->_fileMeta['date'] = null;
+            }
+        }
         $this->_fileMeta['size'] = filesize($file->getPath());
         $this->_fileMeta['width'] = isset($exif['Image ImageWidth'])
             ? (int)$exif['Image ImageWidth']

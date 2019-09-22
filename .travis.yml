@@ -23,7 +23,7 @@ before_script:
 script:
   - docker exec -i sgm_php_fpm composer install
   - docker exec -i sgm_php_fpm php bin/console doctrine:schema:update -f
-  - curl http://localhost:81/dashboard
+  - docker exec -i sgm_php_fpm php bin/phpunit
 
 after_script:
   - docker-compose stop
