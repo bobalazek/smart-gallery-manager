@@ -1,4 +1,4 @@
-# Smart Gallery Manager
+# Smart Gallery Manager &middot; [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/bobalazek/smart-gallery-manager/blob/master/LICENSE) [![Build Status](https://travis-ci.org/bobalazek/smart-gallery-manager.svg?branch=master)](https://travis-ci.org/bobalazek/smart-gallery-manager)
 
 Your personal locally hosted smart gallery manager.
 
