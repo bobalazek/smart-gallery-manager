@@ -39,7 +39,7 @@ View this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager) fo
 * There is also a python micro service for converting & reading exif data from `.dng` files and for face detection on images
 
 
-## Setup & development
+## Setup
 
 * Prepare the environment
   * Create your own `.env` file (copy the contents from `.env.example`)
@@ -50,10 +50,11 @@ View this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager) fo
     * Those will be your default folders that will be used when manually triggering the files scan with `docker exec -i sgm_php_fpm php bin/console app:files:scan` and the files that will per default always show up in the dashboard, when triggering the scan via the web UI
 * Build the app
   * Run: `docker-compose build`
-  * **(temporary fix)** The `sgm_node` container does not yet work as it should, so you'll need to manually install the node dependencies via the **host** device with: `cd web && yarn install && cd ..`
   * Run: `docker-compose up`
+    * This may take a while, especially for the first time, as the `sgm_node` container will install all the dependencies.
   * Run: `docker exec -i sgm_php_fpm composer install`
   * Run: `docker exec -i sgm_php_fpm php bin/console doctrine:schema:update -f`
+  * *(optional)* If you are developing the application, open a new terminal and run: `docker exec -i sgm_node yarn encore dev --watch`. This will watch & rebuild the files for the frontend app
 * Start scanning for new files
   * Go to http://localhost:81/dashboard (or whichever port you set in `.env`) and start scanning for files
 

@@ -4,6 +4,12 @@ WORKDIR /var/www/web
 
 RUN npm install yarn -g
 
-# TODO: fix!
+COPY start.sh /usr/local/bin/
+RUN sed -i 's/\r$//' /usr/local/bin/start.sh
+RUN chmod 755 /usr/local/bin/start.sh
 
-CMD ["yarn", "encore", "dev", "--watch"]
+ARG NODE_ENV
+ENV NODE_ENV ${NODE_ENV}
+
+# TODO: not yet fully working - at least not the environment
+CMD ["/bin/bash", "-c", "/usr/local/bin/start.sh $NODE_ENV"]

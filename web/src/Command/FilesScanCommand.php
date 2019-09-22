@@ -127,12 +127,16 @@ class FilesScanCommand extends Command
         foreach ($actions as $action) {
             $isDisabled = (
                 (
+                    !$shouldGeocode &&
+                    ($action === 'geocode' || $action === 'geocode:force')
+                ) ||
+                (
                     !$shouldLabel &&
                     ($action === 'label' || $action === 'label:force')
                 ) ||
                 (
-                    !$shouldGeocode &&
-                    ($action === 'geocode' || $action === 'geocode:force')
+                    !$shouldFaces &&
+                    ($action === 'faces' || $action === 'faces:force')
                 )
             );
             $this->logger->notice(
