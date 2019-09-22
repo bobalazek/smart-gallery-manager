@@ -244,8 +244,8 @@ class ListView extends React.Component {
                   loadMoreRows={this._loadMoreRows}
                   isRowLoaded={this._isRowLoaded}
                   rowCount={this._getRowCount()}
-                  minimumBatchSize={10}
-                  threshold={10}
+                  minimumBatchSize={6}
+                  threshold={8}
                   ref={this.infiniteLoaderRef}
                 >
                   {({ onRowsRendered, registerChild }) => (
@@ -263,7 +263,7 @@ class ListView extends React.Component {
                           isScrolling={isScrolling}
                           onScroll={onChildScroll}
                           scrollTop={scrollTop}
-                          overscanRowCount={10}
+                          overscanRowCount={4}
                           ref={el => {
                             this.infiniteLoaderListRef.current = el;
                             registerChild(el);
