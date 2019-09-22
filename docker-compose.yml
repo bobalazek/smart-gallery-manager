@@ -37,6 +37,8 @@ services:
   php-fpm:
     container_name: sgm_php_fpm
     build: ./docker/php-fpm
+    env_file:
+      - .env
     volumes:
       - .:/var/www
     links:
@@ -52,6 +54,8 @@ services:
   node:
     container_name: sgm_node
     build: ./docker/node
+    env_file:
+      - .env
     privileged: true # TODO: fix, so we won't need it
     volumes:
       - .:/var/www
@@ -61,6 +65,8 @@ services:
   python:
     container_name: sgm_python
     build: ./docker/python
+    env_file:
+      - .env
     volumes:
       - .:/usr/src/app
       - .:/var/www # Must include that one. It's needed for some unit tests

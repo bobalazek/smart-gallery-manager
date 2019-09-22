@@ -149,11 +149,19 @@ class FilesScanCommand extends Command
         ));
 
         // Browse the folders
-        $folders = $settings['folders'];
+        $folders = isset($settings['folders'])
+            && is_array($settings['folders'])
+            ? $settings['folders']
+            : [];
         $folderOption = $input->getOption('folder');
 
         if (count($folderOption) > 0) {
             $folders = $folderOption;
+        }
+
+        if (empty($folders)) {
+            $this->logger->critical('No folders speficied.');
+            return;
         }
 
         $files = $finder

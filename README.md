@@ -31,29 +31,36 @@ View this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager) fo
 
 
 ## Summary
+
 * It runs on Nginx with PHP-FPM
 * The main app (API & admin) is written in Symfony with MySQL as the database
 * Frontend is written in React
-* It uses webpack as the bundler, via [Symfony Webpack Encore](https://symfony.com/doc/current/frontend/encore/installation.html)
-* There is also a python micro service that is, for now, only used for `.dng` files. It reads the EXIF data and converts it to `.jpg`
+* It uses webpack as the bundler via [Symfony Webpack Encore](https://symfony.com/doc/current/frontend/encore/installation.html)
+* There is also a python micro service for converting & reading exif data from `.dng` files and for face detection on images
 
 
 ## Setup & development
 
-* (optional) Create your own `.env` file, if you want to override the docker ports - just copy the contents from `.env.example`
-* Create a `settings.yml` file and add your file folders in - just copy the contents from `settings.example.yml`
-* Create a `docker-compose.override.yml` file and set your custom volumes there - just copy the contents from `docker-compose.override.example.yml`
-* Duplicate the `web/.env` into `web/.env.local` and set your the values for your custom variables there - particularly those, inside the `Project` block
-* Run: `docker-compose build`
-* **(temporary fix)** The `sgm_node` container does not yet work as it should, so you'll need to manually install the node dependencies via the **host** device with: `cd web && yarn install && cd ..`
-* Run: `docker-compose up`
-* Run: `docker exec -i sgm_php_fpm composer install`
-* Run: `docker exec -i sgm_php_fpm php bin/console doctrine:schema:update -f`
-* Go to http://localhost:81/dashboard (or whichever port you set), to start scanning for files
+* Prepare the environment
+  * Create your own `.env` file (copy the contents from `.env.example`)
+    * All the variables in `.env`, will automatically be forwarded to the `sgm_php_fpm`,  `sgm_node` & the `sgm_python` container.
+    * This is the most convenient way to set the web app variables all in one place. Alternatively you can duplicate the `web/.env` into `web/.env.local` and set your the values for your custom variables there - particularly those, inside the `Project` block.
+  * Create a `docker-compose.override.yml` file and set your custom volumes there - just copy the contents from `docker-compose.override.example.yml`
+  * *(optional)* Create a `settings.yml` file and add your file folders in - just copy the contents from `settings.example.yml`
+    * Those will be your default folders that will be used when manually triggering the files scan with `docker exec -i sgm_php_fpm php bin/console app:files:scan` and the files that will per default always show up in the dashboard, when triggering the scan via the web UI
+* Build the app
+  * Run: `docker-compose build`
+  * **(temporary fix)** The `sgm_node` container does not yet work as it should, so you'll need to manually install the node dependencies via the **host** device with: `cd web && yarn install && cd ..`
+  * Run: `docker-compose up`
+  * Run: `docker exec -i sgm_php_fpm composer install`
+  * Run: `docker exec -i sgm_php_fpm php bin/console doctrine:schema:update -f`
+* Start scanning for new files
+  * Go to http://localhost:81/dashboard (or whichever port you set in `.env`) and start scanning for files
 
-### Notes
 
-* **(temporary fix)** If in development mode, when adding new dependencies to package.json (via yarn), stop the `sgm_node` container first, run the `yarn add ...` command and restart the container again
+## Tests
+
+* To run the tests, you simply execute: `docker exec -i sgm_php_fpm php bin/phpunit`
 
 
 ## Credits
