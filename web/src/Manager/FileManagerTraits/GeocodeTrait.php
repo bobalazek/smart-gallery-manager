@@ -38,6 +38,7 @@ trait GeocodeTrait {
                 'latitude' => null,
                 'longitude' => null,
             ],
+            'meta' => [],
         ];
 
         if ($this->geocodingService === 'here') {
@@ -77,6 +78,7 @@ trait GeocodeTrait {
                 ->setLatitude($this->_geocodeLocation['coordinates']['latitude'])
                 ->setLongitude($this->_geocodeLocation['coordinates']['longitude'])
                 ->setModifiedAt(new \DateTime())
+                ->setMeta($this->_geocodeLocation['meta'])
             ;
             $file->setImageLocation($imageLocation);
         }
@@ -297,5 +299,6 @@ trait GeocodeTrait {
         $this->_geocodeLocation['address']['country'] = $country;
         $this->_geocodeLocation['coordinates']['latitude'] = $fileMeta['geolocation']['latitude'];
         $this->_geocodeLocation['coordinates']['longitude'] = $fileMeta['geolocation']['longitude'];
+        $this->_geocodeLocation['meta'] = $geocodeData;
     }
 }

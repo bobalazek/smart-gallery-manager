@@ -270,6 +270,7 @@ class FilesScanCommand extends Command
             ));
         }
 
+        $this->logger->notice('----------------');
         $this->logger->notice(sprintf(
             'Memory usage: %s',
             $this->_getMemoryUsageText()
