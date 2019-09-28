@@ -62,12 +62,12 @@ class ImageLocation
     private $country;
 
     /**
-     * @ORM\Column(type="decimal", precision=9, scale=6)
+     * @ORM\Column(type="decimal", precision=8, scale=6)
      */
     private $latitude;
 
     /**
-     * @ORM\Column(type="decimal", precision=8, scale=6)
+     * @ORM\Column(type="decimal", precision=9, scale=6)
      */
     private $longitude;
 
