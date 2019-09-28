@@ -410,11 +410,8 @@ class FilesScanCommand extends Command
             /********** Persist **********/
             // Save the entity
             $this->em->persist($file);
-
-            if (($i % 10) === 0) {
-                $this->em->flush();
-                $this->em->clear();
-            }
+            $this->em->flush();
+            $this->em->clear();
         }
 
         // Persist the remaining entities

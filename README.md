@@ -54,7 +54,6 @@ View this [Trello Board](https://trello.com/b/WLSAoeAg/smart-gallery-manager) fo
     * This may take a while, especially for the first time, as the `sgm_node` container will install all the dependencies.
   * Run: `docker exec -i sgm_php_fpm composer install`
   * Run: `docker exec -i sgm_php_fpm php bin/console doctrine:schema:update -f`
-  * *(optional)* If you are developing the application, open a new terminal and run: `docker exec -i sgm_node yarn encore dev --watch`. This will watch & rebuild the files for the frontend app
 * Start scanning for new files
   * Go to http://localhost:81/dashboard (or whichever port you set in `.env`) and start scanning for files
 
