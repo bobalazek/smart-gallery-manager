@@ -5,6 +5,9 @@
     "beberlei/doctrineextensions": {
         "version": "v1.2.3"
     },
+    "clue/stream-filter": {
+        "version": "v1.4.1"
+    },
     "cocur/slugify": {
         "version": "v3.2"
     },
@@ -105,6 +108,18 @@
     "fig/link-util": {
         "version": "1.0.0"
     },
+    "geocoder-php/cache-provider": {
+        "version": "4.1.0"
+    },
+    "geocoder-php/common-http": {
+        "version": "4.2.0"
+    },
+    "geocoder-php/here-provider": {
+        "version": "0.3.0"
+    },
+    "geocoder-php/plugin": {
+        "version": "1.1.0"
+    },
     "guzzlehttp/guzzle": {
         "version": "6.3.3"
     },
@@ -144,6 +159,30 @@
     "oro/doctrine-extensions": {
         "version": "1.2.2"
     },
+    "php-http/cache-plugin": {
+        "version": "1.6.0"
+    },
+    "php-http/client-common": {
+        "version": "2.0.0"
+    },
+    "php-http/discovery": {
+        "version": "1.7.0"
+    },
+    "php-http/guzzle6-adapter": {
+        "version": "v2.0.1"
+    },
+    "php-http/httplug": {
+        "version": "v2.0.0"
+    },
+    "php-http/message": {
+        "version": "1.8.0"
+    },
+    "php-http/message-factory": {
+        "version": "v1.0.2"
+    },
+    "php-http/promise": {
+        "version": "v1.0.0"
+    },
     "phpdocumentor/reflection-common": {
         "version": "1.0.1"
     },
@@ -159,6 +198,9 @@
     "psr/container": {
         "version": "1.0.0"
     },
+    "psr/http-client": {
+        "version": "1.0.0"
+    },
     "psr/http-message": {
         "version": "1.0.1"
     },
@@ -167,6 +209,9 @@
     },
     "psr/log": {
         "version": "1.1.0"
+    },
+    "psr/simple-cache": {
+        "version": "1.0.1"
     },
     "ralouphie/getallheaders": {
         "version": "3.0.3"
@@ -653,6 +698,18 @@
     },
     "webmozart/assert": {
         "version": "1.4.0"
+    },
+    "willdurand/geocoder": {
+        "version": "4.2.1"
+    },
+    "willdurand/geocoder-bundle": {
+        "version": "5.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "master",
+            "version": "5.0",
+            "ref": "b272ad4fbfcd45a20e7cbfdc4ad1b0e27a62fd3b"
+        }
     },
     "zendframework/zend-code": {
         "version": "3.3.1"

@@ -3,9 +3,11 @@
 namespace App\Manager\FileManagerTraits;
 
 use App\Entity\File;
+use App\Entity\ImageFace;
 
 trait FacesTrait {
     private $_faces = [];
+    private $_facesRaw = [];
 
     /**
      * Finds the faces on the image
@@ -22,10 +24,36 @@ trait FacesTrait {
         }
 
         $this->_faces = [];
+        $this->_facesRaw = [];
 
         $this->_facesPython($file, $skipFetchIfAlreadyExists);
 
         $file->setFaces($this->_faces);
+
+        foreach ($this->_facesRaw as $face) {
+            $imageFace = $file->getImageFace(
+                $this->facesService,
+                $face['box'][0], // left
+                $face['box'][1], // top
+                $face['box'][2], // width
+                $face['box'][3] // height
+            );
+            if (!$imageFace) {
+                $imageFace = new ImageFace();
+                $imageFace->setCreatedAt(new \DateTime());
+
+                $file->addImageFace($imageFace);
+            }
+            $imageFace
+                ->setSource($this->facesService)
+                ->setLeft($face['box'][0])
+                ->setTop($face['box'][1])
+                ->setWidth($face['box'][2])
+                ->setHeight($face['box'][3])
+                ->setMeta($face)
+                ->setModifiedAt(new \DateTime())
+            ;
+        }
 
         return true;
     }
@@ -109,6 +137,8 @@ trait FacesTrait {
         $faces = [];
         foreach ($result['data'] as $face) {
             $faces[] = $face['box'];
+
+            $this->_facesRaw[] = $face;
         }
 
         $this->_faces = $faces;

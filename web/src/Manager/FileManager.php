@@ -69,7 +69,10 @@ class FileManager {
         $this->labellingEnabled = $this->params->get('labelling_enabled');
         $this->labellingService = $this->params->get('labelling_service');
         $this->labellingConfidence = $this->params->get('labelling_confidence');
-        $this->awsCredentials = $this->params->get('aws_credentials');
+        $this->awsCredentials = [
+            'key' => $this->params->get('aws_key'),
+            'secret' => $this->params->get('aws_secret'),
+        ];
         $this->awsRekognitionClient = new RekognitionClient([
             'credentials' => $this->awsCredentials,
             'region' => $this->params->get('amazon_rekognition_region'),
@@ -80,7 +83,10 @@ class FileManager {
         // Geocode
         $this->geocodingEnabled = $this->params->get('geocoding_enabled');
         $this->geocodingService = $this->params->get('geocoding_service');
-        $this->hereApiCredentials = $this->params->get('here_api_credentials');
+        $this->hereApiCredentials = [
+            'app_id' => $this->params->get('here_app_id'),
+            'app_code' => $this->params->get('here_app_code'),
+        ];
         $this->hereReverseGeocoderRadius = $this->params->get('here_reverse_geocoder_radius');
         $this->hereReverseGeocoderMaxResults = $this->params->get('here_reverse_geocoder_max_results');
 

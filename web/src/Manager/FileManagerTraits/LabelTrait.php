@@ -3,8 +3,10 @@
 namespace App\Manager\FileManagerTraits;
 
 use App\Entity\File;
+use App\Entity\ImageLabel;
 
 trait LabelTrait {
+    private $_labels = [];
     private $_labelTags = [];
 
     /**
@@ -15,6 +17,7 @@ trait LabelTrait {
      */
     public function label(File $file, $skipFetchIfAlreadyExists = true)
     {
+        $this->_labels = [];
         $this->_labelTags = [];
 
         if (!$this->labellingEnabled) {
@@ -35,6 +38,26 @@ trait LabelTrait {
         }
 
         $file->setTags($this->_labelTags);
+
+        foreach ($this->_labels as $label) {
+            $imageLabel = $file->getImageLabel(
+                $this->labellingService,
+                $label['name']
+            );
+            if (!$imageLabel) {
+                $imageLabel = new ImageLabel();
+                $imageLabel->setCreatedAt(new \DateTime());
+
+                $file->addImageLabel($imageLabel);
+            }
+            $imageLabel
+                ->setSource($this->labellingService)
+                ->setName($label['name'])
+                ->setConfidence($label['confidence'])
+                ->setMeta($label['meta'])
+                ->setModifiedAt(new \DateTime())
+            ;
+        }
 
         return true;
     }
@@ -117,6 +140,12 @@ trait LabelTrait {
 
         $tags = [];
         foreach ($result['Labels'] as $label) {
+            $this->_labels[] = [
+                'name' => $label['Name'],
+                'confidence' => $label['Confidence'],
+                'meta' => $label,
+            ];
+
             if ($label['Confidence'] >= $this->labellingConfidence) {
                 $tags[] = $label['Name'];
             }

@@ -3,6 +3,7 @@
 namespace App\Manager\FileManagerTraits;
 
 use App\Entity\File;
+use App\Entity\ImageLocation;
 
 trait GeocodeTrait {
     private $_geocodeLocation = [];
@@ -22,16 +23,21 @@ trait GeocodeTrait {
             );
         }
 
-        $this->_geocodeLocation['service'] = null;
-        $this->_geocodeLocation['address'] = [
-            'label' => null,
-            'street' => null,
-            'house_number' => null,
-            'postal_code' => null,
-            'city' => null,
-            'district' => null,
-            'state' => null,
-            'country' => null,
+        $this->_geocodeLocation = [
+            'address' => [
+                'label' => null,
+                'street' => null,
+                'house_number' => null,
+                'postal_code' => null,
+                'city' => null,
+                'district' => null,
+                'state' => null,
+                'country' => null,
+            ],
+            'coordinates' => [
+                'latitude' => null,
+                'longitude' => null,
+            ],
         ];
 
         if ($this->geocodingService === 'here') {
@@ -48,6 +54,32 @@ trait GeocodeTrait {
         }
 
         $file->setLocation($this->_geocodeLocation);
+
+        if (
+            !empty($this->_geocodeLocation['coordinates']['latitude']) &&
+            !empty($this->_geocodeLocation['coordinates']['longitude'])
+        ) {
+            $imageLocation = $file->getImageLocation();
+            if (!$imageLocation) {
+                $imageLocation = new ImageLocation();
+                $imageLocation->setCreatedAt(new \DateTime());
+            }
+            $imageLocation
+                ->setSource($this->geocodingService)
+                ->setLabel($this->_geocodeLocation['address']['label'])
+                ->setStreet($this->_geocodeLocation['address']['street'])
+                ->setHouseNumber($this->_geocodeLocation['address']['house_number'])
+                ->setPostalCode($this->_geocodeLocation['address']['postal_code'])
+                ->setTown($this->_geocodeLocation['address']['city'])
+                ->setRegion($this->_geocodeLocation['address']['district'])
+                ->setState($this->_geocodeLocation['address']['state'])
+                ->setCountry($this->_geocodeLocation['address']['country'])
+                ->setLatitude($this->_geocodeLocation['coordinates']['latitude'])
+                ->setLongitude($this->_geocodeLocation['coordinates']['longitude'])
+                ->setModifiedAt(new \DateTime())
+            ;
+            $file->setImageLocation($imageLocation);
+        }
 
         return true;
     }
@@ -87,12 +119,12 @@ trait GeocodeTrait {
     {
         $fileMeta = $file->getMeta();
 
-        $latitude_and_longitude = [
+        $coordinates = [
             'lat' => $fileMeta['geolocation']['latitude'],
             'lon' => $fileMeta['geolocation']['longitude'],
         ];
 
-        $cacheHash = 'osm.' . sha1(json_encode($latitude_and_longitude));
+        $cacheHash = 'osm.' . sha1(json_encode($coordinates));
 
         $path = $this->getFileDataDir($file) . '/' . $this->getGeocodeFileName('osm');
 
@@ -114,7 +146,7 @@ trait GeocodeTrait {
             $response = $this->httpClient->request('GET', $url, [
                 'query' => array_merge([
                     'format' => 'geocodejson',
-                ], $latitude_and_longitude),
+                ], $coordinates),
             ]);
             $content = json_decode($response->getContent(), true);
             if (isset($content['error'])) {
@@ -139,7 +171,6 @@ trait GeocodeTrait {
 
         $locationData = $features[0]['properties']['geocoding'];
 
-        $this->_geocodeLocation['service'] = 'osm';
         $this->_geocodeLocation['address']['label'] = $locationData['label'] ?? null;
         $this->_geocodeLocation['address']['street'] = $locationData['street'] ?? null;
         $this->_geocodeLocation['address']['house_number'] = $locationData['housenumber'] ?? null;
@@ -147,6 +178,8 @@ trait GeocodeTrait {
         $this->_geocodeLocation['address']['city'] = $locationData['city'] ?? null;
         $this->_geocodeLocation['address']['state'] = $locationData['state'] ?? null;
         $this->_geocodeLocation['address']['country'] = $locationData['country'] ?? null;
+        $this->_geocodeLocation['coordinates']['latitude'] = $fileMeta['geolocation']['latitude'];
+        $this->_geocodeLocation['coordinates']['longitude'] = $fileMeta['geolocation']['longitude'];
     }
 
     /**
@@ -173,12 +206,12 @@ trait GeocodeTrait {
             throw new \Exception('This file has no geolocation (latitude & longitude) data.');
         }
 
-        $latitude_and_longitude = [
+        $coordinates = [
             'lat' => $fileMeta['geolocation']['latitude'],
             'lon' => $fileMeta['geolocation']['longitude'],
         ];
 
-        $cacheHash = 'here.' . sha1(json_encode($latitude_and_longitude));
+        $cacheHash = 'here.' . sha1(json_encode($coordinates));
 
         $path = $this->getFileDataDir($file) . '/' . $this->getGeocodeFileName('here');
 
@@ -204,9 +237,11 @@ trait GeocodeTrait {
                     'mode' => 'retrieveAll',
                     'maxresults' => $this->hereReverseGeocoderMaxResults,
                     'gen' => '9',
-                    'prox' => $fileMeta['geolocation']['latitude'] . ',' .
+                    'prox' => (
+                        $fileMeta['geolocation']['latitude'] . ',' .
                         $fileMeta['geolocation']['longitude'] . ',' .
-                        $this->hereReverseGeocoderRadius,
+                        $this->hereReverseGeocoderRadius
+                    ),
                 ],
             ]);
             $content = json_decode($response->getContent(), true);
@@ -252,7 +287,6 @@ trait GeocodeTrait {
             }
         }
 
-        $this->_geocodeLocation['service'] = 'here';
         $this->_geocodeLocation['address']['label'] = $locationData['Label'] ?? null;
         $this->_geocodeLocation['address']['street'] = $locationData['Street'] ?? null;
         $this->_geocodeLocation['address']['house_number'] = $locationData['HouseNumber'] ?? null;
@@ -261,5 +295,7 @@ trait GeocodeTrait {
         $this->_geocodeLocation['address']['district'] = $locationData['District'] ?? null;
         $this->_geocodeLocation['address']['state'] = $locationData['State'] ?? null;
         $this->_geocodeLocation['address']['country'] = $country;
+        $this->_geocodeLocation['coordinates']['latitude'] = $fileMeta['geolocation']['latitude'];
+        $this->_geocodeLocation['coordinates']['longitude'] = $fileMeta['geolocation']['longitude'];
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -76,6 +78,21 @@ class File
     private $faces = [];
 
     /**
+     * @ORM\OneToOne(targetEntity="App\Entity\ImageLocation", mappedBy="file", cascade={"persist", "remove"})
+     */
+    private $imageLocation;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\ImageLabel", mappedBy="file", cascade={"persist", "remove"}, orphanRemoval=true)
+     */
+    private $imageLabels;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\ImageFace", mappedBy="file", cascade={"persist", "remove"}, orphanRemoval=true)
+     */
+    private $imageFaces;
+
+    /**
      * @ORM\Column(type="datetime")
      */
     private $createdAt;
@@ -89,6 +106,12 @@ class File
      * @ORM\Column(type="datetime")
      */
     private $takenAt;
+
+    public function __construct()
+    {
+        $this->imageLabels = new ArrayCollection();
+        $this->imageFaces = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -211,6 +234,120 @@ class File
     public function setFaces(array $faces): self
     {
         $this->faces = $faces;
+
+        return $this;
+    }
+
+    public function getImageLocation(): ?ImageLocation
+    {
+        return $this->imageLocation;
+    }
+
+    public function setImageLocation(?ImageLocation $imageLocation): self
+    {
+        $this->imageLocation = $imageLocation;
+
+        // set (or unset) the owning side of the relation if necessary
+        $newFile = $imageLocation === null ? null : $this;
+        if ($newFile !== $imageLocation->getFile()) {
+            $imageLocation->setFile($newFile);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|ImageLabel[]
+     */
+    public function getImageLabels(): Collection
+    {
+        return $this->imageLabels;
+    }
+
+    public function getImageLabel($source, $name)
+    {
+        $imageLabels = $this->getImageLabels();
+        foreach ($imageLabels as $imageLabel) {
+            if (
+                $imageLabel->getSource() === $source &&
+                $imageLabel->getName() === $name
+            ) {
+                return $imageLabel;
+            }
+        }
+
+        return null;
+    }
+
+    public function addImageLabel(ImageLabel $imageLabel): self
+    {
+        if (!$this->imageLabels->contains($imageLabel)) {
+            $this->imageLabels[] = $imageLabel;
+            $imageLabel->setFile($this);
+        }
+
+        return $this;
+    }
+
+    public function removeImageLabel(ImageLabel $imageLabel): self
+    {
+        if ($this->imageLabels->contains($imageLabel)) {
+            $this->imageLabels->removeElement($imageLabel);
+            // set the owning side to null (unless already changed)
+            if ($imageLabel->getFile() === $this) {
+                $imageLabel->setFile(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|ImageFace[]
+     */
+    public function getImageFaces(): Collection
+    {
+        return $this->imageFaces;
+    }
+
+    public function getImageFace($source, $left, $top, $width, $height)
+    {
+        $tolerance = 0.01;
+        $imageFaces = $this->getImageFaces();
+        foreach ($imageFaces as $imageFace) {
+            if (
+                $imageFace->getSource() === $source &&
+                abs($imageFace->getLeft() - $left) < $tolerance &&
+                abs($imageFace->getTop() - $top) < $tolerance &&
+                abs($imageFace->getWidth() - $width) < $tolerance &&
+                abs($imageFace->getHeight() - $height) < $tolerance
+            ) {
+                return $imageFace;
+            }
+        }
+
+        return null;
+    }
+
+    public function addImageFace(ImageFace $imageFace): self
+    {
+        if (!$this->imageFaces->contains($imageFace)) {
+            $this->imageFaces[] = $imageFace;
+            $imageFace->setFile($this);
+        }
+
+        return $this;
+    }
+
+    public function removeImageFace(ImageFace $imageFace): self
+    {
+        if ($this->imageFaces->contains($imageFace)) {
+            $this->imageFaces->removeElement($imageFace);
+            // set the owning side to null (unless already changed)
+            if ($imageFace->getFile() === $this) {
+                $imageFace->setFile(null);
+            }
+        }
 
         return $this;
     }

@@ -410,10 +410,9 @@ class FilesScanCommand extends Command
             // Save the entity
             $this->em->persist($file);
 
-            if (($i % 25) === 0) {
+            if (($i % 10) === 0) {
                 $this->em->flush();
                 $this->em->clear();
-                gc_collect_cycles();
             }
         }
 

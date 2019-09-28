@@ -14,9 +14,8 @@ parameters:
     geocoding_service: '%env(GEOCODING_SERVICE)%'
     here_reverse_geocoder_radius: '%env(int:HERE_REVERSE_GEOCODER_RADIUS)%'
     here_reverse_geocoder_max_results: '%env(int:HERE_REVERSE_GEOCODER_MAX_RESULTS)%'
-    here_api_credentials:
-        app_id: '%env(HERE_APP_ID)%'
-        app_code: '%env(HERE_APP_CODE)%'
+    here_app_id: '%env(HERE_APP_ID)%'
+    here_app_code: '%env(HERE_APP_CODE)%'
 
     # Labeling
     labelling_enabled: '%env(bool:LABELLING_ENABLED)%'
@@ -25,9 +24,8 @@ parameters:
     amazon_rekognition_region: '%env(AMAZON_REKOGNITION_REGION)%'
     amazon_rekognition_version: '%env(AMAZON_REKOGNITION_VERSION)%'
     amazon_rekognition_min_confidence: '%env(int:AMAZON_REKOGNITION_MIN_CONFIDENCE)%'
-    aws_credentials:
-        key: '%env(AWS_KEY)%'
-        secret: '%env(AWS_SECRET)%'
+    aws_key: '%env(AWS_KEY)%'
+    aws_secret: '%env(AWS_SECRET)%'
 
     # Faces
     faces_enabled: '%env(bool:FACES_ENABLED)%'
@@ -55,3 +53,14 @@ services:
               label: 'File'
               pager_type: 'simple'
               group: General
+
+bazinga_geocoder:
+    providers:
+        here:
+            factory: Bazinga\GeocoderBundle\ProviderFactory\HereFactory
+            cache: 'cache.app.simple'
+            cache_lifetime: 3600
+            cache_precision: 8
+            options:
+                app_id: '%here_app_id%'
+                app_code: '%here_app_code%'
