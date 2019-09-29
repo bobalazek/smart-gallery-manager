@@ -20,6 +20,7 @@ doctrine:
                 json_contains: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonContains
                 json_type: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonType
                 json_array: Scienta\DoctrineJsonFunctions\Query\AST\Functions\Mysql\JsonArray
+                group_concat: DoctrineExtensions\Query\Mysql\GroupConcat
             datetime_functions:
                 date: DoctrineExtensions\Query\Mysql\Date
                 day: DoctrineExtensions\Query\Mysql\Day

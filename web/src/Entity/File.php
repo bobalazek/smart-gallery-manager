@@ -78,17 +78,17 @@ class File
     private $faces = [];
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\ImageLocation", mappedBy="file", cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity="App\Entity\ImageLocation", mappedBy="file", fetch="EXTRA_LAZY", cascade={"persist", "remove"})
      */
     private $imageLocation;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\ImageLabel", mappedBy="file", cascade={"persist", "remove"}, orphanRemoval=true)
+     * @ORM\OneToMany(targetEntity="App\Entity\ImageLabel", mappedBy="file", fetch="EXTRA_LAZY", cascade={"persist", "remove"}, orphanRemoval=true)
      */
     private $imageLabels;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\ImageFace", mappedBy="file", cascade={"persist", "remove"}, orphanRemoval=true)
+     * @ORM\OneToMany(targetEntity="App\Entity\ImageFace", mappedBy="file", fetch="EXTRA_LAZY", cascade={"persist", "remove"}, orphanRemoval=true)
      */
     private $imageFaces;
 

@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\ImageFaceRepository")
+ * @ORM\Table(name="image_faces")
  */
 class ImageFace
 {

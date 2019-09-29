@@ -173,8 +173,6 @@ class FilesScanCommand extends Command
             ->ignoreUnreadableDirs()
             ->followLinks()
             ->in($folders)
-            ->sortByChangedTime()
-            ->reverseSorting()
         ;
 
         $this->logger->debug('Calculating the total number of files in folders. This may take a while ...');

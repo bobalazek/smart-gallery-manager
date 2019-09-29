@@ -12,9 +12,12 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Mime\MimeTypes;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
+use Doctrine\ORM\Query;
 use Intervention\Image\ImageManager;
 use App\Manager\FileManager;
 use App\Entity\File;
+use App\Entity\ImageLabel;
+use App\Entity\ImageLocation;
 
 class ApiController extends AbstractController
 {
@@ -76,8 +79,10 @@ class ApiController extends AbstractController
         $datePerYearMap = [];
 
         $filesCountQueryBuilder = $this->em->createQueryBuilder()
-            ->select('DATE_FORMAT(f.' . $dateField . ', \'%Y-%m-%d\') as filesDate, COUNT(f.id) as filesCount')
+            ->select('DATE_FORMAT(f.' . $dateField . ', \'%Y-%m-%d\') AS filesDate, COUNT(f.id) AS filesCount')
             ->from(File::class, 'f')
+            ->leftJoin('f.imageLabels', 'il')
+            ->leftJoin('f.imageLocation', 'ilo')
             ->groupBy('filesDate')
             ->orderBy('filesDate', 'DESC');
         $this->_applyQueryFilters($filesCountQueryBuilder, $dateField);
@@ -119,9 +124,11 @@ class ApiController extends AbstractController
         $types = [];
 
         $fileTypeCountQueryBuilder = $this->em->createQueryBuilder()
-            ->select('f.type as fileType, COUNT(f.id) as fileTypeCount')
+            ->select('f.type AS fileType, COUNT(f.id) AS fileTypeCount')
             ->from(File::class, 'f')
-            ->groupBy('f.type');
+            ->leftJoin('f.imageLabels', 'il')
+            ->leftJoin('f.imageLocation', 'ilo')
+            ->groupBy('fileType');
         $this->_applyQueryFilters($fileTypeCountQueryBuilder, $dateField);
 
         $fileTypeCount = $fileTypeCountQueryBuilder->getQuery()->getResult();
@@ -134,63 +141,57 @@ class ApiController extends AbstractController
 
         /***** Tags & locations *****/
         $tags = [];
-        $tagsMap = [];
         $locationCityCountryMap = [];
         $locationPerCity = [];
         $locationPerCityMap = [];
         $locationPerCountry = [];
         $locationPerCountryMap = [];
 
-        $filesQueryBuilder = $this->em->createQueryBuilder()
-            ->select('f')
-            ->from(File::class, 'f');
-        $this->_applyQueryFilters($filesQueryBuilder, $dateField);
+        $tagsQueryBuilder = $this->em->createQueryBuilder()
+            ->select('il.name AS tag, COUNT(il.id) AS count')
+            ->from(ImageLabel::class, 'il')
+            ->leftJoin('il.file', 'f')
+            ->leftJoin('f.imageLocation', 'ilo')
+            ->groupBy('tag');
+        $this->_applyQueryFilters($tagsQueryBuilder, $dateField);
+        $tags = $tagsQueryBuilder->getQuery()->getResult(Query::HYDRATE_ARRAY);
 
-        $files = $filesQueryBuilder->getQuery()->getResult();
-        foreach ($files as $file) {
-            $fileTags = $file->getTags();
+        usort($tags, function($a, $b) {
+            return $a['count'] <=> $b['count'];
+        });
+        $tags = array_reverse($tags);
 
-            foreach ($fileTags as $fileTag) {
-                if (!isset($tagsMap[$fileTag])) {
-                    $tagsMap[$fileTag] = 0;
-                }
-
-                $tagsMap[$fileTag]++;
-            }
-
-            $location = $file->getLocation();
-
+        $imageLocationsQueryBuilder = $this->em->createQueryBuilder()
+            ->select('
+                ilo.label AS label,
+                COUNT(ilo.id) AS count,
+                GROUP_CONCAT(DISTINCT ilo.town) AS town,
+                GROUP_CONCAT(DISTINCT ilo.country) AS country
+            ')
+            ->from(ImageLocation::class, 'ilo')
+            ->leftJoin('ilo.file', 'f')
+            ->leftJoin('f.imageLabels', 'il')
+            ->groupBy('label');
+        $this->_applyQueryFilters($imageLocationsQueryBuilder, $dateField);
+        $imageLocations = $imageLocationsQueryBuilder->getQuery()->getResult(Query::HYDRATE_ARRAY);
+        foreach ($imageLocations as $location) {
             // Country
-            $country = $location['address']['country'] ?? '';
+            $country = $location['country'] ?? '';
             if (!isset($locationPerCountryMap[$country])) {
                 $locationPerCountryMap[$country] = 0;
             }
             $locationPerCountryMap[$country]++;
 
             // City
-            $city = $location['address']['city'] ?? '';
+            $city = $location['town'] ?? '';
             if (!isset($locationPerCityMap[$city])) {
                 $locationPerCityMap[$city] = 0;
             }
             $locationPerCityMap[$city]++;
-
             $locationCityCountryMap[$city] = $city === ''
                 ? ''
                 : $country;
         }
-
-        /***** Tags - continued *****/
-        foreach ($tagsMap as $tag => $count) {
-            $tags[] = [
-                'tag' => $tag,
-                'count' => $count,
-            ];
-        }
-
-        usort($tags, function($a, $b) {
-            return $a['count'] <=> $b['count'];
-        });
-        $tags = array_reverse($tags);
 
         /***** Locations - continued *****/
         // City
@@ -277,6 +278,8 @@ class ApiController extends AbstractController
         $filesQueryBuilder = $this->em->createQueryBuilder()
             ->select('f')
             ->from(File::class, 'f')
+            ->leftJoin('f.imageLabels', 'il')
+            ->leftJoin('f.imageLocation', 'ilo')
             ->orderBy('f.' . $dateField, $orderByDirection)
         ;
 
@@ -439,8 +442,9 @@ class ApiController extends AbstractController
      *
      * @param QueryBuilder $query
      * @param string $dateField
+     * @param array $ignoredFields
      */
-    private function _applyQueryFilters(QueryBuilder $queryBuilder, $dateField)
+    private function _applyQueryFilters(QueryBuilder $queryBuilder, $dateField, $ignoredFields = [])
     {
         $request = $this->requestStack->getCurrentRequest();
 
@@ -487,15 +491,8 @@ class ApiController extends AbstractController
         $country = $request->get('country');
         if ($country !== null) {
             $country = strtolower(rawurldecode($country));
-            // TODO: not working yet when $country === '' (Unknown)
             $queryBuilder
-                ->andWhere(
-                    $queryBuilder->expr()->like('LOWER(JSON_UNQUOTE(JSON_EXTRACT(
-                        f.location,
-                        :json_location_address_country
-                    )))', ':country')
-                )
-                ->setParameter('json_location_address_country', '$.address.country')
+                ->andWhere('ilo.country = LOWER(:country)')
                 ->setParameter('country', $country)
             ;
         }
@@ -503,15 +500,8 @@ class ApiController extends AbstractController
         $city = $request->get('city');
         if ($city !== null) {
             $city = strtolower(rawurldecode($city));
-            // TODO: not working yet when $city === '' (Unknown)
             $queryBuilder
-                ->andWhere(
-                    $queryBuilder->expr()->like('LOWER(JSON_UNQUOTE(JSON_EXTRACT(
-                        f.location,
-                        :json_location_address_city
-                    )))', ':city')
-                )
-                ->setParameter('json_location_address_city', '$.address.city')
+                ->andWhere('ilo.town = LOWER(:city)')
                 ->setParameter('city', $city)
             ;
         }
@@ -532,24 +522,9 @@ class ApiController extends AbstractController
                     $queryBuilder->expr()->like('f.path', ':search'),
                     $queryBuilder->expr()->like('f.type', ':search'),
                     $queryBuilder->expr()->like('f.mime', ':search'),
-                    $queryBuilder->expr()->like('f.extension', ':search'),
-                    $queryBuilder->expr()->like('LOWER(JSON_UNQUOTE(JSON_EXTRACT(
-                        f.location,
-                        :json_location_address_label
-                    )))', ':search'),
-                    $queryBuilder->expr()->like('LOWER(JSON_UNQUOTE(JSON_EXTRACT(
-                        f.location,
-                        :json_location_address_district
-                    )))', ':search'),
-                    $queryBuilder->expr()->eq('JSON_CONTAINS(
-                        f.tags,
-                        JSON_ARRAY(:search_json)
-                    )', 1)
+                    $queryBuilder->expr()->like('f.extension', ':search')
                 ))
-                ->setParameter('json_location_address_label', '$.address.label')
-                ->setParameter('json_location_address_district', '$.address.district')
                 ->setParameter('search', '%' . $search . '%')
-                ->setParameter('search_json', ucwords($search))
             ;
         }
 
@@ -557,13 +532,8 @@ class ApiController extends AbstractController
         if ($tag !== null) {
             $tag = strtolower(rawurldecode($tag));
             $queryBuilder
-                ->andWhere(
-                    $queryBuilder->expr()->eq('JSON_CONTAINS(
-                        f.tags,
-                        JSON_ARRAY(:tag)
-                    )', 1)
-                )
-                ->setParameter('tag', ucwords($tag))
+                ->andWhere('il.name = LOWER(:tag)')
+                ->setParameter('tag', $tag)
             ;
         }
 

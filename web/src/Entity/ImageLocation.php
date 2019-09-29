@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\ImageLocationRepository")
+  * @ORM\Table(name="image_locations")
  */
 class ImageLocation
 {
