@@ -79,7 +79,7 @@ class ApiController extends AbstractController
         $datePerYearMap = [];
 
         $filesCountQueryBuilder = $this->em->createQueryBuilder()
-            ->select('DATE_FORMAT(f.' . $dateField . ', \'%Y-%m-%d\') AS filesDate, COUNT(f.id) AS filesCount')
+            ->select('DATE_FORMAT(f.' . $dateField . ', \'%Y-%m-%d\') AS filesDate, COUNT(DISTINCT f.id) AS filesCount')
             ->from(File::class, 'f')
             ->leftJoin('f.imageLabels', 'il')
             ->leftJoin('f.imageLocation', 'ilo')
@@ -124,7 +124,7 @@ class ApiController extends AbstractController
         $types = [];
 
         $fileTypeCountQueryBuilder = $this->em->createQueryBuilder()
-            ->select('f.type AS fileType, COUNT(f.id) AS fileTypeCount')
+            ->select('f.type AS fileType, COUNT(DISTINCT f.id) AS fileTypeCount')
             ->from(File::class, 'f')
             ->leftJoin('f.imageLabels', 'il')
             ->leftJoin('f.imageLocation', 'ilo')
@@ -148,7 +148,7 @@ class ApiController extends AbstractController
         $locationPerCountryMap = [];
 
         $tagsQueryBuilder = $this->em->createQueryBuilder()
-            ->select('il.name AS tag, COUNT(il.id) AS count')
+            ->select('il.name AS tag, COUNT(DISTINCT il.id) AS count')
             ->from(ImageLabel::class, 'il')
             ->leftJoin('il.file', 'f')
             ->leftJoin('f.imageLocation', 'ilo')
@@ -164,7 +164,7 @@ class ApiController extends AbstractController
         $imageLocationsQueryBuilder = $this->em->createQueryBuilder()
             ->select('
                 ilo.label AS label,
-                COUNT(ilo.id) AS count,
+                COUNT(DISTINCT ilo.id) AS count,
                 GROUP_CONCAT(DISTINCT ilo.town) AS town,
                 GROUP_CONCAT(DISTINCT ilo.country) AS country
             ')
