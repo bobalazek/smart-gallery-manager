@@ -71,8 +71,13 @@ trait FileMetaTrait {
      */
     private function _processFileMetaViaGd($file)
     {
-        $exif = @exif_read_data($file->getPath(), 0, true);
-        if (!$exif || !is_array($exif)) {
+        try {
+            $exif = exif_read_data($file->getPath(), 0, true);
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        if (!$exif) {
             throw new \Exception(sprintf(
                 'Could not read the file on path "%s".',
                 $file->getPath()
