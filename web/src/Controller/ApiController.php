@@ -162,28 +162,23 @@ class ApiController extends AbstractController
         $tags = array_reverse($tags);
 
         $imageLocationsQueryBuilder = $this->em->createQueryBuilder()
-            ->select('
-                ilo.label AS label,
-                COUNT(DISTINCT ilo.id) AS count,
-                GROUP_CONCAT(DISTINCT ilo.town) AS town,
-                GROUP_CONCAT(DISTINCT ilo.country) AS country
-            ')
+            ->select('DISTINCT ilo.id, ilo.country, ilo.town')
             ->from(ImageLocation::class, 'ilo')
             ->leftJoin('ilo.file', 'f')
-            ->leftJoin('f.imageLabels', 'il')
-            ->groupBy('label');
+            ->leftJoin('f.imageLabels', 'il');
         $this->_applyQueryFilters($imageLocationsQueryBuilder, $dateField);
-        $imageLocations = $imageLocationsQueryBuilder->getQuery()->getResult(Query::HYDRATE_ARRAY);
-        foreach ($imageLocations as $location) {
+        $imageLocations = $imageLocationsQueryBuilder->getQuery()->getResult();
+
+        foreach ($imageLocations as $imageLocation) {
             // Country
-            $country = $location['country'] ?? '';
+            $country = $imageLocation['country'] ?? '';
             if (!isset($locationPerCountryMap[$country])) {
                 $locationPerCountryMap[$country] = 0;
             }
             $locationPerCountryMap[$country]++;
 
             // City
-            $city = $location['town'] ?? '';
+            $city = $imageLocation['town'] ?? '';
             if (!isset($locationPerCityMap[$city])) {
                 $locationPerCityMap[$city] = 0;
             }
@@ -193,7 +188,6 @@ class ApiController extends AbstractController
                 : $country;
         }
 
-        /***** Locations - continued *****/
         // City
         foreach ($locationPerCityMap as $location => $count) {
             $locationPerCity[] = [
