@@ -50,6 +50,21 @@ class FileManagerTest extends KernelTestCase
             ->setTakenAt(new \DateTime())
             ->setCreatedAt(new \DateTime())
         ;
+
+        // HEIC
+        $fileHeicPath = dirname(dirname(__FILE__)) . '/resources/19-01-12 16-53-39 0394.heic';
+        $this->fileHeic = new File();
+        $this->fileHeic
+            ->setHash(sha1($fileHeicPath))
+            ->setType('other')
+            ->setPath($fileHeicPath)
+            ->setMime('application/octet-stream')
+            ->setExtension('heic')
+            ->setMeta([])
+            ->setModifiedAt(new \DateTime())
+            ->setTakenAt(new \DateTime())
+            ->setCreatedAt(new \DateTime())
+        ;
     }
 
     public function testGetFileMeta()
@@ -87,6 +102,23 @@ class FileManagerTest extends KernelTestCase
         $this->assertTrue($fileMeta['device']['focal_length'] === '22');
         $this->assertTrue($fileMeta['device']['lens_make'] === null);
         $this->assertTrue($fileMeta['device']['lens_model'] === 'EF-M22mm f/2 STM');
+
+        // Test the HEIC file
+        $fileMeta = $this->fileManager->getFileMeta($this->fileHeic);
+        $this->assertTrue($fileMeta['date'] === '2019-01-12T16:53:40+00:00');
+        $this->assertTrue($fileMeta['size'] === 813219);
+        $this->assertTrue($fileMeta['width'] === 4032);
+        $this->assertTrue($fileMeta['height'] === 3024);
+        $this->assertTrue($fileMeta['pixels'] === 12192768);
+        $this->assertTrue($fileMeta['orientation'] === 1);
+        $this->assertTrue($fileMeta['device']['make'] === 'Apple');
+        $this->assertTrue($fileMeta['device']['model'] === 'iPhone 8 Plus');
+        $this->assertTrue($fileMeta['device']['shutter_speed'] === '1/30');
+        $this->assertTrue($fileMeta['device']['aperture'] === '1.8');
+        $this->assertTrue($fileMeta['device']['iso'] === null);
+        $this->assertTrue($fileMeta['device']['focal_length'] === '3.99');
+        $this->assertTrue($fileMeta['device']['lens_make'] === 'Apple');
+        $this->assertTrue($fileMeta['device']['lens_model'] === 'iPhone 8 Plus back dual camera 3.99mm f/1.8');
     }
 
     /**
