@@ -63,21 +63,6 @@ class File
     private $meta = [];
 
     /**
-     * @ORM\Column(type="json_array")
-     */
-    private $location = [];
-
-    /**
-     * @ORM\Column(type="json_array")
-     */
-    private $tags = [];
-
-    /**
-     * @ORM\Column(type="json_array")
-     */
-    private $faces = [];
-
-    /**
      * @ORM\OneToOne(targetEntity="App\Entity\ImageLocation", mappedBy="file", fetch="EXTRA_LAZY", cascade={"persist", "remove"})
      */
     private $imageLocation;
@@ -198,42 +183,6 @@ class File
     public function setMeta(array $meta): self
     {
         $this->meta = $meta;
-
-        return $this;
-    }
-
-    public function getLocation(): ?array
-    {
-        return $this->location;
-    }
-
-    public function setLocation(array $location): self
-    {
-        $this->location = $location;
-
-        return $this;
-    }
-
-    public function getTags(): ?array
-    {
-        return $this->tags;
-    }
-
-    public function setTags(array $tags): self
-    {
-        $this->tags = $tags;
-
-        return $this;
-    }
-
-    public function getFaces(): ?array
-    {
-        return $this->faces;
-    }
-
-    public function setFaces(array $faces): self
-    {
-        $this->faces = $faces;
 
         return $this;
     }
@@ -390,6 +339,10 @@ class File
 
     public function toArray(): ?array
     {
+        $imageLocation = $this->getImageLocation();
+        $imageLabels = $this->getImageLabels();
+        $imageFaces = $this->getImageFaces();
+
         return [
             'id' => $this->getId(),
             'hash' => $this->getHash(),
@@ -399,9 +352,19 @@ class File
             'extension' => $this->getExtension(),
             'data' => $this->getData(),
             'meta' => $this->getMeta(),
-            'location' => $this->getLocation(),
-            'tags' => $this->getTags(),
-            'faces' => $this->getFaces(),
+            'location' => $imageLocation
+                ? $imageLocation->toArray()
+                : null,
+            'labels' => $imageLabels
+                ? array_map(function($imageLabel) {
+                    return $imageLabel->toArray();
+                }, $imageLabels->toArray())
+                : [],
+            'faces' => $imageFaces
+                ? array_map(function($imageFace) {
+                    return $imageFace->toArray();
+                }, $imageFaces->toArray())
+                : [],
             'created_at' => $this->getCreatedAt()->format(DATE_ATOM),
             'modified_at' => $this->getModifiedAt()->format(DATE_ATOM),
             'taken_at' => $this->getTakenAt()->format(DATE_ATOM),

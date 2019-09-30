@@ -26,7 +26,7 @@ const initialState = {
   selectedDate: null,
   selectedCountry: null,
   selectedCity: null,
-  selectedTag: null,
+  selectedLabel: null,
 };
 
 const rootReducer = (state = JSON.parse(JSON.stringify(initialState)), action) => {

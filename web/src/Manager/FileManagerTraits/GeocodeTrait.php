@@ -29,8 +29,10 @@ trait GeocodeTrait {
                 'street' => null,
                 'house_number' => null,
                 'postal_code' => null,
+                'town' => null,
                 'city' => null,
                 'district' => null,
+                'region' => null,
                 'state' => null,
                 'country' => null,
             ],
@@ -54,8 +56,6 @@ trait GeocodeTrait {
             );
         }
 
-        $file->setLocation($this->_geocodeLocation);
-
         if (
             !empty($this->_geocodeLocation['coordinates']['latitude']) &&
             !empty($this->_geocodeLocation['coordinates']['longitude'])
@@ -71,8 +71,8 @@ trait GeocodeTrait {
                 ->setStreet($this->_geocodeLocation['address']['street'])
                 ->setHouseNumber($this->_geocodeLocation['address']['house_number'])
                 ->setPostalCode($this->_geocodeLocation['address']['postal_code'])
-                ->setTown($this->_geocodeLocation['address']['city'])
-                ->setRegion($this->_geocodeLocation['address']['district'])
+                ->setCity($this->_geocodeLocation['address']['city'])
+                ->setDistrict($this->_geocodeLocation['address']['district'])
                 ->setState($this->_geocodeLocation['address']['state'])
                 ->setCountry($this->_geocodeLocation['address']['country'])
                 ->setLatitude($this->_geocodeLocation['coordinates']['latitude'])

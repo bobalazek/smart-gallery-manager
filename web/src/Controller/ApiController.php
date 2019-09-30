@@ -139,30 +139,30 @@ class ApiController extends AbstractController
             ];
         }
 
-        /***** Tags & locations *****/
-        $tags = [];
+        /***** Labels & locations *****/
+        $labels = [];
         $locationCityCountryMap = [];
         $locationPerCity = [];
         $locationPerCityMap = [];
         $locationPerCountry = [];
         $locationPerCountryMap = [];
 
-        $tagsQueryBuilder = $this->em->createQueryBuilder()
-            ->select('il.name AS tag, COUNT(DISTINCT il.id) AS count')
+        $labelsQueryBuilder = $this->em->createQueryBuilder()
+            ->select('il.name AS label, COUNT(DISTINCT il.id) AS count')
             ->from(ImageLabel::class, 'il')
             ->leftJoin('il.file', 'f')
             ->leftJoin('f.imageLocation', 'ilo')
-            ->groupBy('tag');
-        $this->_applyQueryFilters($tagsQueryBuilder, $dateField);
-        $tags = $tagsQueryBuilder->getQuery()->getResult(Query::HYDRATE_ARRAY);
+            ->groupBy('label');
+        $this->_applyQueryFilters($labelsQueryBuilder, $dateField);
+        $labels = $labelsQueryBuilder->getQuery()->getResult(Query::HYDRATE_ARRAY);
 
-        usort($tags, function($a, $b) {
+        usort($labels, function($a, $b) {
             return $a['count'] <=> $b['count'];
         });
-        $tags = array_reverse($tags);
+        $labels = array_reverse($labels);
 
         $imageLocationsQueryBuilder = $this->em->createQueryBuilder()
-            ->select('DISTINCT ilo.id, ilo.country, ilo.town')
+            ->select('DISTINCT ilo.id, ilo.country, ilo.city')
             ->from(ImageLocation::class, 'ilo')
             ->leftJoin('ilo.file', 'f')
             ->leftJoin('f.imageLabels', 'il');
@@ -178,7 +178,7 @@ class ApiController extends AbstractController
             $locationPerCountryMap[$country]++;
 
             // City
-            $city = $imageLocation['town'] ?? '';
+            $city = $imageLocation['city'] ?? '';
             if (!isset($locationPerCityMap[$city])) {
                 $locationPerCityMap[$city] = 0;
             }
@@ -227,7 +227,7 @@ class ApiController extends AbstractController
                     'country' => $locationPerCountry,
                 ],
                 'types' => $types,
-                'tags' => $tags,
+                'labels' => $labels,
             ],
             'meta' => [
                 'order_by' => $orderBy,
@@ -275,6 +275,7 @@ class ApiController extends AbstractController
             ->leftJoin('f.imageLabels', 'il')
             ->leftJoin('f.imageLocation', 'ilo')
             ->orderBy('f.' . $dateField, $orderByDirection)
+            ->groupBy('f.id')
         ;
 
         if ($offset !== null) {
@@ -495,7 +496,7 @@ class ApiController extends AbstractController
         if ($city !== null) {
             $city = strtolower(rawurldecode($city));
             $queryBuilder
-                ->andWhere('ilo.town = LOWER(:city)')
+                ->andWhere('ilo.city = LOWER(:city)')
                 ->setParameter('city', $city)
             ;
         }
@@ -522,12 +523,12 @@ class ApiController extends AbstractController
             ;
         }
 
-        $tag = $request->get('tag');
-        if ($tag !== null) {
-            $tag = strtolower(rawurldecode($tag));
+        $label = $request->get('label');
+        if ($label !== null) {
+            $label = strtolower(rawurldecode($label));
             $queryBuilder
-                ->andWhere('il.name = LOWER(:tag)')
-                ->setParameter('tag', $tag)
+                ->andWhere('il.name = LOWER(:label)')
+                ->setParameter('label', $label)
             ;
         }
 

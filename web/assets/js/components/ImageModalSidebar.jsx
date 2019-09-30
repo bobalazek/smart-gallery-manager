@@ -81,9 +81,8 @@ class ImageModalSidebar extends React.Component {
           const { fileInformation } = this.state;
           const geolocation = fileInformation.meta.geolocation;
           const location = fileInformation.location
-            && fileInformation.location.address
-            && fileInformation.location.address.label
-            ? fileInformation.location.address.label
+            && fileInformation.location.label
+            ? fileInformation.location.label
             : '';
           const position = [
             geolocation.latitude ? geolocation.latitude : 0,
@@ -239,44 +238,36 @@ class ImageModalSidebar extends React.Component {
         ? (
           <React.Fragment>
             <span dangerouslySetInnerHTML={{ __html: fileInformation.location
-              && fileInformation.location.address
-              && fileInformation.location.address.label
-              ? 'Label: ' + fileInformation.location.address.label + '<br />'
+              && fileInformation.location.label
+              ? 'Label: ' + fileInformation.location.label + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.location
-              && fileInformation.location.address
-              && fileInformation.location.address.street
-              ? 'Street: ' + fileInformation.location.address.street + '<br />'
+              && fileInformation.location.street
+              ? 'Street: ' + fileInformation.location.street + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.location
-              && fileInformation.location.address
-              && fileInformation.location.address.house_number
-              ? 'House number: ' + fileInformation.location.address.house_number + '<br />'
+              && fileInformation.location.house_number
+              ? 'House number: ' + fileInformation.location.house_number + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.location
-              && fileInformation.location.address
-              && fileInformation.location.address.postal_code
-              ? 'Postal code: ' + fileInformation.location.address.postal_code + '<br />'
+              && fileInformation.location.postal_code
+              ? 'Postal code: ' + fileInformation.location.postal_code + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.location
-              && fileInformation.location.address
-              && fileInformation.location.address.city
-              ? 'City: ' + fileInformation.location.address.city + '<br />'
+              && fileInformation.location.city
+              ? 'City: ' + fileInformation.location.city + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.location
-              && fileInformation.location.address
-              && fileInformation.location.address.district
-              ? 'District: ' + fileInformation.location.address.district + '<br />'
+              && fileInformation.location.district
+              ? 'District: ' + fileInformation.location.district + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.location
-              && fileInformation.location.address
-              && fileInformation.location.address.state
-              ? 'State: ' + fileInformation.location.address.state + '<br />'
+              && fileInformation.location.state
+              ? 'State: ' + fileInformation.location.state + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.location
-              && fileInformation.location.address
-              && fileInformation.location.address.country
-              ? 'Country: ' + fileInformation.location.address.country + '<br />'
+              && fileInformation.location.country
+              ? 'Country: ' + fileInformation.location.country + '<br />'
               : '' }} />
             <span dangerouslySetInnerHTML={{ __html: fileInformation.meta.geolocation.altitude
               ? 'Altitude: ' + fileInformation.meta.geolocation.altitude + '<br />'
@@ -290,10 +281,12 @@ class ImageModalSidebar extends React.Component {
           </React.Fragment>
         )
         : '',
-      hasTagsData: fileInformation.tags && fileInformation.tags.length > 0,
-      tagsPrimary: 'Tags',
-      tagsSecondary: fileInformation.tags
-        ? fileInformation.tags.join(', ')
+      hasLabelsData: fileInformation.labels && fileInformation.labels.length > 0,
+      labelsPrimary: 'Labels',
+      labelsSecondary: fileInformation.labels
+        ? fileInformation.labels.map((label) => {
+          return label.name + ' (' + parseInt(label.confidence) + '%)';
+        }).join(', ')
         : '',
     };
     return (
@@ -354,7 +347,7 @@ class ImageModalSidebar extends React.Component {
                   />
                 </ListItem>
               }
-              {infoData.hasTagsData &&
+              {infoData.hasLabelsData &&
                 <ListItem>
                   <ListItemAvatar>
                     <Avatar>
@@ -362,8 +355,8 @@ class ImageModalSidebar extends React.Component {
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText
-                    primary={infoData.tagsPrimary}
-                    secondary={infoData.tagsSecondary}
+                    primary={infoData.labelsPrimary}
+                    secondary={infoData.labelsSecondary}
                   />
                 </ListItem>
               }

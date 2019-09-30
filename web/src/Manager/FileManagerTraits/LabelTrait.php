@@ -7,7 +7,6 @@ use App\Entity\ImageLabel;
 
 trait LabelTrait {
     private $_labels = [];
-    private $_labelTags = [];
 
     /**
      * Labels the image
@@ -18,7 +17,6 @@ trait LabelTrait {
     public function label(File $file, $skipFetchIfAlreadyExists = true)
     {
         $this->_labels = [];
-        $this->_labelTags = [];
 
         if (!$this->labellingEnabled) {
             throw new \Exception(
@@ -36,8 +34,6 @@ trait LabelTrait {
                 )
             );
         }
-
-        $file->setTags($this->_labelTags);
 
         foreach ($this->_labels as $label) {
             $imageLabel = $file->getImageLabel(
@@ -150,7 +146,5 @@ trait LabelTrait {
                 $tags[] = $label['Name'];
             }
         }
-
-        $this->_labelTags = $tags;
     }
 }

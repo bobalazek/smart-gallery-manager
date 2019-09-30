@@ -141,4 +141,16 @@ class ImageLabel
 
         return $this;
     }
+
+    public function toArray(): ?array
+    {
+        return [
+            'id' => $this->getId(),
+            'source' => $this->getSource(),
+            'name' => $this->getName(),
+            'confidence' => $this->getConfidence(),
+            'created_at' => $this->getCreatedAt()->format(DATE_ATOM),
+            'modified_at' => $this->getModifiedAt()->format(DATE_ATOM),
+        ];
+    }
 }

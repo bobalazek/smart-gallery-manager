@@ -29,7 +29,7 @@ const mapStateToProps = state => {
     selectedDate: state.selectedDate,
     selectedCountry: state.selectedCountry,
     selectedCity: state.selectedCity,
-    selectedTag: state.selectedTag,
+    selectedLabel: state.selectedLabel,
   };
 };
 
@@ -127,7 +127,7 @@ class AppContent extends React.Component {
       selectedDate,
       selectedCountry,
       selectedCity,
-      selectedTag,
+      selectedLabel,
       orderBy,
       orderByDirection,
       search,
@@ -162,8 +162,8 @@ class AppContent extends React.Component {
       query += '&city=' + selectedCity;
     }
 
-    if (selectedTag !== null) {
-      query += '&tag=' + selectedTag;
+    if (selectedLabel !== null) {
+      query += '&label=' + selectedLabel;
     }
 
     if (search) {

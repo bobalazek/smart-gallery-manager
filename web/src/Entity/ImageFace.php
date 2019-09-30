@@ -175,4 +175,18 @@ class ImageFace
 
         return $this;
     }
+
+    public function toArray(): ?array
+    {
+        return [
+            'id' => $this->getId(),
+            'source' => $this->getSource(),
+            'left' => $this->getLeft(),
+            'top' => $this->getTop(),
+            'width' => $this->getWidth(),
+            'height' => $this->getHeight(),
+            'created_at' => $this->getCreatedAt()->format(DATE_ATOM),
+            'modified_at' => $this->getModifiedAt()->format(DATE_ATOM),
+        ];
+    }
 }

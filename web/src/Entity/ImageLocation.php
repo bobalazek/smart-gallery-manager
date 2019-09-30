@@ -50,6 +50,16 @@ class ImageLocation
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
      */
+    private $city;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $district;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
     private $region;
 
     /**
@@ -169,6 +179,30 @@ class ImageLocation
         return $this;
     }
 
+    public function getCity(): ?string
+    {
+        return $this->city;
+    }
+
+    public function setCity(string $city = null): self
+    {
+        $this->city = $city;
+
+        return $this;
+    }
+
+    public function getDistrict(): ?string
+    {
+        return $this->district;
+    }
+
+    public function setDistrict(string $district = null): self
+    {
+        $this->district = $district;
+
+        return $this;
+    }
+
     public function getRegion(): ?string
     {
         return $this->region;
@@ -275,5 +309,27 @@ class ImageLocation
         $this->modifiedAt = $modifiedAt;
 
         return $this;
+    }
+
+    public function toArray(): ?array
+    {
+        return [
+            'id' => $this->getId(),
+            'source' => $this->getSource(),
+            'label' => $this->getLabel(),
+            'street' => $this->getStreet(),
+            'house_number' => $this->getHouseNumber(),
+            'postal_code' => $this->getPostalCode(),
+            'town' => $this->getTown(),
+            'city' => $this->getCity(),
+            'district' => $this->getDistrict(),
+            'region' => $this->getRegion(),
+            'state' => $this->getState(),
+            'country' => $this->getCountry(),
+            'latitude' => $this->getLatitude(),
+            'longitude' => $this->getLongitude(),
+            'created_at' => $this->getCreatedAt()->format(DATE_ATOM),
+            'modified_at' => $this->getModifiedAt()->format(DATE_ATOM),
+        ];
     }
 }

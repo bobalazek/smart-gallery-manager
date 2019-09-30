@@ -7,7 +7,6 @@ use App\Entity\ImageFace;
 
 trait FacesTrait {
     private $_faces = [];
-    private $_facesRaw = [];
 
     /**
      * Finds the faces on the image
@@ -24,13 +23,10 @@ trait FacesTrait {
         }
 
         $this->_faces = [];
-        $this->_facesRaw = [];
 
         $this->_facesPython($file, $skipFetchIfAlreadyExists);
 
-        $file->setFaces($this->_faces);
-
-        foreach ($this->_facesRaw as $face) {
+        foreach ($this->_faces as $face) {
             $imageFace = $file->getImageFace(
                 $this->facesService,
                 $face['box'][0], // left
@@ -136,9 +132,7 @@ trait FacesTrait {
 
         $faces = [];
         foreach ($result['data'] as $face) {
-            $faces[] = $face['box'];
-
-            $this->_facesRaw[] = $face;
+            $faces[] = $face;
         }
 
         $this->_faces = $faces;

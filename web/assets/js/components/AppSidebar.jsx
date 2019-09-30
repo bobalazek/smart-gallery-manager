@@ -50,7 +50,7 @@ const mapStateToProps = state => {
     selectedDate: state.selectedDate,
     selectedCountry: state.selectedCountry,
     selectedCity: state.selectedCity,
-    selectedTag: state.selectedTag,
+    selectedLabel: state.selectedLabel,
   };
 };
 
@@ -65,16 +65,16 @@ class AppSidebar extends React.Component {
   constructor(props) {
     super(props);
 
-    this.tagsShownStep = 16;
+    this.labelsShownStep = 16;
     this.state = {
-      tagsShownCount: 16,
+      labelsShownCount: 16,
     };
 
     this.onViewClick = this.onViewClick.bind(this);
     this.onTypeClick = this.onTypeClick.bind(this);
     this.onDateClick = this.onDateClick.bind(this);
     this.onLocationClick = this.onLocationClick.bind(this);
-    this.onTagClick = this.onTagClick.bind(this);
+    this.onLabelClick = this.onLabelClick.bind(this);
   }
 
   onViewClick(view) {
@@ -155,12 +155,12 @@ class AppSidebar extends React.Component {
     }
   }
 
-  onTagClick(tag) {
+  onLabelClick(label) {
     this.props.setData(
-      'selectedTag',
-      this.props.selectedTag === tag
+      'selectedLabel',
+      this.props.selectedLabel === label
         ? null
-        : tag
+        : label
     );
   }
 
@@ -546,25 +546,25 @@ class AppSidebar extends React.Component {
     );
   }
 
-  renderTagList() {
+  renderLabelList() {
     const {
       classes,
       filesSummary,
-      selectedTag,
+      selectedLabel,
     } = this.props;
     const {
-      tagsShownCount,
+      labelsShownCount,
     } = this.state;
 
-    let tags = filesSummary && filesSummary.tags
-      ? filesSummary.tags
+    let labels = filesSummary && filesSummary.labels
+      ? filesSummary.labels
       : null;
-    let allTagsShown = true;
+    let allLabelsShown = true;
 
-    if (tags) {
-      allTagsShown = tagsShownCount >= tags.length;
+    if (labels) {
+      allLabelsShown = labelsShownCount >= labels.length;
 
-      tags = tags.slice(0, tagsShownCount);
+      labels = labels.slice(0, labelsShownCount);
     }
 
     return (
@@ -575,13 +575,13 @@ class AppSidebar extends React.Component {
           <ListSubheader component="div">
             <Grid container justify="space-between">
               <Grid item>
-                Tag
+                Label
               </Grid>
               <Grid item>
-                {selectedTag !== null &&
+                {selectedLabel !== null &&
                   <Button
                     size="small"
-                    onClick={this.onTagClick.bind(this, selectedTag)}
+                    onClick={this.onLabelClick.bind(this, selectedLabel)}
                   >
                     Clear
                   </Button>
@@ -591,21 +591,21 @@ class AppSidebar extends React.Component {
           </ListSubheader>
         }
       >
-        {!tags &&
+        {!labels &&
           <CircularProgress className={classes.circularProgress} />
         }
-        {tags && tags.map((entry) => {
+        {labels && labels.map((entry) => {
           return (
             <ListItem
-              key={entry.tag}
+              key={entry.label}
               button
-              onClick={this.onTagClick.bind(this, entry.tag)}
-              selected={selectedTag === entry.tag}
+              onClick={this.onLabelClick.bind(this, entry.label)}
+              selected={selectedLabel === entry.label}
             >
               <ListItemText
                 primary={(
                   <React.Fragment>
-                    {entry.tag}
+                    {entry.label}
                     <span className={classes.listItemCount}>{entry.count}</span>
                   </React.Fragment>
                 )}
@@ -613,12 +613,12 @@ class AppSidebar extends React.Component {
             </ListItem>
           )
         })}
-        {!allTagsShown &&
+        {!allLabelsShown &&
           <ListItem
             button
             onClick={() => {
               this.setState({
-                tagsShownCount: tagsShownCount + this.tagsShownStep,
+                labelsShownCount: labelsShownCount + this.labelsShownStep,
               });
             }}
           >
@@ -642,7 +642,7 @@ class AppSidebar extends React.Component {
         {this.renderTypeList()}
         {this.renderDateList()}
         {this.renderLocationList()}
-        {this.renderTagList()}
+        {this.renderLabelList()}
       </div>
     );
   }
