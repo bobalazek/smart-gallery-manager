@@ -168,6 +168,9 @@ class ListView extends React.Component {
         ) {
           this.infiniteLoaderListRef.current.recomputeRowHeights();
         }
+
+        this.lastQuery = null;
+        this.lastOffset = null;
       });
   }
 
