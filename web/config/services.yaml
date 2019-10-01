@@ -44,6 +44,11 @@ services:
         resource: '../src/Controller'
         tags: ['controller.service_arguments']
 
+    Symfony\Component\HttpFoundation\Session\Storage\Handler\PdoSessionHandler:
+        arguments:
+            - '%env(resolve:DATABASE_URL)%'
+
+    # Admin
     admin.file:
         class: App\Admin\FileAdmin
         arguments: [~, App\Entity\File, ~]

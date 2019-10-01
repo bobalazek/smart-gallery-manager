@@ -5,10 +5,10 @@ services:
     container_name: sgm_mysql
     build: ./docker/mysql
     environment:
-      - MYSQL_DATABASE=database
-      - MYSQL_USER=user
-      - MYSQL_PASSWORD=password
-      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-database}
+      - MYSQL_USER=${MYSQL_USER:-user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-password}
     ports:
       - '${MARAIDB_PORT_3306:-3307}:3306'
     volumes:
