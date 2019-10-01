@@ -85,7 +85,7 @@ class ApiController extends AbstractController
             ->leftJoin('f.imageLocation', 'ilo')
             ->groupBy('filesDate')
             ->orderBy('filesDate', 'DESC');
-        $this->_applyQueryFilters($filesCountQueryBuilder, $dateField);
+        $this->_applyQueryFilters($filesCountQueryBuilder, $dateField, ['date', 'day', 'month', 'year']);
 
         $filesCount = $filesCountQueryBuilder->getQuery()->getResult();
         foreach ($filesCount as $filesCount) {
@@ -129,7 +129,7 @@ class ApiController extends AbstractController
             ->leftJoin('f.imageLabels', 'il')
             ->leftJoin('f.imageLocation', 'ilo')
             ->groupBy('fileType');
-        $this->_applyQueryFilters($fileTypeCountQueryBuilder, $dateField);
+        $this->_applyQueryFilters($fileTypeCountQueryBuilder, $dateField, ['type']);
 
         $fileTypeCount = $fileTypeCountQueryBuilder->getQuery()->getResult();
         foreach ($fileTypeCount as $fileTypeCountSingle) {
@@ -153,7 +153,7 @@ class ApiController extends AbstractController
             ->leftJoin('il.file', 'f')
             ->leftJoin('f.imageLocation', 'ilo')
             ->groupBy('label');
-        $this->_applyQueryFilters($labelsQueryBuilder, $dateField);
+        $this->_applyQueryFilters($labelsQueryBuilder, $dateField, ['label']);
         $labels = $labelsQueryBuilder->getQuery()->getResult(Query::HYDRATE_ARRAY);
 
         usort($labels, function($a, $b) {
@@ -166,7 +166,7 @@ class ApiController extends AbstractController
             ->from(ImageLocation::class, 'ilo')
             ->leftJoin('ilo.file', 'f')
             ->leftJoin('f.imageLabels', 'il');
-        $this->_applyQueryFilters($imageLocationsQueryBuilder, $dateField);
+        $this->_applyQueryFilters($imageLocationsQueryBuilder, $dateField, ['country', 'city']);
         $imageLocations = $imageLocationsQueryBuilder->getQuery()->getResult();
 
         foreach ($imageLocations as $imageLocation) {
@@ -444,7 +444,10 @@ class ApiController extends AbstractController
         $request = $this->requestStack->getCurrentRequest();
 
         $type = $request->get('type');
-        if ($type !== null) {
+        if (
+            $type !== null &&
+            !in_array('type', $ignoredFields)
+        ) {
             $queryBuilder
                 ->andWhere('f.type = :type')
                 ->setParameter('type', $type);
@@ -452,7 +455,10 @@ class ApiController extends AbstractController
         }
 
         $year = $request->get('year');
-        if ($year !== null) {
+        if (
+            $year !== null &&
+            !in_array('year', $ignoredFields)
+        ) {
             $queryBuilder
                 ->andWhere('YEAR(f.' . $dateField . ') = :year')
                 ->setParameter('year', $year);
@@ -460,7 +466,10 @@ class ApiController extends AbstractController
         }
 
         $month = $request->get('month');
-        if ($month !== null) {
+        if (
+            $month !== null &&
+            !in_array('month', $ignoredFields)
+        ) {
             $queryBuilder
                 ->andWhere('MONTH(f.' . $dateField . ') = :month')
                 ->setParameter('month', $month);
@@ -468,7 +477,10 @@ class ApiController extends AbstractController
         }
 
         $day = $request->get('day');
-        if ($day !== null) {
+        if (
+            $day !== null &&
+            !in_array('day', $ignoredFields)
+        ) {
             $queryBuilder
                 ->andWhere('DAY(f.' . $dateField . ') = :day')
                 ->setParameter('day', $day);
@@ -476,7 +488,10 @@ class ApiController extends AbstractController
         }
 
         $date = $request->get('date');
-        if ($date !== null) {
+        if (
+            $date !== null &&
+            !in_array('date', $ignoredFields)
+        ) {
             $queryBuilder
                 ->andWhere('DATE(f.' . $dateField . ') = :date')
                 ->setParameter('date', $date);
@@ -484,7 +499,10 @@ class ApiController extends AbstractController
         }
 
         $country = $request->get('country');
-        if ($country !== null) {
+        if (
+            $country !== null &&
+            !in_array('country', $ignoredFields)
+        ) {
             $country = strtolower(rawurldecode($country));
             $queryBuilder
                 ->andWhere('ilo.country = LOWER(:country)')
@@ -493,7 +511,10 @@ class ApiController extends AbstractController
         }
 
         $city = $request->get('city');
-        if ($city !== null) {
+        if (
+            $city !== null &&
+            !in_array('city', $ignoredFields)
+        ) {
             $city = strtolower(rawurldecode($city));
             $queryBuilder
                 ->andWhere('ilo.city = LOWER(:city)')
@@ -502,7 +523,10 @@ class ApiController extends AbstractController
         }
 
         $createdBefore = $request->get('created_before');
-        if ($createdBefore !== null) {
+        if (
+            $createdBefore !== null &&
+            !in_array('created_before', $ignoredFields)
+        ) {
             $queryBuilder
                 ->andWhere('f.createdAt < :created_before')
                 ->setParameter('created_before', new \DateTime($createdBefore));
@@ -510,21 +534,29 @@ class ApiController extends AbstractController
         }
 
         $search = $request->get('search');
-        if ($search) {
+        if (
+            $search &&
+            !in_array('search', $ignoredFields)
+        ) {
             $search = strtolower(rawurldecode($search));
             $queryBuilder
                 ->andWhere($queryBuilder->expr()->orX(
                     $queryBuilder->expr()->like('f.path', ':search'),
                     $queryBuilder->expr()->like('f.type', ':search'),
                     $queryBuilder->expr()->like('f.mime', ':search'),
-                    $queryBuilder->expr()->like('f.extension', ':search')
+                    $queryBuilder->expr()->like('f.extension', ':search'),
+                    $queryBuilder->expr()->like('il.name', ':search'),
+                    $queryBuilder->expr()->like('ilo.label', ':search')
                 ))
                 ->setParameter('search', '%' . $search . '%')
             ;
         }
 
         $label = $request->get('label');
-        if ($label !== null) {
+        if (
+            $label !== null &&
+            !in_array('label', $ignoredFields)
+        ) {
             $label = strtolower(rawurldecode($label));
             $queryBuilder
                 ->andWhere('il.name = LOWER(:label)')

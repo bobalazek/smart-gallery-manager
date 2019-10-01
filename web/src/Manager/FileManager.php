@@ -68,7 +68,6 @@ class FileManager {
         // Label
         $this->labellingEnabled = $this->params->get('labelling_enabled');
         $this->labellingService = $this->params->get('labelling_service');
-        $this->labellingConfidence = $this->params->get('labelling_confidence');
         $this->awsCredentials = [
             'key' => $this->params->get('aws_key'),
             'secret' => $this->params->get('aws_secret'),

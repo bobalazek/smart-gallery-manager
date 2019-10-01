@@ -241,6 +241,13 @@ class AppSidebar extends React.Component {
         {!types &&
           <CircularProgress className={classes.circularProgress} />
         }
+        {types && types.length === 0 &&
+          <ListItem>
+            <ListItemText
+              primary={'No types found'}
+            />
+          </ListItem>
+        }
         {types && types.map((entry) => {
           return (
             <ListItem
@@ -317,6 +324,13 @@ class AppSidebar extends React.Component {
       >
         {!yearsCount &&
           <CircularProgress className={classes.circularProgress} />
+        }
+        {yearsCount && yearsCount.length === 0 &&
+          <ListItem>
+            <ListItemText
+              primary={'No dates found'}
+            />
+          </ListItem>
         }
         {yearsCount && yearsCount.map((entry) => {
           const subList = (
@@ -433,12 +447,12 @@ class AppSidebar extends React.Component {
       orderBy,
     } = this.props;
 
-    const countriesCount = filesSummary
+    const countries = filesSummary
       && filesSummary.location
       && filesSummary.location.country
       ? filesSummary.location.country
       : null;
-    const citiesCount = filesSummary
+    const cities = filesSummary
       && filesSummary.location
       && filesSummary.location.city
       ? filesSummary.location.city
@@ -468,10 +482,17 @@ class AppSidebar extends React.Component {
           </ListSubheader>
         }
       >
-        {!countriesCount &&
+        {!countries &&
           <CircularProgress className={classes.circularProgress} />
         }
-        {countriesCount && countriesCount.map((entry) => {
+        {countries && countries.length === 0 &&
+          <ListItem>
+            <ListItemText
+              primary={'No locations found'}
+            />
+          </ListItem>
+        }
+        {countries && countries.map((entry) => {
           const subList = (
             <Collapse
               in={entry.location === selectedCountry}
@@ -484,7 +505,7 @@ class AppSidebar extends React.Component {
                 disablePadding
                 style={{ paddingLeft: 8 }}
               >
-                {citiesCount && citiesCount.map((subEntry) => {
+                {cities && cities.map((subEntry) => {
                   if (entry.location !== subEntry.parent) {
                     return;
                   }
@@ -593,6 +614,13 @@ class AppSidebar extends React.Component {
       >
         {!labels &&
           <CircularProgress className={classes.circularProgress} />
+        }
+        {labels && labels.length === 0 &&
+          <ListItem>
+            <ListItemText
+              primary={'No labels found'}
+            />
+          </ListItem>
         }
         {labels && labels.map((entry) => {
           return (
