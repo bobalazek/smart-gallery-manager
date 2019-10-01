@@ -48,6 +48,11 @@ class AppContent extends React.Component {
   }
 
   fetchFilesSummary(orderBy, orderByDirection) {
+    const {
+      selectedYear,
+      selectedYearMonth,
+      selectedDate,
+    } = this.props;
     this.props.setData('isLoading', true);
 
     return new Promise((resolve, reject) => {
@@ -67,6 +72,26 @@ class AppContent extends React.Component {
           let filesPerDate = [];
 
           filesSummary.date.date.forEach((data) => {
+            // Now that we get ALL the dates, because we are ignoring all the
+            //   date related parameters in the API, we will need to process
+            //   them here on the client-side.
+            if (
+              (
+                selectedYear &&
+                !data.date.startsWith(selectedYear + '-')
+              ) ||
+              (
+                selectedYearMonth &&
+                !data.date.startsWith(selectedYearMonth + '-')
+              ) ||
+              (
+                selectedDate &&
+                !data.date !== selectedDate
+              )
+            ) {
+              return;
+            }
+
             let rowsCountPerDate = 1;
             if (data.count > this.maxFilesPerRow) {
               rowsCountPerDate = Math.ceil(data.count / this.maxFilesPerRow);
