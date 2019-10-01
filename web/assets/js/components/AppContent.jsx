@@ -86,7 +86,7 @@ class AppContent extends React.Component {
               ) ||
               (
                 selectedDate &&
-                !data.date !== selectedDate
+                data.date !== selectedDate
               )
             ) {
               return;
