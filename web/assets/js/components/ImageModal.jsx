@@ -55,7 +55,8 @@ const styles = {
     position: 'relative',
   },
   imageFace: {
-    border: '1px solid red',
+    border: '3px solid rgba(255, 255, 255, .5)',
+    boxShadow: '0 0 5px rgba(0, 0, 0, .5), 0 0 5px rgba(0, 0, 0, .5) inset',
     position: 'absolute',
   },
   closeButton: {
@@ -391,10 +392,10 @@ class ImageModal extends React.Component {
                       key={index}
                       className={classes.imageFace}
                       style={{
-                        left: (face[0] * 100) + '%',
-                        top: (face[1] * 100) + '%',
-                        width: (face[2] * 100) + '%',
-                        height: (face[3] * 100) + '%',
+                        left: (face.left * 100) + '%',
+                        top: (face.top * 100) + '%',
+                        width: (face.width * 100) + '%',
+                        height: (face.height * 100) + '%',
                       }}
                     ></div>
                   )
