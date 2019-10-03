@@ -5,7 +5,7 @@ import {
 } from '../actions/index';
 
 const initialState = {
-  view: 'list',
+  view: null,
   isLoading: false,
   isLoaded: false,
   rows: [],

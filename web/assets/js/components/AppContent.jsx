@@ -1,6 +1,8 @@
 import React from 'react';
 import axios from 'axios';
 import moment from 'moment';
+import qs from 'qs';
+import { withRouter, Switch, Route } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/styles';
 import ListView from './ListView';
@@ -44,7 +46,77 @@ class AppContent extends React.Component {
   constructor(props) {
     super(props);
 
-    this.maxFilesPerRow = 50;
+    this.parent = this.props.parent;
+
+    this.lastUrl = null;
+  }
+
+  componentDidUpdate(prevProps) {
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => {
+      const {
+        view,
+      } = this.props;
+
+      const pathWithoutQuery = this.parent.views[view].url;
+      const path = pathWithoutQuery + this.getFiltersQuery();
+      const currentQuery = window.location.search;
+      const currentPath = window.location.pathname + currentQuery;
+      const isFirstVisit = !this.lastPath;
+
+      if (isFirstVisit) {
+        const keyValues = {
+          order_by: 'orderBy',
+          order_by_direction: 'orderByDirection',
+          search: 'search',
+          type: 'selectedType',
+          year: 'selectedYear',
+          month: 'selectedYearMonth',
+          date: 'selectedDate',
+          country: 'selectedCountry',
+          city: 'selectedCity',
+          label: 'selectedLabel',
+        };
+        const parsedQuery = qs.parse(currentQuery, { ignoreQueryPrefix: true });
+        let newData = {};
+
+        for (const key in keyValues) {
+          const propsKey = keyValues[key];
+          if (
+            !parsedQuery[key] ||
+            parsedQuery[key] === this.props[propsKey]
+          ) {
+            continue;
+          }
+
+          let newValue = parsedQuery[key];
+          if (key === 'month') {
+            // We can only set the selectedMonth, if there is also the year
+            if (parsedQuery.year) {
+              newValue = parsedQuery.year + '-' + newValue;
+            } else {
+              continue;
+            }
+          }
+
+          newData[propsKey] = newValue;
+        }
+
+        if (Object.keys(newData).length > 0) {
+          this.props.setDataBatch(newData);
+        }
+      }
+
+      if (
+        !isFirstVisit &&
+        path !== currentPath &&
+        this.lastPath !== path
+      ) {
+        this.props.history.push(path);
+      }
+
+      this.lastPath = path;
+    }, 500);
   }
 
   fetchFilesSummary(orderBy, orderByDirection) {
@@ -93,14 +165,14 @@ class AppContent extends React.Component {
             }
 
             let rowsCountPerDate = 1;
-            if (data.count > this.maxFilesPerRow) {
-              rowsCountPerDate = Math.ceil(data.count / this.maxFilesPerRow);
+            if (data.count > this.parent.maxFilesPerRow) {
+              rowsCountPerDate = Math.ceil(data.count / this.parent.maxFilesPerRow);
 
               for (let i = 0; i < rowsCountPerDate-1; i++) {
-                rowsFilesCountMap.push(this.maxFilesPerRow);
+                rowsFilesCountMap.push(this.parent.maxFilesPerRow);
               }
               rowsFilesCountMap.push(
-                data.count % this.maxFilesPerRow
+                data.count % this.parent.maxFilesPerRow
               );
             } else {
               rowsFilesCountMap.push(data.count);
@@ -202,18 +274,23 @@ class AppContent extends React.Component {
     const {
       classes,
       onImageClick,
-      view,
     } = this.props;
 
     return (
       <div className={classes.root}>
-        {view === 'list' && <ListView onImageClick={onImageClick} parent={this} />}
-        {view === 'map' && <MapView onImageClick={onImageClick} parent={this} />}
+        <Switch>
+          <Route exact path={basePath}>
+            <ListView onImageClick={onImageClick} parent={this} />
+          </Route>
+          <Route exact path={`${basePath}/map`}>
+            <MapView onImageClick={onImageClick} parent={this} />
+          </Route>
+        </Switch>
       </div>
     );
   }
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(
-  withStyles(styles)(AppContent)
+  withRouter(withStyles(styles)(AppContent))
 );

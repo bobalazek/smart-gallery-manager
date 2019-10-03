@@ -1,4 +1,5 @@
 import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import { withStyles } from '@material-ui/styles';
 import ImageModal from './ImageModal';
 import AppSidebar from './AppSidebar';
@@ -29,6 +30,21 @@ const styles = {
 class AppContainer extends React.Component {
   constructor(props) {
     super(props);
+
+    this.maxFilesPerRow = 50;
+    this.sidebarLabelsShownStep = 16;
+    this.views = {
+      list: {
+        key: 'list',
+        label: 'List',
+        url: basePath,
+      },
+      map: {
+        key: 'map',
+        label: 'Map',
+        url: basePath + '/map',
+      },
+    };
 
     this.state = {
       isModalOpen: false,
@@ -63,23 +79,26 @@ class AppContainer extends React.Component {
     } = this.state;
 
     return (
-      <div className={classes.root}>
-        <div className={classes.containerInner}>
-          <div className={classes.sidebarWrapper}>
-            <AppSidebar />
+      <BrowserRouter>
+        <div className={classes.root}>
+          <div className={classes.containerInner}>
+            <div className={classes.sidebarWrapper}>
+              <AppSidebar parent={this} />
+            </div>
+            <div className={classes.contentWrapper}>
+              <AppContent
+                parent={this}
+                onImageClick={this.onImageClick}
+              />
+            </div>
           </div>
-          <div className={classes.contentWrapper}>
-            <AppContent
-              onImageClick={this.onImageClick}
-            />
-          </div>
+          <ImageModal
+            open={isModalOpen}
+            onClose={this.onModalClose}
+            fileId={modalFileId}
+          />
         </div>
-        <ImageModal
-          open={isModalOpen}
-          onClose={this.onModalClose}
-          fileId={modalFileId}
-        />
-      </div>
+      </BrowserRouter>
     );
   }
 }

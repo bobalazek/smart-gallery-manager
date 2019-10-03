@@ -2,6 +2,14 @@
 
 {% block title %}Smart Gallery Manager{% endblock %}
 
+{% block javascripts_head %}
+    {{ parent() }}
+    <script>
+        var baseUrl = '{{ url('gallery') | trim('/') }}';
+        var basePath = '{{ path('gallery') }}';
+    </script>
+{% endblock %}
+
 {% block body %}
     <div id="root"></div>
 {% endblock %}

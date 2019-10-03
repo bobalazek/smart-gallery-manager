@@ -1,5 +1,6 @@
 import React from 'react';
 import moment from 'moment';
+import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -65,10 +66,11 @@ class AppSidebar extends React.Component {
   constructor(props) {
     super(props);
 
-    this.labelsShownStep = 16;
     this.state = {
       labelsShownCount: 16,
     };
+
+    this.parent = this.props.parent;
 
     this.onViewClick = this.onViewClick.bind(this);
     this.onTypeClick = this.onTypeClick.bind(this);
@@ -77,11 +79,10 @@ class AppSidebar extends React.Component {
     this.onLabelClick = this.onLabelClick.bind(this);
   }
 
-  onViewClick(view) {
-    this.props.setData(
-      'view',
-      view
-    );
+  onViewClick(view, url) {
+    this.props.setData('view', view);
+
+    this.props.history.push(url);
   }
 
   onTypeClick(type) {
@@ -170,11 +171,6 @@ class AppSidebar extends React.Component {
       view,
     } = this.props;
 
-    const views = {
-      list: 'List',
-      // map: 'Map',
-    };
-
     return (
       <List
         component="nav"
@@ -185,16 +181,17 @@ class AppSidebar extends React.Component {
           </ListSubheader>
         }
       >
-        {Object.keys(views).map((viewKey) => {
+        {Object.keys(this.parent.views).map((viewKey) => {
+          const thisView = this.parent.views[viewKey];
           return (
             <ListItem
-              key={viewKey}
+              key={thisView.key}
               button
-              onClick={this.onViewClick.bind(this, viewKey)}
-              selected={view === viewKey}
+              onClick={this.onViewClick.bind(this, thisView.key, thisView.url)}
+              selected={view === thisView.key}
             >
               <ListItemText
-                primary={views[viewKey]}
+                primary={thisView.label}
               />
             </ListItem>
           )
@@ -646,7 +643,7 @@ class AppSidebar extends React.Component {
             button
             onClick={() => {
               this.setState({
-                labelsShownCount: labelsShownCount + this.labelsShownStep,
+                labelsShownCount: labelsShownCount + this.parent.sidebarLabelsShownStep,
               });
             }}
           >
@@ -677,5 +674,5 @@ class AppSidebar extends React.Component {
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(
-  withStyles(styles)(AppSidebar)
+  withRouter(withStyles(styles)(AppSidebar))
 );

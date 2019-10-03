@@ -37,8 +37,7 @@ const styles = {
   circularProgressWrapper: {
     position: 'absolute',
     top: 32,
-    right: '50%',
-    marginLeft: -40,
+    right: 32,
     zIndex: 9999,
   },
   infiniteLoaderContainer: {
@@ -96,9 +95,9 @@ class ListView extends React.Component {
   constructor(props) {
     super(props);
 
-    this.parent = this.props.parent;
-
     this.onChange = this.onChange.bind(this);
+
+    this.parent = this.props.parent;
 
     // Infinite loader
     this.infiniteLoaderContainerRef = React.createRef();
@@ -117,6 +116,8 @@ class ListView extends React.Component {
   }
 
   componentDidMount() {
+    this.props.setData('view', 'list');
+
     this.fetchFilesSummary();
   }
 
@@ -143,7 +144,7 @@ class ListView extends React.Component {
     if (name === 'orderBy') {
       this.fetchFilesSummary(value, this.props.orderByDirection);
     } else {
-      clearTimeout(this.searchTimer)
+      clearTimeout(this.searchTimer);
       this.searchTimer = setTimeout(() => {
         this.fetchFilesSummary();
       }, 500);

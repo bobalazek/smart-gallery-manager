@@ -1,6 +1,11 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import L from 'leaflet';
 import { withStyles } from '@material-ui/styles';
+import {
+  setData,
+  setDataBatch,
+} from '../actions/index';
 
 const styles = {
   root: {
@@ -11,15 +16,26 @@ const styles = {
   },
 };
 
+function mapDispatchToProps(dispatch) {
+  return {
+    setData: (type, data) => dispatch(setData(type, data)),
+  };
+}
+
 class MapView extends React.Component {
   constructor(props) {
     super(props);
+
+    this.parent = this.props.parent;
 
     this.mapRef = React.createRef();
   }
 
   componentDidMount() {
+    this.props.setData('view', 'map');
+
     this.prepareMap();
+    this.parent.fetchFilesSummary();
   }
 
   prepareMap() {
@@ -57,4 +73,6 @@ class MapView extends React.Component {
   }
 }
 
-export default withStyles(styles)(MapView);
+export default connect(null, mapDispatchToProps)(
+  withStyles(styles)(MapView)
+);

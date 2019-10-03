@@ -31,4 +31,12 @@ class DefaultController extends AbstractController
     {
         return $this->render('default/gallery.html.twig');
     }
+
+    /**
+     * @Route("/gallery/{path}", name="gallery")
+     */
+    public function galleryWithPath(Request $request, $path = '')
+    {
+        return $this->render('default/gallery.html.twig');
+    }
 }

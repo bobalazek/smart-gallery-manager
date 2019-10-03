@@ -7,10 +7,13 @@
           content="minimum-scale=1, initial-scale=1, width=device-width, shrink-to-fit=no"
         />
         <title>{% block title %}{% endblock %}</title>
-        {% block stylesheets %}
+        {% block javascripts_head %}
             <script>
                 var rootUrl = '{{ url('index') | trim('/') }}';
+                var rootPath = '{{ path('index') }}';
             </script>
+        {% endblock %}
+        {% block stylesheets %}
             {{ encore_entry_link_tags('app') }}
         {% endblock %}
     </head>
