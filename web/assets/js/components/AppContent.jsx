@@ -218,6 +218,7 @@ class AppContent extends React.Component {
 
   getFiltersQuery(forcedOrderBy, forcedOrderByDirection) {
     const {
+      view,
       selectedType,
       selectedYear,
       selectedYearMonth,
@@ -233,6 +234,10 @@ class AppContent extends React.Component {
     let query = '?order_by=' + (forcedOrderBy ? forcedOrderBy : orderBy);
 
     query += '&order_by_direction=' + (forcedOrderByDirection ? forcedOrderByDirection : orderByDirection);
+
+    if (view === 'map') {
+      query += '&only_with_location=true';
+    }
 
     if (selectedType !== null) {
       query += '&type=' + selectedType;

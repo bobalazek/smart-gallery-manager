@@ -1,4 +1,6 @@
 import React from 'react';
+import axios from 'axios';
+import moment from 'moment';
 import { connect } from 'react-redux';
 import L from 'leaflet';
 import { withStyles } from '@material-ui/styles';
@@ -16,6 +18,23 @@ const styles = {
   },
 };
 
+const mapStateToProps = state => {
+  return {
+    isLoading: state.isLoading,
+    isLoaded: state.isLoaded,
+    orderBy: state.orderBy,
+    orderByDirection: state.orderByDirection,
+    search: state.search,
+    selectedType: state.selectedType,
+    selectedYear: state.selectedYear,
+    selectedYearMonth: state.selectedYearMonth,
+    selectedDate: state.selectedDate,
+    selectedCountry: state.selectedCountry,
+    selectedCity: state.selectedCity,
+    selectedLabel: state.selectedLabel,
+  };
+};
+
 function mapDispatchToProps(dispatch) {
   return {
     setData: (type, data) => dispatch(setData(type, data)),
@@ -28,6 +47,16 @@ class MapView extends React.Component {
 
     this.parent = this.props.parent;
 
+    this.state = {
+      zoom: 8,
+      position: [
+        48.2082,
+        16.3738
+      ],
+      data: [],
+      meta: [],
+    };
+
     this.mapRef = React.createRef();
   }
 
@@ -35,14 +64,55 @@ class MapView extends React.Component {
     this.props.setData('view', 'map');
 
     this.prepareMap();
-    this.parent.fetchFilesSummary();
+    this.fetchFilesSummary();
+  }
+
+  componentDidUpdate(prevProps) {
+    if (
+      prevProps.selectedType !== this.props.selectedType ||
+      prevProps.selectedYear !== this.props.selectedYear ||
+      prevProps.selectedYearMonth !== this.props.selectedYearMonth ||
+      prevProps.selectedDate !== this.props.selectedDate ||
+      prevProps.selectedCountry !== this.props.selectedCountry ||
+      prevProps.selectedCity !== this.props.selectedCity ||
+      prevProps.selectedLabel !== this.props.selectedLabel
+    ) {
+      this.fetchFilesSummary();
+    }
+  }
+
+  fetchFilesSummary() {
+    this.parent.fetchFilesSummary()
+      .then(() => {
+        const createdBefore = moment();
+
+        return new Promise((resolve, reject) => {
+          this.props.setData('isLoading', true);
+
+          const query = this.parent.getFiltersQuery();
+          const url = rootUrl + '/api/files/map' + query +
+            '&created_before=' + createdBefore.format('YYYY-MM-DDTHH:mm:ss');
+
+          return axios.get(url)
+            .then(res => {
+              this.setState({
+                data: res.data.data,
+                meta: res.data.data,
+              }, () => {
+                this.prepareMap();
+              });
+            });
+        });
+      });
   }
 
   prepareMap() {
-    const position = [
-      48.2082,
-      16.3738
-    ];
+    const {
+      position,
+      zoom,
+      data,
+      meta,
+    } = this.state;
 
     if (
       this.mapRef &&
@@ -50,13 +120,37 @@ class MapView extends React.Component {
     ) {
       this.mapRef.current.style.height = window.innerHeight + 'px';
 
-      const map = L.map(this.mapRef.current, {
-        layers: [
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-          }),
-        ],
-      }).setView(position, 8);
+      if (!this.mapMarkersLayer) {
+        this.mapMarkersLayer = L.featureGroup();
+      }
+      this.mapMarkersLayer.clearLayers();
+
+      for (let i = 0; i < data.length; i++) {
+        const coordinates = data[i].location.coordinates;
+        L.marker(coordinates)
+          .bindPopup(
+            'Location: ' + data[i].location.label + '<br />' +
+            'Latitude: ' +  coordinates[0] + ', ' +
+            'Longitude: ' +  coordinates[1] + '<br />' +
+            'Count: '  + data[i].count
+          )
+          .addTo(this.mapMarkersLayer);
+      }
+
+      if (!this.map) {
+        this.map = L.map(this.mapRef.current, {
+          layers: [
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+            }),
+            this.mapMarkersLayer,
+          ],
+        }).setView(position, zoom);
+      }
+
+      if (data.length > 0) {
+        this.map.fitBounds(this.mapMarkersLayer.getBounds());
+      }
     }
   }
 
@@ -73,6 +167,6 @@ class MapView extends React.Component {
   }
 }
 
-export default connect(null, mapDispatchToProps)(
+export default connect(mapStateToProps, mapDispatchToProps)(
   withStyles(styles)(MapView)
 );

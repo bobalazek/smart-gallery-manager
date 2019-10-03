@@ -152,7 +152,8 @@ class ApiController extends AbstractController
             ->from(ImageLabel::class, 'il')
             ->leftJoin('il.file', 'f')
             ->leftJoin('f.imageLocation', 'ilo')
-            ->groupBy('label');
+            ->groupBy('label')
+        ;
         $this->_applyQueryFilters($labelsQueryBuilder, $dateField, ['label']);
         $labels = $labelsQueryBuilder->getQuery()->getResult(Query::HYDRATE_ARRAY);
 
@@ -165,7 +166,8 @@ class ApiController extends AbstractController
             ->select('DISTINCT ilo.id, ilo.country, ilo.city')
             ->from(ImageLocation::class, 'ilo')
             ->leftJoin('ilo.file', 'f')
-            ->leftJoin('f.imageLabels', 'il');
+            ->leftJoin('f.imageLabels', 'il')
+        ;
         $this->_applyQueryFilters($imageLocationsQueryBuilder, $dateField, ['country', 'city']);
         $imageLocations = $imageLocationsQueryBuilder->getQuery()->getResult();
 
@@ -241,12 +243,8 @@ class ApiController extends AbstractController
      */
     public function files(Request $request)
     {
-        $mimeTypes = new MimeTypes();
-
         $offset = $request->get('offset');
         $limit = $request->get('limit');
-        $dateFrom = $request->get('date_from');
-        $dateTo = $request->get('date_to');
         $orderBy = $request->get('order_by', 'taken_at');
         if (!in_array($orderBy, ['taken_at', 'created_at'])) {
             return $this->json([
@@ -286,20 +284,6 @@ class ApiController extends AbstractController
             $filesQueryBuilder->setMaxResults((int)$limit);
         }
 
-        if ($dateFrom !== null) {
-            $filesQueryBuilder
-                ->andWhere('f.' . $dateField . ' >= :date_from')
-                ->setParameter('date_from', new \DateTime($dateFrom . ' 00:00:00'))
-            ;
-        }
-
-        if ($dateTo !== null) {
-            $filesQueryBuilder
-                ->andWhere('f.' . $dateField . ' <= :date_to')
-                ->setParameter('date_to', new \DateTime($dateTo . ' 23:59:59'))
-            ;
-        }
-
         $this->_applyQueryFilters($filesQueryBuilder, $dateField);
 
         $files = $filesQueryBuilder->getQuery()->getResult();
@@ -321,8 +305,81 @@ class ApiController extends AbstractController
             'meta' => [
                 'offset' => (int)$offset,
                 'limit' => (int)$limit,
-                'date_from' => $dateTo,
-                'date_to' => $dateTo,
+                'order_by' => $orderBy,
+            ],
+        ]);
+    }
+
+    /**
+     * @Route("/api/files/map", name="api.files.map")
+     */
+    public function filesMap(Request $request)
+    {
+        $orderBy = $request->get('order_by', 'taken_at');
+        if (!in_array($orderBy, ['taken_at', 'created_at'])) {
+            return $this->json([
+                'error' => [
+                    'message' => 'Invalid order_by parameter.',
+                ],
+            ], 500);
+        }
+
+        $orderByDirection = $request->get('order_by_direction', 'DESC');
+        if (!in_array($orderByDirection, ['ASC', 'DESC'])) {
+            return $this->json([
+                'error' => [
+                    'message' => 'Invalid order_by_direction parameter.',
+                ],
+            ], 500);
+        }
+
+        $dateField = $orderBy === 'taken_at'
+            ? 'takenAt'
+            : 'createdAt';
+
+        $imageLocationQueryBuilder = $this->em->createQueryBuilder()
+            ->select('ilo.id, ilo.label, ilo.latitude, ilo.longitude')
+            ->from(ImageLocation::class, 'ilo')
+            ->leftJoin('ilo.file', 'f')
+            ->leftJoin('f.imageLabels', 'il')
+            ->orderBy('f.' . $dateField, $orderByDirection)
+            ->groupBy('ilo.id')
+        ;
+
+        $this->_applyQueryFilters($imageLocationQueryBuilder, $dateField);
+
+        $imageLocations = $imageLocationQueryBuilder->getQuery()->getResult();
+
+        $dataMap = [];
+        foreach ($imageLocations as $imageLocation) {
+            $latitudeShort = round($imageLocation['latitude'], 3);
+            $longitudeShort = round($imageLocation['longitude'], 3);
+            $key = $latitudeShort . ',' . $longitudeShort;
+
+            if (!isset($dataMap[$key])) {
+                $dataMap[$key] = [
+                    'label' => $imageLocation['label'],
+                    'count' => 0,
+                ];
+            }
+
+            $dataMap[$key]['count']++;
+        }
+
+        $data = [];
+        foreach ($dataMap as $key => $value) {
+            $data[] = [
+                'location' => [
+                    'label' => $value['label'],
+                    'coordinates' => explode(',', $key)
+                ],
+                'count' => $value['count'],
+            ];
+        }
+
+        return $this->json([
+            'data' => $data,
+            'meta' => [
                 'order_by' => $orderBy,
             ],
         ]);
@@ -561,6 +618,13 @@ class ApiController extends AbstractController
             $queryBuilder
                 ->andWhere('il.name = LOWER(:label)')
                 ->setParameter('label', $label)
+            ;
+        }
+
+        $onlyWithLocation = $request->get('only_with_location');
+        if ($onlyWithLocation === 'true') {
+            $queryBuilder
+                ->andWhere('ilo.id IS NOT NULL')
             ;
         }
 
