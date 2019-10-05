@@ -11,14 +11,7 @@ import {
   List,
 } from 'react-virtualized';
 import { withStyles } from '@material-ui/styles';
-import Grid from '@material-ui/core/Grid';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import FormControl from '@material-ui/core/FormControl';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import Select from '@material-ui/core/Select';
-import TextField from '@material-ui/core/TextField';
-import OutlinedInput from '@material-ui/core/OutlinedInput';
+import AppNavigation from './AppNavigation';
 import Image from './Image';
 import ImageGrid from './ImageGrid';
 import {
@@ -33,12 +26,6 @@ const styles = {
     width: '100%',
     flexGrow: 1,
     padding: 16,
-  },
-  circularProgressWrapper: {
-    position: 'absolute',
-    top: 32,
-    right: 32,
-    zIndex: 9999,
   },
   infiniteLoaderContainer: {
     width: '100%',
@@ -95,9 +82,9 @@ class ListView extends React.Component {
   constructor(props) {
     super(props);
 
-    this.onChange = this.onChange.bind(this);
-
     this.parent = this.props.parent;
+
+    this.rowsLoading = {};
 
     // Infinite loader
     this.infiniteLoaderContainerRef = React.createRef();
@@ -135,22 +122,6 @@ class ListView extends React.Component {
     }
   }
 
-  onChange(event) {
-    const name = event.target.name;
-    const value = event.target.value;
-
-    this.props.setData(name, value);
-
-    if (name === 'orderBy') {
-      this.fetchFilesSummary(value, this.props.orderByDirection);
-    } else {
-      clearTimeout(this.searchTimer);
-      this.searchTimer = setTimeout(() => {
-        this.fetchFilesSummary();
-      }, 500);
-    }
-  }
-
   fetchFilesSummary(orderBy, orderByDirection) {
     this.parent.fetchFilesSummary(orderBy, orderByDirection)
       .then(() => {
@@ -172,6 +143,7 @@ class ListView extends React.Component {
 
         this.lastQuery = null;
         this.lastOffset = null;
+        this.rowsLoading = {};
       });
   }
 
@@ -188,52 +160,7 @@ class ListView extends React.Component {
 
     return (
       <div className={classes.root}>
-        {isLoading && (
-          <div className={classes.circularProgressWrapper}>
-            <CircularProgress size={80} />
-          </div>
-        )}
-        <Grid
-          container
-          justify="space-between"
-          style={{ marginBottom: 20 }}
-        >
-          <Grid item>
-            <FormControl variant="outlined">
-              <Select
-                name="orderBy"
-                value={orderBy}
-                onChange={this.onChange}
-                input={<OutlinedInput name="orderBy" />}
-              >
-                <MenuItem value="taken_at">Date taken</MenuItem>
-                <MenuItem value="created_at">Date created</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl variant="outlined">
-              <Select
-                name="orderByDirection"
-                value={orderByDirection}
-                onChange={this.onChange}
-                input={<OutlinedInput name="age" />}
-              >
-                <MenuItem value="DESC">Descending</MenuItem>
-                <MenuItem value="ASC">Ascending</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item>
-            <TextField
-              name="search"
-              label="Search"
-              type="search"
-              variant="outlined"
-              fullWidth
-              value={search}
-              onChange={this.onChange}
-            />
-          </Grid>
-        </Grid>
+        <AppNavigation parent={this.parent} />
         {!isLoading && isLoaded && files.length === 0 &&
           <div>No files found.</div>
         }
@@ -318,7 +245,7 @@ class ListView extends React.Component {
       const dateMoment = moment.parseZone(file.date);
 
       const date = dateMoment.format('YYYY-MM-DD');
-      const hasReachedMaxFilesPerRow = row.files.length >= this.parent.maxFilesPerRow;
+      const hasReachedMaxFilesPerRow = row.files.length >= this.parent.parent.maxFilesPerRow;
 
       if (
         (
@@ -374,19 +301,16 @@ class ListView extends React.Component {
       filesSummaryDatetime,
     } = this.props;
 
-    const query = this.parent.getFiltersQuery();
-    let offset = 0;
-    let limit = 0;
-
-    for (let i = 0; i <= stopIndex; i++) {
-      if (i < startIndex) {
-        offset += rowsFilesCountMap[i];
-      }
-
-      if (i >= startIndex) {
-        limit += rowsFilesCountMap[i];
+    for (let index = startIndex; index <= stopIndex; index++) {
+      if (this._isRowLoaded({ index })) {
+        startIndex++;
       }
     }
+
+    const query = this.parent.getFiltersQuery();
+    const offsetAndLimit = this.parent.getOffsetAndLimitByIndexes(startIndex, stopIndex);
+    const offset = offsetAndLimit[0];
+    const limit = offsetAndLimit[1];
 
     // Prevent doing a request if it's the same query and offset
     //   or if limit is 0, which basically means, that we are at the end of the page
@@ -404,6 +328,7 @@ class ListView extends React.Component {
     this.lastOffset = offset;
 
     return new Promise((resolve, reject) => {
+      this._setRowsLoading(startIndex, stopIndex);
       this.props.setData('isLoading', true);
 
       const url = rootUrl + '/api/files' + query +
@@ -435,6 +360,9 @@ class ListView extends React.Component {
           this._prepareRowsPerIndex(files, startIndex, stopIndex);
 
           resolve();
+        })
+        .finally(() => {
+          this._setRowsLoaded(startIndex, stopIndex);
         });
     });
   }
@@ -444,7 +372,15 @@ class ListView extends React.Component {
       rows,
     } = this.props;
 
-    return !!rows[index];
+    const isLoaded = !!rows[index];
+    if (
+      !isLoaded &&
+      this.rowsLoading[index] === true
+    ) {
+      return true;
+    }
+
+    return isLoaded;
   }
 
   _getRowCount() {
@@ -492,6 +428,18 @@ class ListView extends React.Component {
         )}
       </CellMeasurer>
     );
+  }
+
+  _setRowsLoading(startIndex, stopIndex) {
+    for (let i = startIndex; i <= stopIndex; i++) {
+      this.rowsLoading[i] = true;
+    }
+  }
+
+  _setRowsLoaded(startIndex, stopIndex) {
+    for (let i = startIndex; i <= stopIndex; i++) {
+      this.rowsLoading[i] = false;
+    }
   }
 }
 

@@ -1,6 +1,8 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { withStyles } from '@material-ui/styles';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import ImageModal from './ImageModal';
 import AppSidebar from './AppSidebar';
 import AppContent from './AppContent';
@@ -11,6 +13,12 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     height: '100vh',
+  },
+  circularProgressWrapper: {
+    position: 'fixed',
+    top: 32,
+    right: 32,
+    zIndex: 9999,
   },
   containerInner: {
     width: '100%',
@@ -25,6 +33,12 @@ const styles = {
     flexGrow: 1,
     position: 'relative',
   },
+};
+
+const mapStateToProps = state => {
+  return {
+    isLoading: state.isLoading,
+  };
 };
 
 class AppContainer extends React.Component {
@@ -72,6 +86,7 @@ class AppContainer extends React.Component {
   render() {
     const {
       classes,
+      isLoading,
     } = this.props;
     const {
       isModalOpen,
@@ -81,6 +96,11 @@ class AppContainer extends React.Component {
     return (
       <BrowserRouter>
         <div className={classes.root}>
+          {isLoading && (
+            <div className={classes.circularProgressWrapper}>
+              <CircularProgress size={80} />
+            </div>
+          )}
           <div className={classes.containerInner}>
             <div className={classes.sidebarWrapper}>
               <AppSidebar parent={this} />
@@ -103,4 +123,6 @@ class AppContainer extends React.Component {
   }
 }
 
-export default withStyles(styles)(AppContainer);
+export default connect(mapStateToProps)(
+  withStyles(styles)(AppContainer)
+);

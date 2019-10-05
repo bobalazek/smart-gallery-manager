@@ -32,6 +32,7 @@ const mapStateToProps = state => {
     selectedCountry: state.selectedCountry,
     selectedCity: state.selectedCity,
     selectedLabel: state.selectedLabel,
+    rowsFilesCountMap: state.rowsFilesCountMap,
   };
 };
 
@@ -125,10 +126,12 @@ class AppContent extends React.Component {
       selectedYearMonth,
       selectedDate,
     } = this.props;
-    this.props.setData('isLoading', true);
 
     return new Promise((resolve, reject) => {
-      let url = rootUrl + '/api/files/summary' + this.getFiltersQuery(orderBy, orderByDirection);
+      this.props.setData('isLoading', true);
+
+      let url = rootUrl + '/api/files/summary' +
+        this.getFiltersQuery(orderBy, orderByDirection);
 
       this.requestCancelToken && this.requestCancelToken();
 
@@ -212,6 +215,9 @@ class AppContent extends React.Component {
           } else {
             reject(error);
           }
+        })
+        .finally(() => {
+          this.props.setData('isLoading', false);
         });
     });
   }
@@ -273,6 +279,27 @@ class AppContent extends React.Component {
     }
 
     return query;
+  }
+
+  getOffsetAndLimitByIndexes(startIndex, stopIndex) {
+    const {
+      rowsFilesCountMap,
+    } = this.props;
+
+    let offset = 0;
+    let limit = 0;
+
+    for (let i = 0; i <= stopIndex; i++) {
+      if (i < startIndex) {
+        offset += rowsFilesCountMap[i];
+      }
+
+      if (i >= startIndex) {
+        limit += rowsFilesCountMap[i];
+      }
+    }
+
+    return [offset, limit];
   }
 
   render() {
