@@ -440,6 +440,7 @@ class ApiController extends AbstractController
                 UrlGeneratorInterface::ABSOLUTE_URL
             );
 
+            $isMissing = false;
             $width = $swapWidthHeight
                 ? $fileMeta['height']
                 : $fileMeta['width'];
@@ -476,6 +477,7 @@ class ApiController extends AbstractController
                 ) . 'img/404.jpg';
 
                 $aspectRatio = $width / $height;
+                $isMissing = true;
             }
 
             $response[$imageType] = [
@@ -483,6 +485,7 @@ class ApiController extends AbstractController
                 'width' => $width,
                 'height' => $height,
                 'aspect_ratio' => $aspectRatio,
+                'is_missing' => $isMissing,
             ];
         }
 

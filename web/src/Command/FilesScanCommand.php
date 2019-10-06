@@ -49,6 +49,7 @@ class FilesScanCommand extends Command
                 'Should we update the existing entries in the database (when meta changes for example)?',
                 false
             )
+            // TODO: implement cleanup for missing images
             ->addOption(
                 'action',
                 'a',
