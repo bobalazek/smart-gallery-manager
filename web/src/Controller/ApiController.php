@@ -84,7 +84,7 @@ class ApiController extends AbstractController
             ->leftJoin('f.imageLabels', 'il')
             ->leftJoin('f.imageLocation', 'ilo')
             ->groupBy('filesDate')
-            ->orderBy('filesDate', 'DESC');
+            ->orderBy('filesDate', $orderByDirection);
         $this->_applyQueryFilters($filesCountQueryBuilder, $dateField, ['date', 'day', 'month', 'year']);
 
         $filesCount = $filesCountQueryBuilder->getQuery()->getResult();
@@ -272,8 +272,8 @@ class ApiController extends AbstractController
             ->from(File::class, 'f')
             ->leftJoin('f.imageLabels', 'il')
             ->leftJoin('f.imageLocation', 'ilo')
-            ->orderBy('f.' . $dateField, $orderByDirection)
             ->groupBy('f.id')
+            ->orderBy('f.' . $dateField, $orderByDirection)
         ;
 
         if ($offset !== null) {

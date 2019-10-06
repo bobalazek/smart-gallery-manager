@@ -38,6 +38,7 @@ const styles = {
 const mapStateToProps = state => {
   return {
     isLoading: state.isLoading,
+    isDataLoading: state.isDataLoading,
   };
 };
 
@@ -87,6 +88,7 @@ class AppContainer extends React.Component {
     const {
       classes,
       isLoading,
+      isDataLoading,
     } = this.props;
     const {
       isModalOpen,
@@ -96,7 +98,7 @@ class AppContainer extends React.Component {
     return (
       <BrowserRouter>
         <div className={classes.root}>
-          {isLoading && (
+          {(isLoading || isDataLoading) && (
             <div className={classes.circularProgressWrapper}>
               <CircularProgress size={80} />
             </div>

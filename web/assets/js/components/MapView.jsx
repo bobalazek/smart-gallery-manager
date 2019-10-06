@@ -4,6 +4,7 @@ import moment from 'moment';
 import { connect } from 'react-redux';
 import L from 'leaflet';
 import { withStyles } from '@material-ui/styles';
+import AppNavigation from './AppNavigation';
 import {
   setData,
   setDataBatch,
@@ -12,26 +13,20 @@ import {
 const styles = {
   root: {
     width: '100%',
+    flexGrow: 1,
+    padding: 16,
+  },
+  mapContainer: {
+    width: '100%',
     display: 'flex',
     flexDirection: 'column',
-    height: '100vh',
+    height: 'calc(100vh - 108px)',
   },
 };
 
 const mapStateToProps = state => {
   return {
-    isLoading: state.isLoading,
-    isLoaded: state.isLoaded,
-    orderBy: state.orderBy,
-    orderByDirection: state.orderByDirection,
-    search: state.search,
-    selectedType: state.selectedType,
-    selectedYear: state.selectedYear,
-    selectedYearMonth: state.selectedYearMonth,
-    selectedDate: state.selectedDate,
-    selectedCountry: state.selectedCountry,
-    selectedCity: state.selectedCity,
-    selectedLabel: state.selectedLabel,
+    filesSummaryDatetime: state.filesSummaryDatetime,
   };
 };
 
@@ -64,46 +59,32 @@ class MapView extends React.Component {
     this.props.setData('view', 'map');
 
     this.prepareMap();
-    this.fetchFilesSummary();
   }
 
   componentDidUpdate(prevProps) {
-    if (
-      prevProps.selectedType !== this.props.selectedType ||
-      prevProps.selectedYear !== this.props.selectedYear ||
-      prevProps.selectedYearMonth !== this.props.selectedYearMonth ||
-      prevProps.selectedDate !== this.props.selectedDate ||
-      prevProps.selectedCountry !== this.props.selectedCountry ||
-      prevProps.selectedCity !== this.props.selectedCity ||
-      prevProps.selectedLabel !== this.props.selectedLabel
-    ) {
-      this.fetchFilesSummary();
-    }
-  }
+    if (prevProps.filesSummaryDatetime !== this.props.filesSummaryDatetime) {
+      const createdBefore = moment();
 
-  fetchFilesSummary() {
-    this.parent.fetchFilesSummary()
-      .then(() => {
-        const createdBefore = moment();
+      return new Promise((resolve, reject) => {
+        this.props.setData('isDataLoading', true);
 
-        return new Promise((resolve, reject) => {
-          this.props.setData('isLoading', true);
+        const query = this.parent.getFiltersQuery();
+        const url = rootUrl + '/api/files/map' + query +
+          '&created_before=' + createdBefore.format('YYYY-MM-DDTHH:mm:ss');
 
-          const query = this.parent.getFiltersQuery();
-          const url = rootUrl + '/api/files/map' + query +
-            '&created_before=' + createdBefore.format('YYYY-MM-DDTHH:mm:ss');
-
-          return axios.get(url)
-            .then(res => {
-              this.setState({
-                data: res.data.data,
-                meta: res.data.data,
-              }, () => {
-                this.prepareMap();
-              });
+        return axios.get(url)
+          .then(res => {
+            this.setState({
+              data: res.data.data,
+              meta: res.data.data,
+            }, () => {
+              this.prepareMap();
             });
-        });
+          }).finally(() => {
+            this.props.setData('isDataLoading', false);
+          });
       });
+    }
   }
 
   prepareMap() {
@@ -161,7 +142,10 @@ class MapView extends React.Component {
 
     return (
       <div className={classes.root}>
-        <div ref={this.mapRef}></div>
+        <AppNavigation parent={this.parent} />
+        <div className={classes.mapContainer}>
+          <div ref={this.mapRef}></div>
+        </div>
       </div>
     );
   }

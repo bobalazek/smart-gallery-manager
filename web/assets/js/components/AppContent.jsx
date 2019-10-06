@@ -48,8 +48,10 @@ class AppContent extends React.Component {
     super(props);
 
     this.parent = this.props.parent;
+  }
 
-    this.lastUrl = null;
+  componentWillUnmount() {
+    this.requestCancelToken && this.requestCancelToken();
   }
 
   componentDidUpdate(prevProps) {
@@ -116,11 +118,15 @@ class AppContent extends React.Component {
         this.props.history.push(path);
       }
 
+      if (this.lastPath !== path) {
+        this.fetchFilesSummary();
+      }
+
       this.lastPath = path;
-    }, 500);
+    }, 200);
   }
 
-  fetchFilesSummary(orderBy, orderByDirection) {
+  fetchFilesSummary() {
     const {
       selectedYear,
       selectedYearMonth,
@@ -130,8 +136,7 @@ class AppContent extends React.Component {
     return new Promise((resolve, reject) => {
       this.props.setData('isLoading', true);
 
-      let url = rootUrl + '/api/files/summary' +
-        this.getFiltersQuery(orderBy, orderByDirection);
+      let url = rootUrl + '/api/files/summary' + this.getFiltersQuery();
 
       this.requestCancelToken && this.requestCancelToken();
 
@@ -213,16 +218,18 @@ class AppContent extends React.Component {
           if (axios.isCancel(error)) {
             // Request was canceled
           } else {
+            this.props.setDataBatch({
+              isLoaded: true,
+              isLoading: false,
+            });
+
             reject(error);
           }
-        })
-        .finally(() => {
-          this.props.setData('isLoading', false);
         });
     });
   }
 
-  getFiltersQuery(forcedOrderBy, forcedOrderByDirection) {
+  getFiltersQuery() {
     const {
       view,
       selectedType,
@@ -237,9 +244,9 @@ class AppContent extends React.Component {
       search,
     } = this.props;
 
-    let query = '?order_by=' + (forcedOrderBy ? forcedOrderBy : orderBy);
+    let query = '?order_by=' + orderBy;
 
-    query += '&order_by_direction=' + (forcedOrderByDirection ? forcedOrderByDirection : orderByDirection);
+    query += '&order_by_direction=' + orderByDirection;
 
     if (view === 'map') {
       query += '&only_with_location=true';

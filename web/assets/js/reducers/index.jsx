@@ -6,8 +6,9 @@ import {
 
 const initialState = {
   view: null,
-  isLoading: false,
+  isLoading: false, // summary
   isLoaded: false,
+  isDataLoading: false, // files
   rows: [],
   rowsFilesCountMap: [], // [ index: fileCount ]
   rowsTotalCount: 0, // What is the total number of rows?

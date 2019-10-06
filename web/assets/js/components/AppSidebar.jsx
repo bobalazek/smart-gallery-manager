@@ -203,6 +203,8 @@ class AppSidebar extends React.Component {
   renderTypeList() {
     const {
       classes,
+      isLoading,
+      isLoaded,
       filesSummary,
       selectedType,
     } = this.props;
@@ -235,17 +237,17 @@ class AppSidebar extends React.Component {
           </ListSubheader>
         }
       >
-        {!types &&
+        {isLoading &&
           <CircularProgress className={classes.circularProgress} />
         }
-        {types && types.length === 0 &&
+        {!isLoading && isLoaded && types && types.length === 0 &&
           <ListItem>
             <ListItemText
               primary={'No types found'}
             />
           </ListItem>
         }
-        {types && types.map((entry) => {
+        {!isLoading && isLoaded && types && types.map((entry) => {
           return (
             <ListItem
               key={entry.type}
@@ -271,6 +273,8 @@ class AppSidebar extends React.Component {
   renderDateList() {
     const {
       classes,
+      isLoading,
+      isLoaded,
       filesSummary,
       selectedYear,
       selectedYearMonth,
@@ -319,17 +323,17 @@ class AppSidebar extends React.Component {
           </ListSubheader>
         }
       >
-        {!yearsCount &&
+        {isLoading &&
           <CircularProgress className={classes.circularProgress} />
         }
-        {yearsCount && yearsCount.length === 0 &&
+        {!isLoading && isLoaded && yearsCount && yearsCount.length === 0 &&
           <ListItem>
             <ListItemText
               primary={'No dates found'}
             />
           </ListItem>
         }
-        {yearsCount && yearsCount.map((entry) => {
+        {!isLoading && isLoaded && yearsCount && yearsCount.map((entry) => {
           const subList = (
             <Collapse
               in={entry.date === selectedYear}
@@ -438,6 +442,8 @@ class AppSidebar extends React.Component {
   renderLocationList() {
     const {
       classes,
+      isLoading,
+      isLoaded,
       filesSummary,
       selectedCountry,
       selectedCity,
@@ -479,17 +485,17 @@ class AppSidebar extends React.Component {
           </ListSubheader>
         }
       >
-        {!countries &&
+        {isLoading &&
           <CircularProgress className={classes.circularProgress} />
         }
-        {countries && countries.length === 0 &&
+        {!isLoading && isLoaded && countries && countries.length === 0 &&
           <ListItem>
             <ListItemText
               primary={'No locations found'}
             />
           </ListItem>
         }
-        {countries && countries.map((entry) => {
+        {!isLoading && isLoaded && countries && countries.map((entry) => {
           const subList = (
             <Collapse
               in={entry.location === selectedCountry}
@@ -567,6 +573,8 @@ class AppSidebar extends React.Component {
   renderLabelList() {
     const {
       classes,
+      isLoading,
+      isLoaded,
       filesSummary,
       selectedLabel,
     } = this.props;
@@ -609,17 +617,17 @@ class AppSidebar extends React.Component {
           </ListSubheader>
         }
       >
-        {!labels &&
+        {isLoading &&
           <CircularProgress className={classes.circularProgress} />
         }
-        {labels && labels.length === 0 &&
+        {!isLoading && isLoaded && labels && labels.length === 0 &&
           <ListItem>
             <ListItemText
               primary={'No labels found'}
             />
           </ListItem>
         }
-        {labels && labels.map((entry) => {
+        {!isLoading && isLoaded && labels && labels.map((entry) => {
           return (
             <ListItem
               key={entry.label}
@@ -638,7 +646,7 @@ class AppSidebar extends React.Component {
             </ListItem>
           )
         })}
-        {!allLabelsShown &&
+        {!isLoading && isLoaded && !allLabelsShown &&
           <ListItem
             button
             onClick={() => {

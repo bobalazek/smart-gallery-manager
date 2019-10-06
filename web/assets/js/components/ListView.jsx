@@ -104,47 +104,30 @@ class ListView extends React.Component {
 
   componentDidMount() {
     this.props.setData('view', 'list');
-
-    this.fetchFilesSummary();
   }
 
   componentDidUpdate(prevProps) {
-    if (
-      prevProps.selectedType !== this.props.selectedType ||
-      prevProps.selectedYear !== this.props.selectedYear ||
-      prevProps.selectedYearMonth !== this.props.selectedYearMonth ||
-      prevProps.selectedDate !== this.props.selectedDate ||
-      prevProps.selectedCountry !== this.props.selectedCountry ||
-      prevProps.selectedCity !== this.props.selectedCity ||
-      prevProps.selectedLabel !== this.props.selectedLabel
-    ) {
-      this.fetchFilesSummary();
+    if (prevProps.filesSummaryDatetime !== this.props.filesSummaryDatetime) {
+      this.cache.clearAll();
+
+      if (
+        this.infiniteLoaderRef &&
+        this.infiniteLoaderRef.current
+      ) {
+        this.infiniteLoaderRef.current.resetLoadMoreRowsCache(true);
+      }
+
+      if (
+        this.infiniteLoaderListRef &&
+        this.infiniteLoaderListRef.current
+      ) {
+        this.infiniteLoaderListRef.current.recomputeRowHeights();
+      }
+
+      this.lastQuery = null;
+      this.lastOffset = null;
+      this.rowsLoading = {};
     }
-  }
-
-  fetchFilesSummary(orderBy, orderByDirection) {
-    this.parent.fetchFilesSummary(orderBy, orderByDirection)
-      .then(() => {
-        this.cache.clearAll();
-
-        if (
-          this.infiniteLoaderRef &&
-          this.infiniteLoaderRef.current
-        ) {
-          this.infiniteLoaderRef.current.resetLoadMoreRowsCache(true);
-        }
-
-        if (
-          this.infiniteLoaderListRef &&
-          this.infiniteLoaderListRef.current
-        ) {
-          this.infiniteLoaderListRef.current.recomputeRowHeights();
-        }
-
-        this.lastQuery = null;
-        this.lastOffset = null;
-        this.rowsLoading = {};
-      });
   }
 
   render() {
@@ -329,7 +312,7 @@ class ListView extends React.Component {
 
     return new Promise((resolve, reject) => {
       this._setRowsLoading(startIndex, stopIndex);
-      this.props.setData('isLoading', true);
+      this.props.setData('isDataLoading', true);
 
       const url = rootUrl + '/api/files' + query +
         '&offset=' + offset +
@@ -354,15 +337,23 @@ class ListView extends React.Component {
           this.props.setDataBatch({
             files,
             filesIdMap,
-            isLoading: false,
+            isDataLoading: false,
           });
+
+          this._setRowsLoaded(startIndex, stopIndex);
 
           this._prepareRowsPerIndex(files, startIndex, stopIndex);
 
           resolve();
         })
-        .finally(() => {
-          this._setRowsLoaded(startIndex, stopIndex);
+        .catch((error) => {
+          if (axios.isCancel(error)) {
+            // Request was canceled
+          } else {
+            reject(error);
+          }
+
+          this.props.setData('isDataLoading', false);
         });
     });
   }

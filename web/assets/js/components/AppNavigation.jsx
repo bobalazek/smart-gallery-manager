@@ -43,15 +43,6 @@ class AppNavigation extends React.Component {
     const value = event.target.value;
 
     this.props.setData(name, value);
-
-    if (name === 'orderBy') {
-      this.parent.fetchFilesSummary(value, this.props.orderByDirection);
-    } else {
-      clearTimeout(this.searchTimer);
-      this.searchTimer = setTimeout(() => {
-        this.parent.fetchFilesSummary();
-      }, 500);
-    }
   }
 
   render() {
