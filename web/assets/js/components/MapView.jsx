@@ -80,7 +80,8 @@ class MapView extends React.Component {
             }, () => {
               this.prepareMap();
             });
-          }).finally(() => {
+          })
+          .finally(() => {
             this.props.setData('isDataLoading', false);
           });
       });
