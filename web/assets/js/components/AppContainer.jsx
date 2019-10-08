@@ -3,6 +3,8 @@ import { connect } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { withStyles } from '@material-ui/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import ViewListIcon from '@material-ui/icons/ViewList';
+import MapIcon from '@material-ui/icons/Map';
 import ImageModal from './ImageModal';
 import AppSidebar from './AppSidebar';
 import AppContent from './AppContent';
@@ -53,11 +55,13 @@ class AppContainer extends React.Component {
         key: 'list',
         label: 'List',
         url: basePath,
+        icon: <ViewListIcon />,
       },
       map: {
         key: 'map',
         label: 'Map',
         url: basePath + '/map',
+        icon: <MapIcon />,
       },
     };
 

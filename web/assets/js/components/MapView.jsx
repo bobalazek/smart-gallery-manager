@@ -109,12 +109,15 @@ class MapView extends React.Component {
 
       for (let i = 0; i < data.length; i++) {
         const coordinates = data[i].location.coordinates;
+        const url = this.parent.parent.views.list.url +
+          '?search=' + data[i].location.label;
+
         L.marker(coordinates)
           .bindPopup(
-            'Location: ' + data[i].location.label + '<br />' +
-            'Latitude: ' +  coordinates[0] + ', ' +
-            'Longitude: ' +  coordinates[1] + '<br />' +
-            'Count: '  + data[i].count
+            '<a href="' + url + '">' +
+              data[i].location.label + ' (count: ' + data[i].count + ')' +
+            '</a><br />' +
+            '(Lat: ' +  coordinates[0] + ', Lon: ' + coordinates[1] + ')'
           )
           .addTo(this.mapMarkersLayer);
       }

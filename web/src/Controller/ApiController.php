@@ -352,8 +352,8 @@ class ApiController extends AbstractController
 
         $dataMap = [];
         foreach ($imageLocations as $imageLocation) {
-            $latitudeShort = round($imageLocation['latitude'], 3);
-            $longitudeShort = round($imageLocation['longitude'], 3);
+            $latitudeShort = number_format($imageLocation['latitude'], 3);
+            $longitudeShort = number_format($imageLocation['longitude'], 3);
             $key = $latitudeShort . ',' . $longitudeShort;
 
             if (!isset($dataMap[$key])) {

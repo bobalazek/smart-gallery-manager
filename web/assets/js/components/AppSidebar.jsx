@@ -11,6 +11,7 @@ import List from '@material-ui/core/List';
 import ListSubheader from '@material-ui/core/ListSubheader';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
 import {
   setData,
   setDataBatch,
@@ -190,6 +191,11 @@ class AppSidebar extends React.Component {
               onClick={this.onViewClick.bind(this, thisView.key, thisView.url)}
               selected={view === thisView.key}
             >
+              {thisView.icon &&
+                <ListItemIcon>
+                  {thisView.icon}
+                </ListItemIcon>
+              }
               <ListItemText
                 primary={thisView.label}
               />
