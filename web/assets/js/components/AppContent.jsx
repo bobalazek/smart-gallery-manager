@@ -7,6 +7,7 @@ import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/styles';
 import ListView from './ListView';
 import MapView from './MapView';
+import FacesView from './FacesView';
 import {
   setData,
   setDataBatch,
@@ -250,6 +251,8 @@ class AppContent extends React.Component {
 
     if (view === 'map') {
       query += '&only_with_location=true';
+    } else if (view === 'faces') {
+      query += '&only_with_faces=true';
     }
 
     if (selectedType !== null) {
@@ -322,7 +325,10 @@ class AppContent extends React.Component {
             <ListView onImageClick={onImageClick} parent={this} />
           </Route>
           <Route exact path={`${basePath}/map`}>
-            <MapView onImageClick={onImageClick} parent={this} />
+            <MapView parent={this} />
+          </Route>
+          <Route exact path={`${basePath}/faces`}>
+            <FacesView onImageClick={onImageClick} parent={this} />
           </Route>
         </Switch>
       </div>

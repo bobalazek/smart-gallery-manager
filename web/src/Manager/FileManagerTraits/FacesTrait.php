@@ -24,7 +24,7 @@ trait FacesTrait {
 
         $this->_faces = [];
 
-        $this->_facesPython($file, $skipFetchIfAlreadyExists);
+        $this->_facesMtcnn($file, $skipFetchIfAlreadyExists);
 
         foreach ($this->_faces as $face) {
             $imageFace = $file->getImageFace(
@@ -65,8 +65,8 @@ trait FacesTrait {
             $service = $this->facesService;
         }
 
-        if ($service === 'python') {
-            return 'faces.json';
+        if ($service === 'mtcnn') {
+            return 'mtcnn.json';
         }
 
         throw new \Exception(sprintf(
@@ -76,12 +76,12 @@ trait FacesTrait {
     }
 
     /**
-     * Detects faces via python
+     * Detects faces via mtcnn
      *
      * @param File $file
      * @param bool $skipFetchIfAlreadyExists
      */
-    private function _facesPython($file, $skipFetchIfAlreadyExists)
+    private function _facesMtcnn($file, $skipFetchIfAlreadyExists)
     {
         // Check if it's a viable file first. If not, it will throw an exception,
         //   so it won't continue any execution.

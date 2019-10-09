@@ -18,6 +18,7 @@ use App\Manager\FileManager;
 use App\Entity\File;
 use App\Entity\ImageLabel;
 use App\Entity\ImageLocation;
+use App\Entity\ImageFace;
 
 class ApiController extends AbstractController
 {
@@ -82,6 +83,7 @@ class ApiController extends AbstractController
             ->select('DATE_FORMAT(f.' . $dateField . ', \'%Y-%m-%d\') AS filesDate, COUNT(DISTINCT f.id) AS filesCount')
             ->from(File::class, 'f')
             ->leftJoin('f.imageLabels', 'il')
+            ->leftJoin('f.imageFaces', 'if')
             ->leftJoin('f.imageLocation', 'ilo')
             ->groupBy('filesDate')
             ->orderBy('filesDate', $orderByDirection);
@@ -127,6 +129,7 @@ class ApiController extends AbstractController
             ->select('f.type AS fileType, COUNT(DISTINCT f.id) AS fileTypeCount')
             ->from(File::class, 'f')
             ->leftJoin('f.imageLabels', 'il')
+            ->leftJoin('f.imageFaces', 'if')
             ->leftJoin('f.imageLocation', 'ilo')
             ->groupBy('fileType');
         $this->_applyQueryFilters($fileTypeCountQueryBuilder, $dateField, ['type']);
@@ -151,6 +154,7 @@ class ApiController extends AbstractController
             ->select('il.name AS label, COUNT(DISTINCT il.id) AS count')
             ->from(ImageLabel::class, 'il')
             ->leftJoin('il.file', 'f')
+            ->leftJoin('f.imageFaces', 'if')
             ->leftJoin('f.imageLocation', 'ilo')
             ->groupBy('label')
         ;
@@ -167,6 +171,7 @@ class ApiController extends AbstractController
             ->from(ImageLocation::class, 'ilo')
             ->leftJoin('ilo.file', 'f')
             ->leftJoin('f.imageLabels', 'il')
+            ->leftJoin('f.imageFaces', 'if')
         ;
         $this->_applyQueryFilters($imageLocationsQueryBuilder, $dateField, ['country', 'city']);
         $imageLocations = $imageLocationsQueryBuilder->getQuery()->getResult();
@@ -271,6 +276,7 @@ class ApiController extends AbstractController
             ->select('f')
             ->from(File::class, 'f')
             ->leftJoin('f.imageLabels', 'il')
+            ->leftJoin('f.imageFaces', 'if')
             ->leftJoin('f.imageLocation', 'ilo')
             ->groupBy('f.id')
             ->orderBy('f.' . $dateField, $orderByDirection)
@@ -342,6 +348,7 @@ class ApiController extends AbstractController
             ->from(ImageLocation::class, 'ilo')
             ->leftJoin('ilo.file', 'f')
             ->leftJoin('f.imageLabels', 'il')
+            ->leftJoin('f.imageFaces', 'if')
             ->orderBy('f.' . $dateField, $orderByDirection)
             ->groupBy('ilo.id')
         ;
@@ -386,6 +393,34 @@ class ApiController extends AbstractController
     }
 
     /**
+     * @Route("/api/files/faces", name="api.files.faces")
+     */
+    public function filesFaces(Request $request)
+    {
+        $imageFacesQueryBuilder = $this->em->createQueryBuilder()
+            ->select('if.id')
+            ->from(ImageFace::class, 'if')
+            ->leftJoin('if.file', 'f')
+            ->leftJoin('f.imageLabels', 'il')
+            ->leftJoin('f.imageLocation', 'ilo')
+            ->groupBy('if.id')
+        ;
+
+        $this->_applyQueryFilters($imageFacesQueryBuilder);
+
+        $imageFaces = $imageFacesQueryBuilder->getQuery()->getResult();
+
+        $data = [];
+        foreach ($imageFaces as $imageFace) {
+            // TODO
+        }
+
+        return $this->json([
+            'data' => $data,
+        ]);
+    }
+
+    /**
      * @Route("/api/file/{hash}", name="api.file.detail")
      */
     public function fileDetail($hash, Request $request)
@@ -424,7 +459,7 @@ class ApiController extends AbstractController
         // .dng images are already oriented, because when we set the meta,
         //   we get the .jpg version from the .dng file, because in .dng,
         //   the sizes are wrong. Means, with .dgn files we already have applied the orientation
-        // See the _processFileMetaViaPython() method in FileManager.php
+        // See the _processFileMetaViaMtcnn() method in FileManager.php
         $swapWidthHeight = $file->getExtension() !== 'dng' &&
             !in_array($fileMeta['orientation'], [null, 1, 2, 3, 4]);
 
@@ -499,8 +534,12 @@ class ApiController extends AbstractController
      * @param string $dateField
      * @param array $ignoredFields
      */
-    private function _applyQueryFilters(QueryBuilder $queryBuilder, $dateField, $ignoredFields = [])
+    private function _applyQueryFilters(QueryBuilder $queryBuilder, $dateField = 'takenAt', $ignoredFields = [])
     {
+        if (!in_array($dateField, ['takenAt', 'createdAt'])) {
+            throw new \Exception('Invalid dateField parameter. Available: "takenAt" or "createdAt".');
+        }
+
         $request = $this->requestStack->getCurrentRequest();
 
         $type = $request->get('type');
@@ -628,6 +667,13 @@ class ApiController extends AbstractController
         if ($onlyWithLocation === 'true') {
             $queryBuilder
                 ->andWhere('ilo.id IS NOT NULL')
+            ;
+        }
+
+        $onlyWithFaces = $request->get('only_with_faces');
+        if ($onlyWithFaces === 'true') {
+            $queryBuilder
+                ->andWhere('if.id IS NOT NULL')
             ;
         }
 

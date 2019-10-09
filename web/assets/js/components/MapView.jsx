@@ -49,7 +49,6 @@ class MapView extends React.Component {
         16.3738
       ],
       data: [],
-      meta: [],
     };
 
     this.mapRef = React.createRef();
@@ -63,20 +62,16 @@ class MapView extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (prevProps.filesSummaryDatetime !== this.props.filesSummaryDatetime) {
-      const createdBefore = moment();
-
       return new Promise((resolve, reject) => {
         this.props.setData('isDataLoading', true);
 
-        const query = this.parent.getFiltersQuery();
-        const url = rootUrl + '/api/files/map' + query +
-          '&created_before=' + createdBefore.format('YYYY-MM-DDTHH:mm:ss');
+        const url = rootUrl + '/api/files/map' +
+          this.parent.getFiltersQuery();
 
         return axios.get(url)
           .then(res => {
             this.setState({
               data: res.data.data,
-              meta: res.data.data,
             }, () => {
               this.prepareMap();
             });
@@ -93,7 +88,6 @@ class MapView extends React.Component {
       position,
       zoom,
       data,
-      meta,
     } = this.state;
 
     if (

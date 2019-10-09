@@ -5,6 +5,7 @@ import { withStyles } from '@material-ui/styles';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import ViewListIcon from '@material-ui/icons/ViewList';
 import MapIcon from '@material-ui/icons/Map';
+import FaceIcon from '@material-ui/icons/Face';
 import ImageModal from './ImageModal';
 import AppSidebar from './AppSidebar';
 import AppContent from './AppContent';
@@ -63,6 +64,14 @@ class AppContainer extends React.Component {
         url: basePath + '/map',
         icon: <MapIcon />,
       },
+      /*
+      faces: {
+        key: 'faces',
+        label: 'Faces',
+        url: basePath + '/faces',
+        icon: <FaceIcon />,
+      },
+      */
     };
 
     this.state = {
