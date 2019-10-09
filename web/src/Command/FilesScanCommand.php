@@ -303,8 +303,6 @@ class FilesScanCommand extends Command
             ) {
                 $this->logger->debug('File already exists. Skipping ...');
 
-                $this->em->detach($file);
-
                 continue;
             }
 
@@ -412,10 +410,6 @@ class FilesScanCommand extends Command
             $this->em->flush();
             $this->em->clear();
         }
-
-        // Persist the remaining entities
-        $this->em->flush();
-        $this->em->clear();
 
         $this->logger->notice('======== File processing completed ========');
 
