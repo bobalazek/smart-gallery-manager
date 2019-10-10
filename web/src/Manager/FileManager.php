@@ -147,8 +147,9 @@ class FileManager {
             $this->getImagePath($file)
         );
 
-        // Adobe DNG converter has a strange behaviour, where it auto-applies the orientation
-        // https://feedback.photoshop.com/photoshop_family/topics/dng-converter-preview-ignores-image-orientation
+        // Our .dng files are already oriented in the getImagePath() above,
+        //   when we push the .dng file, and get a .jpg file back.
+        // The auto-orientation already happens on the python side.
         if (
             $applyOrientation &&
             $file->getExtension() === 'dng'
