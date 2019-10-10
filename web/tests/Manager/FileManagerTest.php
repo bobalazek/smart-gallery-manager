@@ -93,8 +93,8 @@ class FileManagerTest extends KernelTestCase
         // The meta saved here is for the original, non-oriented image,
         //   that's why the width & height are inversed here!
         // We do apply the orientation here AFTER we get the meta.
-        $this->assertTrue($fileMeta['width'] === 6012);
-        $this->assertTrue($fileMeta['height'] === 4008);
+        $this->assertTrue($fileMeta['width'] === 4008);
+        $this->assertTrue($fileMeta['height'] === 6012);
         $this->assertTrue($fileMeta['pixels'] === 24096096);
         $this->assertTrue($fileMeta['orientation'] === 6);
         $this->assertTrue($fileMeta['device']['make'] === 'Canon');

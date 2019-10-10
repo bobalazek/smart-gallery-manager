@@ -459,7 +459,7 @@ class ApiController extends AbstractController
         // .dng images are already oriented, because when we set the meta,
         //   we get the .jpg version from the .dng file, because in .dng,
         //   the sizes are wrong. Means, with .dng files we already have applied the orientation
-        // See the _processFileMetaViaMtcnn() method in FileManager.php
+        // See the _processFileMetaViaPython() method in FileManager.php
         $swapWidthHeight = $file->getExtension() !== 'dng' &&
             !in_array($fileMeta['orientation'], [null, 1, 2, 3, 4]);
 
