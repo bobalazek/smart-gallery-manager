@@ -90,9 +90,6 @@ class FileManagerTest extends KernelTestCase
         $fileMeta = $this->fileManager->getFileMeta($this->fileDng);
         $this->assertTrue($fileMeta['date'] === '2019-08-19T18:18:25+00:00');
         $this->assertTrue($fileMeta['size'] === 27750426);
-        // The meta saved here is for the original, non-oriented image,
-        //   that's why the width & height are inversed here!
-        // We do apply the orientation here AFTER we get the meta.
         $this->assertTrue($fileMeta['width'] === 4008);
         $this->assertTrue($fileMeta['height'] === 6012);
         $this->assertTrue($fileMeta['pixels'] === 24096096);
