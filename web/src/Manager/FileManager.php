@@ -141,11 +141,20 @@ class FileManager {
      *
      * @return Image
      */
-    public function getImage(File $file, $applyOrientation = false): Image
+    public function getImage(File $file, $applyOrientation = true): Image
     {
         $image = $this->imageManager->make(
             $this->getImagePath($file)
         );
+
+        // Adobe DNG converter has a strange behaviour, where it auto-applies the orientation
+        // https://feedback.photoshop.com/photoshop_family/topics/dng-converter-preview-ignores-image-orientation
+        if (
+            $applyOrientation &&
+            $file->getExtension() === 'dng'
+        ) {
+            $applyOrientation = false;
+        }
 
         if ($applyOrientation) {
             // $image->orientate();
