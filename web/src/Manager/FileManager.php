@@ -153,8 +153,13 @@ class FileManager {
         // https://github.com/Intervention/image/blob/master/src/Intervention/Image/Imagick/Commands/ExifCommand.php#L32
         // So we'll do the orientation manually
         // https://github.com/Intervention/image/blob/master/src/Intervention/Image/Commands/OrientateCommand.php#L17
+
         $fileMeta = $file->getMeta();
-        $orientation = $fileMeta['orientation'];
+        if (!$fileMeta) {
+            $fileMeta = $this->getFileMeta($file);
+        }
+
+        $orientation = $fileMeta['orientation'] ?? null;
         if ($orientation === 2) {
             $image->flip();
         } elseif ($orientation === 3) {
