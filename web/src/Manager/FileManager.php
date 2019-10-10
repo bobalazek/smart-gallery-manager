@@ -145,7 +145,31 @@ class FileManager {
         $image = $this->imageManager->make(
             $this->getImagePath($file)
         );
-        $image->orientate();
+
+        // $image->orientate();
+        // There seems to be an issue, where exif_read_data doesn't read the tags correctly.
+        // Even though imagemagic does, the Intervention image library still fallback
+        // to the exif_read_data, and that then again triggers an exception
+        // https://github.com/Intervention/image/blob/master/src/Intervention/Image/Imagick/Commands/ExifCommand.php#L32
+        // So we'll do the orientation manually
+        // https://github.com/Intervention/image/blob/master/src/Intervention/Image/Commands/OrientateCommand.php#L17
+        $fileMeta = $file->getMeta();
+        $orientation = $fileMeta['orientation'];
+        if ($orientation === 2) {
+            $image->flip();
+        } elseif ($orientation === 3) {
+            $image->rotate(180);
+        } elseif ($orientation === 4) {
+            $image->rotate(180)->flip();
+        } elseif ($orientation === 5) {
+            $image->rotate(270)->flip();
+        } elseif ($orientation === 6) {
+            $image->rotate(270);
+        } elseif ($orientation === 7) {
+            $image->rotate(90)->flip();
+        } elseif ($orientation === 8) {
+            $image->rotate(90);
+        }
 
         return $image;
     }

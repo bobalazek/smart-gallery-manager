@@ -72,7 +72,9 @@ trait FileMetaTrait {
     private function _processFileMetaViaGd($file)
     {
         set_error_handler(function($errno, $errstr, $errfile, $errline) {
-            throw new \RuntimeException($errstr . ' on line ' . $errline . ' in file ' . $errfile);
+            throw new \RuntimeException(
+                $errstr . ' on line ' . $errline . ' in file ' . $errfile
+            );
         });
         try {
             $exif = exif_read_data($file->getPath(), 0, true);
