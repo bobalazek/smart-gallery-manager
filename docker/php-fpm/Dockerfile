@@ -51,7 +51,8 @@ RUN wget https://raw.githubusercontent.com/composer/getcomposer.org/ba13e3fc70f1
 RUN mv composer.phar /usr/local/bin/composer
 
 # Permissions
-RUN usermod -u 1000 www-data && groupmod -g 1000 www-data
+# TODO: not working correctly
+# RUN usermod -u 1000 www-data && groupmod -g 1000 www-data
 
 EXPOSE 9000
 
