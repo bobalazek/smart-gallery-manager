@@ -71,21 +71,14 @@ trait FileMetaTrait {
      */
     private function _processFileMetaViaGd($file)
     {
-        set_error_handler(function($errno, $errstr, $errfile, $errline) {
-            throw new \RuntimeException(
-                $errstr . ' on line ' . $errline . ' in file ' . $errfile
-            );
-        });
-        try {
-            $exif = exif_read_data($file->getPath(), 0, true);
-        } catch (\Exception $e) {
-            throw $e;
-        }
-        restore_error_handler();
+        $exif = @exif_read_data($file->getPath(), 0, true);
 
-        if (!$exif) {
+        if (
+            !$exif ||
+            !is_array($exif)
+        ) {
             throw new \Exception(sprintf(
-                'Could not read the file on path "%s".',
+                'Could not read the exif data from the file "%s".',
                 $file->getPath()
             ));
         }

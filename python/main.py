@@ -17,9 +17,18 @@ def index():
 @app.route("/file-view")
 def file_view():
     file = request.query.file
+    orientation = None
+    if request.query.orientation:
+        if request.query.orientation == 'auto':
+            orientation = None
+        elif request.query.orientation == 'none':
+            orientation = 0
+        else:
+            orientation = int(request.query.orientation)
+
     response.content_type = "application/json"
     if not os.path.isfile(file):
-        json.dumps({
+        return json.dumps({
             "data": {
                 "error": "File does not exist",
             },
@@ -30,7 +39,7 @@ def file_view():
     image_buffer = io.BytesIO()
 
     with rawpy.imread(file) as raw:
-        rgb = raw.postprocess(use_camera_wb=True)
+        rgb = raw.postprocess(use_camera_wb=True, user_flip=orientation)
         im = Image.fromarray(rgb)
         im.save(image_buffer, format="jpeg")
         raw.close()

@@ -50,6 +50,9 @@ COPY supervisor/supervisord.conf /etc/supervisor/conf.d/
 RUN wget https://raw.githubusercontent.com/composer/getcomposer.org/ba13e3fc70f1c66250d1ea7ea4911d593aa1dba5/web/installer -O - -q | php -- --quiet
 RUN mv composer.phar /usr/local/bin/composer
 
+# Permissions
+RUN usermod -u 1000 www-data && groupmod -g 1000 www-data
+
 EXPOSE 9000
 
 CMD ["/usr/bin/supervisord"]
