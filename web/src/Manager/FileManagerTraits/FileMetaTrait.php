@@ -83,6 +83,10 @@ trait FileMetaTrait {
             ));
         }
 
+        if ($file->getExtension() === 'dng') {
+            throw new \Exception('The .dng format is not supported by GD');
+        }
+
         $this->_fileMeta['date'] = isset($exif['IFD0']['DateTime'])
             ? $this->_eval($exif['IFD0']['DateTime'], 'datetime')
             : (isset($exif['EXIF']['DateTimeOriginal'])
