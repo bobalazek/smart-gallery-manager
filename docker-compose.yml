@@ -9,8 +9,6 @@ services:
       - MYSQL_USER=${MYSQL_USER:-user}
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-password}
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-password}
-    ports:
-      - '${MARAIDB_PORT_3306:-3307}:3306'
     volumes:
       - ./var/mysql:/var/lib/mysql
     networks:
