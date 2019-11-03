@@ -54,7 +54,6 @@ services:
     build: ./docker/node
     env_file:
       - .env
-    privileged: true # TODO: fix, so we won't need it
     volumes:
       - .:/var/www
     networks:
