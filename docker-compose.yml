@@ -13,7 +13,6 @@ services:
       - ./var/mysql:/var/lib/mysql
     networks:
       - app-network
-    restart: always
   nginx:
     container_name: sgm_nginx
     build: ./docker/nginx
@@ -31,7 +30,6 @@ services:
       - php-fpm
     networks:
       - app-network
-    restart: always
   php-fpm:
     container_name: sgm_php_fpm
     build: ./docker/php-fpm
@@ -48,7 +46,6 @@ services:
       - python
     networks:
       - app-network
-    restart: always
   node:
     container_name: sgm_node
     build: ./docker/node
@@ -58,7 +55,6 @@ services:
       - .:/var/www
     networks:
       - app-network
-    restart: always
   python:
     container_name: sgm_python
     build: ./docker/python
@@ -69,7 +65,6 @@ services:
       - .:/var/www # Must include that one. It's needed for some unit tests
     networks:
       - app-network
-    restart: always
   redis:
     container_name: sgm_redis
     image: redis
@@ -77,7 +72,6 @@ services:
       - ./var/redis:/data
     networks:
       - app-network
-    restart: always
   memcached:
     container_name: sgm_memcached
     image: memcached
@@ -85,7 +79,6 @@ services:
       - ./var/memcached:/var/lib/memcached
     networks:
       - app-network
-    restart: always
 networks:
   app-network:
     name: sgm_app_network
